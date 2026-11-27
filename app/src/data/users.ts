@@ -188,6 +188,7 @@ export function saveSession(user: User): void {
   } catch {
     // Bỏ qua: phiên chỉ mất khi tải lại trang.
   }
+  notifyAuthChanged()
 }
 
 /** Đọc người đang đăng nhập (null khi chưa đăng nhập). */
@@ -212,4 +213,18 @@ export function getSessionUser(): User | null {
 /** Đăng xuất: xóa phiên đăng nhập. */
 export function clearSession(): void {
   localStorage.removeItem(SESSION_KEY)
+  notifyAuthChanged()
+}
+
+/**
+ * Báo cho các component đang hiển thị (vd Header) biết phiên đăng nhập
+ * vừa thay đổi, để chúng cập nhật ngay mà không cần chuyển trang.
+ * Header lắng nghe sự kiện 'camping-auth-changed' này.
+ */
+function notifyAuthChanged(): void {
+  try {
+    window.dispatchEvent(new Event('camping-auth-changed'))
+  } catch {
+    // Môi trường không có window (vd test SSR): bỏ qua.
+  }
 }
