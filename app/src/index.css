@@ -419,6 +419,16 @@ a { color: var(--color-primary-text); }
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+}
+/* Điện thoại: chữ logo nhỏ lại một chút để nút menu + logo + cụm tác
+   vụ (đổi theme, giỏ hàng, avatar) vừa một hàng (xem App.tsx).
+   Chữ "Camping Shop" ở 18px vẫn rộng ~130px nên phải xuống 16px
+   mới đủ chỗ khi đã đăng nhập (có thêm avatar). */
+@media (max-width: 480px) {
+  .site-header .brand {
+    font-size: 1rem;
+  }
 }
 
 .site-footer {
