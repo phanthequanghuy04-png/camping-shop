@@ -94,7 +94,7 @@ export default function HomePage() {
           KHÔNG dùng animation khi cuộn cho phần này (theo yêu cầu): tiêu
           đề và các thẻ luôn hiện sẵn, chỉ giữ hiệu ứng hover.
           Bấm vào lọc tới /shop?category=id */}
-      <section className="mx-auto max-w-[1200px] px-4 pt-10 pb-12 sm:px-6 md:pt-14 md:pb-16">
+      <section className="cv-cats mx-auto max-w-[1200px] px-4 pt-10 pb-12 sm:px-6 md:pt-14 md:pb-16">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-foreground">
@@ -127,6 +127,7 @@ export default function HomePage() {
                       src={resolveImage(cover)}
                       alt={category.name}
                       loading="lazy"
+                      decoding="async"
                       className="aspect-[4/3] w-full object-cover transition duration-500 ease-out group-hover:scale-105"
                     />
                     {/* Chip số sản phẩm nằm trên ảnh, chỉ trên điện thoại:
@@ -168,7 +169,7 @@ export default function HomePage() {
       </section>
 
       {/* Sản phẩm nổi bật */}
-      <section className="mx-auto max-w-[1200px] px-4 pb-16 sm:px-6">
+      <section className="cv-feat mx-auto max-w-[1200px] px-4 pb-16 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             {/* Tiêu đề dùng fade (chỉ mờ dần) thay vì fade-up: fade-up
