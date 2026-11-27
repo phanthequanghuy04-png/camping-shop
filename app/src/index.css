@@ -841,6 +841,9 @@ a { color: var(--color-primary-text); }
    thành chữ tối màu trên ảnh (lỗi bắt được khi kiểm tra live 2026-11-28). */
 .kairn-hero h1 { color: #fff; }
 .kairn-tile-green { background: #2d6a4f; color: #fff; }
+/* Ô xanh đổi theo chế độ tối (trước đây giữ nguyên #2D6A4F ở cả 2 chế độ
+   nên nút đổi sáng/tối không ảnh hưởng tới nó — Huy báo lỗi 2026-11-28). */
+.dark .kairn-tile-green { background: #1b4332; }
 .kairn-tile-cream { background: #faf6ec; color: #1c2b1f; }
 .dark .kairn-tile-cream { background: var(--color-surface); color: var(--color-foreground); }
 .kairn-glass-circle {
