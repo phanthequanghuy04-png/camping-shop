@@ -46,9 +46,11 @@ jobs:
           VITE_API_URL: https://camping-shop-api.vercel.app
           # Thông tin tài khoản nhận tiền thật của shop (Huy cung cấp 2026-11-27):
           # MB Bank — dùng để hiện mã VietQR trên màn hình đặt hàng thành công.
+          # LƯU Ý: số tài khoản phải đặt trong dấu ngoặc kép, nếu không YAML
+          # hiểu thành số nguyên và làm mất số 0 ở đầu (0708065040 → 708065040).
           VITE_BANK_CODE: MB
           VITE_BANK_NAME: MB Bank
-          VITE_BANK_ACCOUNT: 0708065040
+          VITE_BANK_ACCOUNT: "0708065040"
           VITE_BANK_HOLDER: Phan Thế Quang Huy
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
