@@ -836,6 +836,10 @@ a { color: var(--color-primary-text); }
    class text-white của Tailwind (cùng bẫy cascade với h1/h2/h3) nên phải
    viết luật riêng có độ ưu tiên cao hơn ở đây. */
 .kairn-hero a.kairn-cta { color: #fff; }
+/* Tiêu đề hero: chữ trắng ở CẢ 2 chế độ. Luật `h1` không lớp ở index.css
+   thắng class text-white của Tailwind — ở chế độ sáng nó biến tiêu đề
+   thành chữ tối màu trên ảnh (lỗi bắt được khi kiểm tra live 2026-11-28). */
+.kairn-hero h1 { color: #fff; }
 .kairn-tile-green { background: #2d6a4f; color: #fff; }
 .kairn-tile-cream { background: #faf6ec; color: #1c2b1f; }
 .dark .kairn-tile-cream { background: var(--color-surface); color: var(--color-foreground); }
