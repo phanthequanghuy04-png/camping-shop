@@ -1,3 +1,10 @@
+# BẢN NHÁP — workflow GitHub Pages cho web camping-shop, đã thêm VITE_API_URL.
+# File gốc: .github/workflows/pages.yml (KHÔNG sửa file gốc).
+# Trước khi dùng: thay VERCEL_API_URL bằng URL thật của backend Vercel,
+# vd: https://camping-shop-api.vercel.app (KHÔNG có dấu / ở cuối).
+# Sau đó tải file này lên repo, ghi đè .github/workflows/pages.yml, commit
+# lên nhánh main — workflow sẽ tự chạy (on: push) và build lại frontend
+# với VITE_API_URL đã nhúng vào bundle lúc build.
 name: Deploy to GitHub Pages
 
 on:
@@ -32,6 +39,11 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: app
+        env:
+          # VITE_API_URL là biến build-time: Vite nhúng giá trị này vào
+          # bundle JS lúc build (app/src/lib/api.ts đọc import.meta.env).
+          # Phải thay VERCEL_API_URL bằng URL Vercel thật trước khi commit.
+          VITE_API_URL: https://camping-shop-api.vercel.app
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
