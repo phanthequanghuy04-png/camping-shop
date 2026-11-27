@@ -222,6 +222,26 @@ body {
   flex-direction: column;
 }
 
+/* Flex item mặc định có min-width: auto (= min-content): trang /admin
+   chứa bảng min-w 720px làm <main> không co lại được, cả trang phình
+   ra 754px trên điện thoại 390px (thẻ thống kê, tab, bảng đều bị cắt
+   khỏi màn hình). min-width: 0 cho phép các khối con co về đúng bề
+   rộng màn hình; bảng vẫn cuộn ngang bên trong thẻ của nó
+   (overflow-x-auto) như thiết kế. */
+#root > * {
+  min-width: 0;
+}
+
+/* <main> các trang dùng mx-auto + max-w-6xl để căn giữa. Trong flex
+   cột, margin auto 2 bên làm align-items: stretch mất tác dụng nên
+   <main> rộng theo nội dung (max-content) thay vì theo màn hình.
+   width: 100% khóa bề rộng theo khung #root (max-w-6xl vẫn giới hạn
+   trên desktop, mx-auto vẫn căn giữa); kết hợp min-width: 0 ở trên
+   thì trang /admin mới co về đúng 390px. */
+#root > main {
+  width: 100%;
+}
+
 h1,
 h2,
 h3 {
