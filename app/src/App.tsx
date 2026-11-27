@@ -6,6 +6,7 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
 } from 'react-router-dom'
 import AdminPage from './pages/AdminPage'
 import CartPage from './pages/CartPage'
@@ -17,7 +18,10 @@ import RegisterPage from './pages/RegisterPage'
 import ShopPage from './pages/ShopPage'
 import ThemeToggle from './components/ThemeToggle'
 import { useCart } from './context/CartContext'
-import { getSessionUser } from './data/users'
+import { clearSession, getSessionUser } from './data/users'
+import type { User } from './data/types'
+import { clearToken } from './lib/api'
+import { showToast } from './lib/toast'
 import {
   cleanupAnimations,
   initAnimations,
@@ -47,26 +51,48 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   // useLocation để Header render lại mỗi lần đổi trang.
   useLocation()
-  // Link "Quản trị" chỉ hiện với tài khoản admin. Đồng bộ lại ngay khi
-  // phiên đăng nhập thay đổi (đăng nhập/đăng xuất ở trang /login không
-  // chuyển trang, nên chỉ đọc localStorage lúc render sẽ làm link hiện
-  // nốt sau khi đăng xuất cho tới lần chuyển trang sau). users.ts phát
-  // sự kiện 'camping-auth-changed' mỗi khi saveSession/clearSession.
+  const navigate = useNavigate()
+  // Người đang đăng nhập (null khi chưa đăng nhập) + có phải admin không.
+  // Đồng bộ lại ngay khi phiên đăng nhập thay đổi (đăng nhập/đăng xuất
+  // ở trang /login không chuyển trang, nên chỉ đọc localStorage lúc
+  // render sẽ làm header cập nhật chậm). users.ts phát sự kiện
+  // 'camping-auth-changed' mỗi khi saveSession/clearSession.
+  const [sessionUser, setSessionUser] = useState<User | null>(() =>
+    getSessionUser(),
+  )
   const [isAdmin, setIsAdmin] = useState(
     () => getSessionUser()?.role === 'admin',
   )
   useEffect(() => {
-    const syncAdmin = () => setIsAdmin(getSessionUser()?.role === 'admin')
-    window.addEventListener('camping-auth-changed', syncAdmin)
-    window.addEventListener('storage', syncAdmin)
+    const syncAuth = () => {
+      const user = getSessionUser()
+      setSessionUser(user)
+      setIsAdmin(user?.role === 'admin')
+    }
+    window.addEventListener('camping-auth-changed', syncAuth)
+    window.addEventListener('storage', syncAuth)
     return () => {
-      window.removeEventListener('camping-auth-changed', syncAdmin)
-      window.removeEventListener('storage', syncAdmin)
+      window.removeEventListener('camping-auth-changed', syncAuth)
+      window.removeEventListener('storage', syncAuth)
     }
   }, [])
-  const visibleNavLinks = navLinks.filter(
-    (link) => link.to !== '/admin' || isAdmin,
-  )
+
+  const handleLogout = () => {
+    clearSession()
+    clearToken()
+    showToast('Đã đăng xuất.')
+    navigate('/')
+  }
+
+  // Link "Quản trị" chỉ hiện với tài khoản admin; link "Đăng nhập" /
+  // "Đăng ký" chỉ hiện khi chưa đăng nhập (đã đăng nhập thì header hiện
+  // tên người dùng + nút "Đăng xuất" thay thế).
+  const visibleNavLinks = navLinks.filter((link) => {
+    if (link.to === '/admin') return isAdmin
+    if (link.to === '/login' || link.to === '/register')
+      return !sessionUser
+    return true
+  })
 
   return (
     <header className="site-header">
@@ -113,6 +139,48 @@ function Header() {
               {totalQty}
             </span>
           </Link>
+
+          {/* Đã đăng nhập: hiện tên người dùng + nút Đăng xuất thay cho
+              link Đăng nhập / Đăng ký trong menu. */}
+          {sessionUser && (
+            <>
+              <span
+                className="hidden max-w-[140px] items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-medium text-[#F5F0E1] sm:inline-flex"
+                title={sessionUser.email}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  className="shrink-0"
+                >
+                  <circle
+                    cx="12"
+                    cy="8"
+                    r="4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  />
+                  <path
+                    d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="truncate">{sessionUser.name}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-full px-3 py-2 text-sm font-medium text-[#F5F0E1] transition duration-200 ease-out hover:bg-white/10 focus:outline-2 focus:outline-[#74C69D]"
+              >
+                Đăng xuất
+              </button>
+            </>
+          )}
 
           {/* Burger menu mobile */}
           <button
@@ -164,6 +232,33 @@ function Header() {
 function AppContent() {
   const location = useLocation()
 
+  // Toast ngắn (vd "Đăng nhập thành công!"): LoginPage / Header phát sự
+  // kiện 'camping-toast' qua showToast(), AppContent hiện thông báo nổi
+  // phía trên trang vài giây rồi tự mờ đi. Bấm vào toast để tắt ngay.
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(
+    null,
+  )
+  const [toastVisible, setToastVisible] = useState(false)
+  useEffect(() => {
+    const onToast = (event: Event) => {
+      const message = (event as CustomEvent<string>).detail
+      if (typeof message !== 'string' || message === '') return
+      setToast({ id: Date.now(), message })
+      setToastVisible(true)
+    }
+    window.addEventListener('camping-toast', onToast)
+    return () => window.removeEventListener('camping-toast', onToast)
+  }, [])
+  useEffect(() => {
+    if (!toast) return
+    const hideTimer = window.setTimeout(() => setToastVisible(false), 3200)
+    const clearTimer = window.setTimeout(() => setToast(null), 3600)
+    return () => {
+      window.clearTimeout(hideTimer)
+      window.clearTimeout(clearTimer)
+    }
+  }, [toast])
+
   // Khởi tạo animation 1 lần: GSAP + Lenis + AOS, rồi reveal '.reveal'.
   useEffect(() => {
     let cancelled = false
@@ -189,6 +284,44 @@ function AppContent() {
   return (
     <>
       <Header />
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          onClick={() => setToastVisible(false)}
+          className={`fixed left-1/2 top-20 z-[60] flex -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full bg-[#1B4332] px-5 py-3 text-sm font-medium whitespace-nowrap text-white shadow-[0_12px_32px_rgba(27,67,50,0.35)] transition-all duration-300 ease-out ${
+            toastVisible
+              ? 'translate-y-0 opacity-100'
+              : '-translate-y-2 opacity-0'
+          }`}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            className="shrink-0"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="#74C69D"
+              strokeWidth="1.8"
+            />
+            <path
+              d="m8 12.5 2.5 2.5L16 9.5"
+              stroke="#74C69D"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {toast.message}
+        </div>
+      )}
 
       <Routes>
         <Route path="/" element={<HomePage />} />
