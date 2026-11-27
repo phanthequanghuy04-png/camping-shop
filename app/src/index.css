@@ -431,6 +431,31 @@ a { color: var(--color-primary-text); }
   }
 }
 
+/* Các mục lớn dưới màn hình đầu (trang chủ): trình duyệt chỉ vẽ khi
+   sắp cuộn tới (content-visibility), lúc mới tải thì bỏ qua — theo ý
+   tưởng của Huy (tránh làm đi làm lại khi cuộn). contain-intrinsic-size
+   cho trình duyệt chiều cao ước lượng để thanh cuộn và thanh tiến
+   trình không nhảy nhiều khi mục được vẽ; `auto` giữ lại chiều cao
+   thật sau lần vẽ đầu. Desktop / mobile khác nhau nên có 2 mức ước
+   lượng (xem HomePage.tsx: .cv-cats = danh mục, .cv-feat = sản phẩm
+   nổi bật). */
+.cv-cats {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+.cv-feat {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1200px;
+}
+@media (max-width: 767px) {
+  .cv-cats {
+    contain-intrinsic-size: auto 1300px;
+  }
+  .cv-feat {
+    contain-intrinsic-size: auto 4600px;
+  }
+}
+
 .site-footer {
   margin-top: auto;
   background-color: var(--color-primary-dark);
