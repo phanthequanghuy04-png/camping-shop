@@ -1,0 +1,1510 @@
+/* Lucian UX/UI Prompt — port sang React cho Camping Shop (MIT License (c) 2026 Seokwoooo).
+   Nguồn: https://lucianlabs.dev/uxui-prompt/ — các mẫu #212, #441, #442, #240, #444, #445, #450.
+   Cách port (theo skill lucian-uxui/references/porting.md): giữ nguyên cấu trúc, kích thước,
+   thời gian, đường cong chuyển động của từng mẫu; chỉ đổi token màu sang hệ design
+   của shop (xanh rừng #2D6A4F / kem #FAF6EC) và chuyển phần tương tác sang React.
+   File này là CSS thuần (không viết lại bằng Tailwind) để không làm mất thông số gốc. */
+
+/* ---------- 1. Token --ux-* ánh xạ sang biến --color-* của shop ----------
+   Vì --color-* đã tự đổi theo .dark nên token Lucian cũng đổi theo dark mode. */
+:root {
+  --ux-page: var(--color-background);
+  --ux-surface: var(--color-surface);
+  --ux-surface-2: var(--color-muted);
+  --ux-surface-3: var(--color-border);
+  --ux-ink: var(--color-foreground);
+  --ux-ink-2: var(--color-muted-foreground);
+  --ux-ink-3: var(--color-muted-foreground);
+  --ux-line: color-mix(in srgb, var(--color-foreground) 9%, transparent);
+  --ux-line-2: color-mix(in srgb, var(--color-foreground) 17%, transparent);
+  --ux-accent: var(--color-primary);
+  --ux-accent-2: var(--color-primary-light);
+  --ux-accent-soft: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --ux-accent-ink: #ffffff;
+  --ux-mint: #2d6a4f;
+  --ux-ok: #047857;
+  --ux-warn: #b45309;
+  --ux-danger: #b91c1c;
+  --ux-glass: rgba(255, 255, 255, 0.58);
+  --ux-glass-line: rgba(255, 255, 255, 0.85);
+  --ux-shadow: rgba(27, 67, 50, 0.14);
+  --ux-shadow-strong: rgba(27, 67, 50, 0.3);
+  --ux-grad: linear-gradient(120deg, #2d6a4f, #74c69d 55%, #c68a4b);
+  --ux-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ux-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+.dark {
+  --ux-mint: #6ee7b7;
+  --ux-ok: #6ee7b7;
+  --ux-danger: #ff7d8c;
+  --ux-warn: #ffb26b;
+  --ux-accent-ink: #0b0c12;
+  --ux-glass: rgba(255, 255, 255, 0.07);
+  --ux-glass-line: rgba(255, 255, 255, 0.18);
+  --ux-shadow: rgba(0, 0, 0, 0.45);
+  --ux-shadow-strong: rgba(0, 0, 0, 0.72);
+}
+
+/* ---------- .ux base (từ tokens.css, font đổi sang font của shop) ---------- */
+.ux,
+.ux *,
+.ux *::before,
+.ux *::after {
+  box-sizing: border-box;
+}
+.ux {
+  font-family: inherit;
+  color: var(--ux-ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+:where(.ux) :is(button, input, textarea, select) {
+  font: inherit;
+  color: inherit;
+}
+:where(.ux) button {
+  cursor: pointer;
+}
+.ux :focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 3px;
+}
+.ux [hidden] {
+  display: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux,
+  .ux *,
+  .ux *::before,
+  .ux *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   #212 — Header ẩn khi cuộn + thanh tiến trình đọc (Navigation)
+   Hành vi gốc: cuộn xuống thì header trượt lên khỏi màn hình (ẩn sau khi
+   cuộn xuống tích lũy > 8px, y >= 60); cuộn lên dù ít cũng hiện lại
+   (tích lũy lên < -6px); y > 20 thì header đặc lại (blur + bóng + thấp hơn);
+   về gần đầu trang thì trong suốt lại. Thanh tiến trình 2px dưới header.
+   Áp dụng lên .site-header có sẵn của shop (kèm yêu cầu làm lại header
+   mềm hơn, bo tròn, fade, hover): bo tròn đáy 24px, link dạng pill với
+   hiệu ứng hover mờ dần, brand hover nhẹ.
+   ========================================================================== */
+.site-header {
+  transition:
+    transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.3s,
+    box-shadow 0.3s,
+    backdrop-filter 0.3s,
+    border-radius 0.3s;
+}
+.site-header.is-solid {
+  border-radius: 0 0 24px 24px;
+  background-color: color-mix(
+    in srgb,
+    var(--color-primary-dark) 88%,
+    transparent
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 20px -14px rgba(0, 0, 0, 0.5);
+}
+.site-header.is-hide {
+  transform: translateY(-110%);
+}
+.site-header .nav-link {
+  border-bottom: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
+}
+.site-header .nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.site-header .nav-link--active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+.site-header .brand {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.site-header .brand:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+/* Thanh tiến trình đọc 2px ở đáy header (chỉ hiện khi đã cuộn). */
+.header-progress {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-primary-light);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.site-header.is-solid .header-progress {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   #441 — Nút tim yêu thích + nút Thêm morph (Product card)
+   Chỉ port phần tim + nút thêm (ảnh sản phẩm của shop là ảnh thật, không
+   phải hình SVG bình giữ nhiệt như bản gốc nên không có hàng chọn màu).
+   Tim: bấm thì tim đầy màu đỏ + nảy (scale .4 -> 1.3), 6 hạt văng ra +
+   vòng lan tỏa. Nút Thêm: bấm thì trượt thành dấu tick "Đã thêm" nền
+   xanh mint, 1400ms sau trở lại.
+   ========================================================================== */
+.u441-wl {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ux-surface);
+  box-shadow: 0 2px 8px -2px var(--ux-shadow);
+  color: var(--ux-ink-2);
+  transform: scale(var(--k, 1));
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1),
+    color 0.2s;
+}
+.u441-wl:active {
+  --k: 0.86;
+  transition: transform 0.1s var(--ux-ease);
+}
+.u441-wl svg {
+  width: 17px;
+  height: 17px;
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  transition: fill 0.2s;
+}
+.u441-wl[aria-pressed="true"] {
+  color: var(--ux-danger);
+}
+.u441-wl[aria-pressed="true"] svg {
+  fill: currentColor;
+  animation: u441-heart 0.55s cubic-bezier(0.3, 1.8, 0.5, 1);
+}
+@keyframes u441-heart {
+  0% { transform: scale(0.4); }
+  60% { transform: scale(1.3); }
+  100% { transform: none; }
+}
+.u441-wl b {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px;
+  border-radius: 50%;
+  background: var(--c, var(--ux-danger));
+  opacity: 0;
+  pointer-events: none;
+}
+.u441-wl.is-burst b {
+  animation: u441-burst 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+@keyframes u441-burst {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-24px) scale(0.3); }
+}
+.u441-wl i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--ux-danger);
+  opacity: 0;
+  pointer-events: none;
+}
+.u441-wl.is-burst i {
+  animation: u441-ring 0.5s var(--ux-ease);
+}
+@keyframes u441-ring {
+  0% { opacity: 0.8; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.u441-add {
+  position: relative;
+  display: grid;
+  transform: scale(var(--k, 1));
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1),
+    background-color 0.3s var(--ux-ease);
+}
+.u441-add:active {
+  --k: 0.92;
+  transition: transform 0.1s var(--ux-ease);
+}
+.u441-add > span {
+  grid-area: 1/1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition:
+    opacity 0.2s var(--ux-ease),
+    transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.u441-add > span + span {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.u441-add.is-ok {
+  background: var(--ux-mint) !important;
+}
+.u441-add.is-ok > span:first-child {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.u441-add.is-ok > span + span {
+  opacity: 1;
+  transform: none;
+}
+
+/* ==========================================================================
+   #442 — Ảnh bay vào giỏ + badge nảy (Add to cart)
+   Bản sao ảnh 56px bay theo đường cong bezier 13 khung hình, 720ms,
+   cubic-bezier(.45,0,.55,1), scale 1 -> 0.34, xoay 24 độ; tới nơi thì
+   nút giỏ lắc nhẹ (wig .6s) và badge nảy (scale 1 -> 1.5 -> 1).
+   ========================================================================== */
+.u442-fly {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px -8px var(--ux-shadow-strong);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.u442-fly img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#header-cart-button.is-hit svg {
+  animation: u442-wig 0.6s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+@keyframes u442-wig {
+  0% { transform: none; }
+  20% { transform: translateY(3px) scale(1.08, 0.9); }
+  40% { transform: rotate(-12deg); }
+  60% { transform: rotate(9deg); }
+  80% { transform: rotate(-4deg); }
+  100% { transform: none; }
+}
+.cart-badge.is-bump {
+  animation: u442-bump 0.55s cubic-bezier(0.3, 1.8, 0.5, 1) 0.05s;
+}
+@keyframes u442-bump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.5) translateY(-3px); }
+  100% { transform: none; }
+}
+
+/* ==========================================================================
+   #240 — Ngăn giỏ trượt + thanh miễn phí vận chuyển (Cart drawer)
+   Ngăn trượt từ phải vào: translateX(105%) -> 0, .45s cubic-bezier(.3,1,.3,1),
+   bóng -20px; overlay mờ .35s; món mới thêm vào nhấp nháy 1.2s; xóa món thì
+   hàng trượt sang phải 110% rồi gập lại (grid-template-rows 1fr -> 0fr);
+   thanh tiến trình rộng theo % tới ngưỡng, đổi màu xanh khi đạt; tổng tiền
+   lăn từng chữ số (.45s cubic-bezier(.3,1.25,.5,1)).
+   Khác bản gốc: rộng min(360px, 90vw) thay vì 268px để hàng có chỗ cho
+   ảnh thật + số lượng; ngưỡng miễn phí vận chuyển 500.000₫.
+   ========================================================================== */
+.u240-ov {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(10, 10, 20, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s;
+}
+.u240-root.is-open .u240-ov {
+  opacity: 1;
+  pointer-events: auto;
+}
+.u240-dr {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 71;
+  width: min(360px, 90vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--ux-surface);
+  box-shadow: -20px 0 40px -20px rgba(0, 0, 0, 0.35);
+  transform: translateX(105%);
+  transition: transform 0.45s cubic-bezier(0.3, 1, 0.3, 1);
+  border-radius: 24px 0 0 24px;
+}
+.u240-root.is-open .u240-dr {
+  transform: none;
+}
+.u240-dh {
+  display: flex;
+  align-items: center;
+  padding: 22px 14px 10px 18px;
+}
+.u240-dh b {
+  margin-right: auto;
+  font-size: 16px;
+  font-weight: 900;
+}
+.u240-dh b i {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--ux-accent);
+  color: var(--ux-accent-ink);
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 850;
+  vertical-align: 2px;
+}
+.u240-x {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ux-surface-2);
+  color: var(--ux-ink-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.u240-x svg {
+  width: 11px;
+  height: 11px;
+}
+.u240-fs {
+  margin: 2px 18px 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--ux-surface-2);
+  font-size: 11px;
+  font-weight: 750;
+  color: var(--ux-ink-2);
+}
+.u240-fs b {
+  color: var(--ux-ink);
+  font-weight: 900;
+}
+.u240-fs.is-ok {
+  background: color-mix(in srgb, var(--ux-ok) 14%, transparent);
+  color: var(--ux-ok);
+}
+.u240-bar {
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 3px;
+  background: var(--ux-surface-3);
+  overflow: hidden;
+}
+.u240-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ux-accent);
+  transition:
+    width 0.6s cubic-bezier(0.3, 1.2, 0.5, 1),
+    background 0.3s;
+}
+.u240-fs.is-ok .u240-bar i {
+  background: var(--ux-ok);
+}
+.u240-ls {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 0 12px;
+}
+.u240-it {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 0.4s cubic-bezier(0.3, 0.8, 0.3, 1) 0.15s,
+    opacity 0.25s;
+}
+.u240-it > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.u240-it.is-gone {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.u240-in {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--ux-line);
+  transition: transform 0.3s cubic-bezier(0.5, 0, 0.75, 0);
+}
+.u240-it.is-gone .u240-in {
+  transform: translateX(110%);
+}
+.u240-it.is-fl .u240-in {
+  animation: u240-fl 1.2s ease;
+}
+@keyframes u240-fl {
+  20% { background: color-mix(in srgb, var(--ux-accent) 12%, transparent); }
+}
+.u240-th {
+  flex: none;
+  width: 46px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.u240-tx {
+  flex: 1;
+  min-width: 0;
+}
+.u240-tx b {
+  display: block;
+  font-size: 12px;
+  font-weight: 850;
+}
+.u240-tx small {
+  display: block;
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--ux-ink-3);
+}
+.u240-qt {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px var(--ux-line);
+}
+.u240-qt button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: none;
+  color: var(--ux-ink-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.u240-qt span {
+  min-width: 16px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+.u240-pr {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+.u240-rm {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ux-ink-3);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.u240-rm:hover {
+  background: var(--ux-surface-2);
+  color: #e11d48;
+}
+.u240-rm svg {
+  width: 12px;
+  height: 12px;
+}
+.u240-ft {
+  padding: 12px 16px 20px;
+  border-top: 1px solid var(--ux-line);
+}
+.u240-sm {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 11px;
+  font-weight: 750;
+  color: var(--ux-ink-2);
+}
+.u240-sm b {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--ux-ink);
+  font-variant-numeric: tabular-nums;
+}
+.u240-ck {
+  width: 100%;
+  height: 44px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ux-accent);
+  color: var(--ux-accent-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.u240-dr button:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 2px;
+}
+.u240-dg {
+  display: inline-block;
+  height: 1.2em;
+  overflow: hidden;
+  line-height: 1.2;
+  vertical-align: bottom;
+}
+.u240-dg span {
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.3, 1.25, 0.5, 1);
+}
+.u240-empty {
+  padding: 32px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ux-ink-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .u240-dr,
+  .u240-ov,
+  .u240-it,
+  .u240-in,
+  .u240-bar i,
+  .u240-dg span {
+    transition: none;
+  }
+  .u240-it.is-fl .u240-in {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   #444 — Các bước thanh toán (Checkout steps)
+   Giỏ hàng -> Giao hàng -> Thanh toán -> Hoàn tất. Chuyển bước thì đường
+   nối giữa các bước đầy dần (.32s cubic-bezier(.5,0,.4,1), so le --d),
+   bước xong hiện dấu tick nảy lên, bước hiện tại "thở" với vòng mờ 2s.
+   Khác bản gốc: rộng 100% (tối đa 560px) thay vì 316px cố định; đường nối
+   tính bằng % để co giãn theo chiều rộng.
+   ========================================================================== */
+.u444-st {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+.u444-ln {
+  position: absolute;
+  top: 17px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ux-line-2);
+  overflow: hidden;
+}
+.u444-ln i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ux-accent);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  transition: transform 0.32s cubic-bezier(0.5, 0, 0.4, 1);
+  transition-delay: var(--d, 0s);
+}
+.u444-ln.is-on i {
+  transform: none;
+}
+.u444-s {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.u444-dot {
+  position: relative;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ux-surface);
+  box-shadow: inset 0 0 0 2px var(--ux-line-2);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ux-ink-3);
+  font-variant-numeric: tabular-nums;
+  transform: scale(var(--k, 1));
+  transition:
+    background-color 0.25s var(--ux-ease),
+    box-shadow 0.25s var(--ux-ease),
+    color 0.25s,
+    transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1);
+  transition-delay: var(--d, 0s);
+}
+.u444-dot:hover {
+  --k: 1.07;
+}
+.u444-dot:active {
+  --k: 0.9;
+  transition-delay: 0s;
+}
+.u444-dot b,
+.u444-dot svg {
+  grid-area: 1/1;
+  transition:
+    opacity 0.2s,
+    transform 0.5s cubic-bezier(0.3, 1.8, 0.5, 1);
+  transition-delay: var(--d, 0s);
+}
+.u444-dot svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transform: scale(0.2) rotate(-30deg);
+}
+.u444-s.is-done .u444-dot {
+  background: var(--ux-accent);
+  box-shadow: inset 0 0 0 2px var(--ux-accent);
+  color: var(--ux-accent-ink);
+}
+.u444-s.is-done .u444-dot b {
+  opacity: 0;
+  transform: scale(0.4);
+}
+.u444-s.is-done .u444-dot svg {
+  opacity: 1;
+  transform: none;
+}
+.u444-s.is-cur .u444-dot {
+  box-shadow: inset 0 0 0 2px var(--ux-accent);
+  color: var(--ux-accent);
+}
+.u444-s.is-cur .u444-dot::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--ux-accent-soft);
+  animation: u444-breathe 2s ease-in-out infinite;
+}
+@keyframes u444-breathe {
+  50% { transform: scale(1.12); opacity: 0.5; }
+}
+.u444 .u444-dot:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 6px;
+}
+.u444-s span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ux-ink-3);
+  white-space: nowrap;
+  transition: color 0.25s;
+  transition-delay: var(--d, 0s);
+}
+.u444-s.is-done span {
+  color: var(--ux-ink-2);
+}
+.u444-s.is-cur span {
+  color: var(--ux-ink);
+  font-weight: 700;
+}
+.u444-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   #445 — Áp mã giảm giá (Apply a coupon)
+   Vé mã giảm giá + ô nhập mã. Nhập đúng mã: con dấu "Đã áp dụng" đóng
+   xuống (scale 1.9 -> 1, xoay -14 độ, .38s cubic-bezier(.5,1.7,.6,1)),
+   vé rung nhẹ (thud .5s), giá cũ gạch ngang + thu nhỏ, giá mới lăn xuống
+   (rAF 700ms easeOutCubic). Nhập sai mã: ô nhập lắc đầu (.42s) + viền đỏ.
+   Mã của shop: CAMP10 — giảm 10%, tối đa 200.000₫.
+   Khác bản gốc: vé rộng 100% (tối đa 420px) thay vì 284px cố định.
+   ========================================================================== */
+.u445-tk {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 420px;
+  height: 108px;
+  border-radius: 16px;
+  filter: drop-shadow(0 12px 18px var(--ux-shadow));
+  transform: scale(var(--k, 1));
+  transition: transform 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.u445.is-thud .u445-tk {
+  animation: u445-thud 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) 0.12s;
+}
+@keyframes u445-thud {
+  0% { transform: none; }
+  30% { transform: scale(0.97, 0.95) translateY(2px); }
+  60% { transform: scale(1.01, 1.02); }
+  100% { transform: none; }
+}
+.u445-l,
+.u445-r {
+  position: relative;
+  height: 100%;
+}
+.u445-l {
+  flex: none;
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px 0 0 16px;
+  background: linear-gradient(150deg, #40916c, #2d6a4f 55%, #1b4332);
+  color: #fff;
+  -webkit-mask:
+    radial-gradient(circle 8px at 100% 0, #0000 98%, #000) top/100% 51% no-repeat,
+    radial-gradient(circle 8px at 100% 100%, #0000 98%, #000) bottom/100% 51% no-repeat;
+  mask:
+    radial-gradient(circle 8px at 100% 0, #0000 98%, #000) top/100% 51% no-repeat,
+    radial-gradient(circle 8px at 100% 100%, #0000 98%, #000) bottom/100% 51% no-repeat;
+}
+.u445-l b {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.u445-l small {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+}
+.u445-l::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    60% 50% at 20% 10%,
+    rgba(255, 255, 255, 0.28),
+    transparent 70%
+  );
+}
+.u445-r {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 0 16px 16px 0;
+  background: var(--ux-surface);
+  -webkit-mask:
+    radial-gradient(circle 8px at 0 0, #0000 98%, #000) top/100% 51% no-repeat,
+    radial-gradient(circle 8px at 0 100%, #0000 98%, #000) bottom/100% 51% no-repeat;
+  mask:
+    radial-gradient(circle 8px at 0 0, #0000 98%, #000) top/100% 51% no-repeat,
+    radial-gradient(circle 8px at 0 100%, #0000 98%, #000) bottom/100% 51% no-repeat;
+}
+.u445-r::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  border-left: 2px dashed var(--ux-line-2);
+}
+.u445-r b {
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.u445-r small {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--ux-ink-3);
+}
+.u445-r code {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--ux-surface-2);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ux-ink-2);
+}
+.u445-stamp {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  margin-top: -26px;
+  height: 52px;
+  padding: 0 12px;
+  border: 3px solid var(--ux-mint);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--ux-mint);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--ux-surface) 70%, transparent);
+  transform: rotate(-14deg) scale(1.9);
+  opacity: 0;
+  pointer-events: none;
+  -webkit-mask: radial-gradient(circle at 30% 40%, #000 55%, rgba(0, 0, 0, 0.75) 70%);
+  mask: radial-gradient(circle at 30% 40%, #000 55%, rgba(0, 0, 0, 0.75) 70%);
+}
+.u445-stamp::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1.5px solid currentColor;
+  border-radius: 7px;
+  opacity: 0.6;
+}
+.u445.is-on .u445-stamp {
+  opacity: 1;
+  transform: rotate(-14deg) scale(1);
+  transition:
+    opacity 0.12s,
+    transform 0.38s cubic-bezier(0.5, 1.7, 0.6, 1);
+}
+.u445-pr {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+  height: 34px;
+  margin-top: 16px;
+  padding-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.u445-old {
+  position: relative;
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--ux-ink);
+  transition:
+    font-size 0.4s cubic-bezier(0.3, 1.3, 0.5, 1),
+    color 0.3s;
+}
+.u445-old::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 52%;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.35s var(--ux-ease) 0.1s;
+}
+.u445.is-on .u445-old {
+  font-size: 14px;
+  color: var(--ux-ink-3);
+}
+.u445.is-on .u445-old::after {
+  transform: none;
+}
+.u445-new {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ux-accent);
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.25s,
+    transform 0.5s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.u445.is-on .u445-new {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.15s;
+}
+.u445-fd {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 12px;
+}
+.u445-fd.is-shake {
+  animation: u445-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes u445-shake {
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.u445-in {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ux-surface);
+  box-shadow: 0 0 0 1px var(--ux-line-2);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  color: var(--ux-ink);
+  outline: none;
+  transition: box-shadow 0.2s;
+}
+.u445-in::placeholder {
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ux-ink-3);
+  opacity: 1;
+}
+.u445-in:focus,
+.u445-in.is-act {
+  box-shadow:
+    0 0 0 1.5px var(--ux-accent),
+    0 0 0 5px var(--ux-accent-soft);
+}
+.u445-fd.is-err .u445-in {
+  box-shadow:
+    0 0 0 1.5px var(--ux-danger),
+    0 0 0 5px color-mix(in srgb, var(--ux-danger) 14%, transparent);
+}
+.u445 .u445-in:focus-visible {
+  outline: none;
+}
+.u445-ap {
+  flex: none;
+  min-width: 70px;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--ux-ink);
+  color: var(--ux-surface);
+  font-size: 14px;
+  font-weight: 650;
+  transform: scale(var(--k, 1));
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1),
+    opacity 0.15s;
+}
+.u445-ap:active {
+  --k: 0.93;
+  transition: transform 0.1s var(--ux-ease);
+}
+.u445-ap i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: u445-spin 0.7s linear infinite;
+}
+@keyframes u445-spin {
+  to { transform: rotate(360deg); }
+}
+.u445 .u445-ap:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 3px;
+}
+.u445-msg {
+  height: 18px;
+  margin: 6px 0 0;
+  width: 100%;
+  max-width: 420px;
+  padding-left: 4px;
+  font-size: 12px;
+  color: var(--ux-danger);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.2s,
+    transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.u445-msg.is-on {
+  opacity: 1;
+  transform: none;
+}
+.u445-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   #450 — Nút về đầu trang + nút hỗ trợ (Back to top + support buttons)
+   Nút về đầu trang 44px có vòng tiến trình đọc (r=19.5, chu vi 122.5);
+   bấm thì mũi tên bay lên (.7s) rồi nút ẩn tạm 850ms và hiện lại.
+   Nút chat 56px nở thành panel hỗ trợ 260x232 ngay tại chỗ
+   (.6s cubic-bezier(.34,1.45,.64,1)); mở panel thì nút về đầu trang ẩn đi.
+   Khác bản gốc: cụm nút đặt fixed góc phải-dưới màn hình thay vì trong
+   khung demo 340x300; panel chat dùng nội dung tiếng Việt của shop.
+   ========================================================================== */
+.u450-wrap {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 65;
+  width: 56px;
+  height: 56px;
+  pointer-events: none;
+}
+.u450-wrap > * {
+  pointer-events: auto;
+}
+.u450-top {
+  position: absolute;
+  right: 6px;
+  bottom: 68px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ux-surface);
+  color: var(--ux-ink);
+  box-shadow:
+    0 0 0 1px var(--ux-line),
+    0 10px 22px -12px var(--ux-shadow-strong);
+  overflow: hidden;
+  transition:
+    transform 0.5s var(--ux-spring),
+    opacity 0.25s,
+    visibility 0s;
+}
+.u450-top:hover {
+  transform: translateY(-2px);
+}
+.u450-top:active {
+  transform: scale(0.92);
+}
+.u450-top > * {
+  grid-area: 1/1;
+}
+.u450-top svg.rg {
+  position: absolute;
+  inset: 0;
+  width: 44px;
+  height: 44px;
+  transform: rotate(-90deg);
+}
+.u450-top .rg circle {
+  fill: none;
+  stroke-width: 2.5;
+}
+.u450-top .rg .tr {
+  stroke: var(--ux-line);
+}
+.u450-top .rg .pr {
+  stroke: var(--ux-accent);
+  stroke-linecap: round;
+  stroke-dasharray: 122.5;
+  stroke-dashoffset: calc(122.5 * (1 - var(--p, 0)));
+  transition: stroke-dashoffset var(--pd, 0.8s) cubic-bezier(0.4, 0, 0.2, 1);
+}
+.u450-top svg.ar {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.u450-top.is-fly svg.ar {
+  animation: u450-fly 0.7s cubic-bezier(0.5, 0, 0.3, 1);
+}
+@keyframes u450-fly {
+  45% { transform: translateY(-30px); opacity: 0; }
+  46% { transform: translateY(26px); opacity: 0; }
+}
+.u450-top.is-hide,
+.u450-wrap.is-open .u450-top {
+  transform: translateY(10px) scale(0.6);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.35s var(--ux-ease),
+    opacity 0.25s,
+    visibility 0s 0.35s;
+}
+.u450-fab {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: var(--ux-accent);
+  box-shadow:
+    0 14px 28px -14px var(--ux-accent),
+    0 0 0 0 var(--ux-line);
+  overflow: hidden;
+  transition:
+    width 0.6s var(--ux-spring),
+    height 0.6s var(--ux-spring),
+    border-radius 0.45s var(--ux-ease),
+    background 0.18s,
+    box-shadow 0.35s;
+}
+.u450-wrap.is-open .u450-fab {
+  width: 260px;
+  height: 232px;
+  border-radius: 20px;
+  background: var(--ux-surface);
+  box-shadow:
+    0 26px 50px -22px var(--ux-shadow-strong),
+    0 0 0 1px var(--ux-line);
+}
+.u450-open {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  background: none;
+  color: var(--ux-accent-ink);
+  transition:
+    opacity 0.2s,
+    transform 0.45s var(--ux-spring),
+    visibility 0s;
+}
+.u450-open:hover svg {
+  transform: rotate(-8deg) scale(1.08);
+}
+.u450-open:active {
+  transform: scale(0.9);
+}
+.u450-open svg {
+  width: 26px;
+  height: 26px;
+  transition: transform 0.4s var(--ux-spring);
+}
+.u450-open svg path {
+  fill: currentColor;
+}
+.u450-open svg circle {
+  fill: var(--ux-accent);
+}
+.u450-wrap.is-open .u450-open {
+  opacity: 0;
+  transform: scale(0.4) rotate(-30deg);
+  visibility: hidden;
+  transition:
+    opacity 0.15s,
+    transform 0.3s var(--ux-ease),
+    visibility 0s 0.3s;
+}
+.u450-wrap button:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 2px;
+}
+.u450-wrap .u450-in:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--ux-accent);
+}
+.u450-p {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 260px;
+  height: 232px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s,
+    visibility 0s 0.15s;
+}
+.u450-wrap.is-open .u450-p {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.25s 0.12s,
+    visibility 0s;
+}
+.u450-p > * {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.2s,
+    transform 0.4s var(--ux-spring);
+}
+.u450-wrap.is-open .u450-p > * {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(0.16s + var(--i) * 50ms);
+}
+.u450-hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.u450-av {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ux-accent-soft);
+  display: grid;
+  place-items: center;
+}
+.u450-av svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--ux-accent);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.u450-av::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ux-mint);
+  box-shadow: 0 0 0 2px var(--ux-surface);
+}
+.u450-hd div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.u450-hd b {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.u450-hd span {
+  font-size: 11.5px;
+  color: var(--ux-ink-3);
+}
+.u450-x {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  align-self: flex-start;
+  margin: -4px -4px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--ux-ink-3);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.u450-x:hover {
+  background: var(--ux-surface-2);
+  color: var(--ux-ink);
+}
+.u450-x svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.u450-msgs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  margin-top: 12px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.u450-bb {
+  max-width: 88%;
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 4px 14px 14px 14px;
+  background: var(--ux-surface-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ux-ink);
+}
+.u450-bb.is-me {
+  align-self: flex-end;
+  border-radius: 14px 4px 14px 14px;
+  background: var(--ux-accent);
+  color: var(--ux-accent-ink);
+  animation: u450-pop 0.4s var(--ux-spring);
+}
+@keyframes u450-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }
+}
+.u450-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.u450-chip {
+  border: 1px solid var(--ux-line-2);
+  background: var(--ux-surface);
+  color: var(--ux-ink-2);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.u450-chip:hover {
+  background: var(--ux-accent-soft);
+  color: var(--ux-accent);
+}
+.u450-f {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0;
+}
+.u450-in {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ux-surface-2);
+  font-size: 13px;
+  color: var(--ux-ink);
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--ux-line);
+}
+.u450-in::placeholder {
+  color: var(--ux-ink-3);
+}
+.u450-sd {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ux-accent);
+  color: var(--ux-accent-ink);
+  transition:
+    transform 0.35s var(--ux-spring),
+    opacity 0.2s;
+}
+.u450-sd:active {
+  transform: scale(0.9);
+}
+.u450-sd svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
