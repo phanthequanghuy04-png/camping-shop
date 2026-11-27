@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   BrowserRouter,
   Link,
@@ -58,12 +58,7 @@ function Header() {
   // khi cuộn quá 20px + thanh tiến trình đọc 2px ở đáy header.
   const [headerSolid, setHeaderSolid] = useState(false)
   const [headerHidden, setHeaderHidden] = useState(false)
-  // Thanh tiến trình đọc 2px ở đáy header (#212): cập nhật TRỰC TIẾP
-  // qua ref thay vì useState — setState theo từng pixel cuộn sẽ render
-  // lại cả App theo từng khung hình, gây lag/giật trên điện thoại
-  // (sửa 2026-11-27). headerSolid/headerHidden ở trên đã chỉ setState
-  // khi giá trị thật sự đổi nên giữ nguyên.
-  const progressRef = useRef<HTMLSpanElement>(null)
+  const [readProgress, setReadProgress] = useState(0)
   useEffect(() => {
     let last = window.scrollY
     let acc = 0
@@ -88,10 +83,7 @@ function Header() {
         setHeaderHidden(hidden)
       }
       const max = document.documentElement.scrollHeight - window.innerHeight
-      const bar = progressRef.current
-      if (bar) {
-        bar.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`
-      }
+      setReadProgress(max > 0 ? Math.min(1, y / max) : 0)
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -244,14 +236,12 @@ function Header() {
           ))}
         </nav>
       </div>
-      {/* Thanh tiến trình đọc (#212): đầy dần theo % trang đã cuộn.
-          Giá trị scaleX do onScroll cập nhật trực tiếp qua ref. */}
+      {/* Thanh tiến trình đọc (#212): đầy dần theo % trang đã cuộn. */}
       <span
         className="header-progress"
         aria-hidden="true"
-        ref={progressRef}
         style={{
-          transform: 'scaleX(0)',
+          transform: `scaleX(${readProgress})`,
           transformOrigin: '0 50%',
         }}
       />
