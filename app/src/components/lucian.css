@@ -1800,3 +1800,133 @@
 .u066.is-done .u066-back{opacity:1;transform:none;pointer-events:auto}
 .u066-msg:empty{min-height:0;margin:0}
 .u066-msg{margin:0 0 4px;font-size:13px;font-weight:650;color:#4b5563;text-align:center;min-height:20px;transition:transform .45s var(--ux-ease)}
+
+/* ==========================================================================
+   #403 Email sign-in form — Lucian (MIT (c) 2026 Seokwoooo)
+   https://lucianlabs.dev/uxui-prompt/#403
+   Dùng ở: form Đăng nhập (LoginPage) + các ô nhập ở Đăng ký (RegisterPage,
+   qua AuthField trong EmailSignInForm.tsx).
+   Khác bản gốc: khung cố định 340x300 đổi thành rộng 100% (form 280px
+   căn giữa như gốc); màu chữ nút ok dùng --ux-accent-ink thay cho
+   light-dark() (shop đổi theme bằng class .dark); mật khẩu mẫu
+   'lucian2026' KHÔNG dùng — đăng nhập thật qua API / tài khoản demo.
+   Nhãn nổi khi focus/có giá trị; mắt mở/đóng như mắt thật; sai thì ô
+   rung + gạch đỏ quét ngang; đúng thì nút co thành tick tròn.
+   ========================================================================== */
+.u403{position:relative;width:100%;display:grid;place-items:center}
+.u403-form{width:280px;max-width:100%;margin:0}
+.u403-f{position:relative;height:52px;border-radius:12px;background:var(--ux-surface);box-shadow:inset 0 0 0 1px var(--ux-line-2);transition:box-shadow .2s}
+.u403-f+.u403-f{margin-top:10px}
+.u403-f:hover{box-shadow:inset 0 0 0 1px var(--ux-ink-3)}
+.u403-f.is-f{box-shadow:inset 0 0 0 1.5px var(--ux-accent),0 0 0 4px var(--ux-accent-soft)}
+.u403-f.is-err{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ux-danger) 55%,transparent)}
+.u403-f::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:2px;background:var(--ux-danger);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ux-ease)}
+.u403-f.is-err::after{transform:scaleX(1)}
+.u403-f.is-shake{animation:u403-shake .45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes u403-shake{15%{transform:translateX(-7px)}35%{transform:translateX(6px)}55%{transform:translateX(-4px)}75%{transform:translateX(2px)}}
+.u403-f label{position:absolute;left:15px;top:17px;font-size:14px;color:var(--ux-ink-3);transform-origin:left top;transition:transform .4s var(--ux-spring),color .2s;pointer-events:none}
+.u403-f.is-up label{transform:translateY(-10px) scale(.76);color:var(--ux-ink-2)}
+.u403-f.is-f label{color:var(--ux-accent)}
+.u403-f.is-err label{color:var(--ux-danger)}
+.u403-in{position:absolute;inset:0;width:100%;padding:21px 15px 6px;border:0;border-radius:12px;background:none;outline:none;font-size:14px;color:var(--ux-ink)}
+.u403 .u403-in:focus-visible{outline:none}
+.u403-in[type="password"]{letter-spacing:.14em}
+.u403-pw .u403-in{padding-right:48px}
+.u403-eye{position:absolute;right:8px;top:9px;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:9px;background:none;color:var(--ux-ink-3);transition:color .2s,background .2s}
+.u403-eye:hover{color:var(--ux-ink);background:var(--ux-surface-2)}
+.u403 .u403-eye:focus-visible{outline:2px solid var(--ux-accent);outline-offset:-2px}
+.u403-eye svg{width:20px;height:20px;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.u403-eye .lid{transform-origin:10px 10px;transform:scaleY(.1);transition:transform .45s var(--ux-spring)}
+.u403-eye .lash{opacity:1;transition:opacity .2s,transform .4s var(--ux-spring);transform-origin:10px 10px}
+.u403-eye[aria-pressed="true"] .lid{transform:none}
+.u403-eye[aria-pressed="true"] .lash{opacity:0;transform:translateY(-3px)}
+.u403-msg{height:auto;min-height:24px;margin:0;padding:6px 4px 0;font-size:12px;font-weight:500;line-height:1.5;color:var(--ux-danger);opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .35s var(--ux-spring)}
+.u403-msg.is-on{opacity:1;transform:none}
+.u403-go{position:relative;display:grid;place-items:center;width:280px;max-width:100%;height:48px;margin:6px auto 0;padding:0;border:0;border-radius:14px;background:var(--ux-ink);color:var(--ux-surface);font-size:14.5px;font-weight:600;overflow:hidden;transition:width .55s var(--ux-spring),border-radius .45s var(--ux-ease),background .35s,color .35s,transform .4s var(--ux-spring)}
+.u403-go:hover{transform:translateY(-1px)}
+.u403-go:active{transform:scale(.97,.94);transition-duration:.55s,.45s,.35s,.35s,.1s}
+.u403 .u403-go:focus-visible{outline:2px solid var(--ux-accent);outline-offset:3px}
+.u403-go>*{grid-area:1/1;transition:opacity .2s,transform .4s var(--ux-spring)}
+.u403-go i{width:18px;height:18px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;opacity:0;transform:scale(.5);animation:u403-spin .7s linear infinite}
+.u403-go svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:scale(.5)}
+.u403-go svg path{stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .4s var(--ux-ease) .1s}
+@keyframes u403-spin{to{rotate:360deg}}
+.u403-go.is-busy,.u403-go.is-ok{width:48px;border-radius:24px;cursor:default}
+.u403-go.is-busy span,.u403-go.is-ok span{opacity:0;transform:scale(.8)}
+.u403-go.is-busy i{opacity:1;transform:none}
+.u403-go.is-ok{background:var(--ux-mint);color:var(--ux-accent-ink)}
+.u403-go.is-ok svg{opacity:1;transform:none}
+.u403-go.is-ok svg path{stroke-dashoffset:0}
+.u403-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ==========================================================================
+   #429 Search autocomplete — Lucian (MIT (c) 2026 Seokwoooo)
+   https://lucianlabs.dev/uxui-prompt/#429
+   Dùng ở: ô tìm kiếm trang Cửa hàng (ShopPage, qua SearchAutocomplete.tsx).
+   Khác bản gốc: khung cố định 340x300 đổi thành rộng 100%; dropdown
+   đổi từ chảy trong luồng sang phủ tuyệt đối dưới ô nhập (không đẩy
+   nội dung bên dưới); gợi ý là sản phẩm thật của shop (ảnh + tên +
+   giá) thay cho tài liệu mẫu; Enter/chọn gợi ý mở trang chi tiết sản
+   phẩm; phím tắt ⌘K/Ctrl K bắt ở cấp cửa sổ (bản gốc chỉ trong khung).
+   light-dark() bỏ đi vì token --ux-* đã tự đổi theo class .dark.
+   ========================================================================== */
+.u429{position:relative;width:100%}
+.u429-w{position:relative}
+.u429-f{position:relative;z-index:2;display:flex;align-items:center;gap:10px;height:48px;padding:0 9px 0 15px;border-radius:14px;background:var(--ux-surface);box-shadow:0 0 0 1px var(--ux-line-2),0 10px 24px -14px var(--ux-shadow-strong);cursor:text;transition:box-shadow .2s var(--ux-ease)}
+.u429-f:focus-within,.u429.is-open .u429-f{box-shadow:0 0 0 1.5px var(--ux-accent),0 0 0 5px var(--ux-accent-soft),0 10px 24px -14px var(--ux-shadow-strong)}
+.u429-f>svg{flex:none;width:18px;height:18px;fill:none;stroke:var(--ux-ink-3);stroke-width:2;stroke-linecap:round}
+.u429-in{flex:1;min-width:0;height:100%;padding:0;border:0;background:none;outline:none;font-size:15px;font-weight:500;color:var(--ux-ink)}
+.u429-in::placeholder{color:var(--ux-ink-3);opacity:1}
+.u429 .u429-in:focus-visible{outline:none}
+.u429-kb{flex:none;height:24px;padding:0 7px;border-radius:7px;display:grid;place-items:center;background:var(--ux-surface-2);box-shadow:inset 0 0 0 1px var(--ux-line);font:inherit;font-size:11.5px;font-weight:600;color:var(--ux-ink-3)}
+.u429-dd{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:40;padding:6px;border-radius:14px;background:var(--ux-surface);box-shadow:0 0 0 1px var(--ux-line-2),0 22px 44px -18px var(--ux-shadow-strong);transform-origin:50% 0;opacity:0;transform:translateY(-8px) scale(.96);visibility:hidden;transition:opacity .16s var(--ux-ease),transform .2s var(--ux-ease),visibility 0s linear .2s}
+.u429.is-open .u429-dd{opacity:1;transform:none;visibility:visible;transition:opacity .18s var(--ux-ease),transform .5s cubic-bezier(.3,1.4,.5,1),visibility 0s}
+.u429-pill{position:absolute;left:6px;right:6px;top:6px;height:40px;border-radius:10px;background:color-mix(in srgb,var(--ux-ink) 7%,transparent);transform:translateY(var(--py,0px));opacity:var(--po,0);transition:transform .45s cubic-bezier(.3,1.5,.5,1),opacity .15s}
+.u429-lb{position:relative}
+.u429-o{position:relative;display:flex;align-items:center;gap:11px;height:40px;padding:0 10px;border-radius:10px;cursor:pointer;color:var(--ux-ink-2)}
+.u429.is-open .u429-o{animation:u429-row .45s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(var(--i) * 35ms)}
+@keyframes u429-row{from{opacity:0;transform:translateY(-6px)}}
+.u429-o[aria-selected="true"]{color:var(--ux-ink)}
+.u429-ic{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--ux-surface-2);color:var(--ux-ink-2);overflow:hidden}
+.u429-ic svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.u429-ic img{width:100%;height:100%;object-fit:cover;display:block}
+.u429-ic.is-av{border-radius:50%;background:var(--ux-accent-soft);color:var(--ux-accent);font-size:11px;font-weight:700}
+.u429-t{flex:1;min-width:0;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u429-t mark{background:none;color:var(--ux-ink);font-weight:700}
+.u429-m{flex:none;font-size:11.5px;color:var(--ux-ink-3)}
+.u429-en{flex:none;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--ux-line-2);font-size:11px;color:var(--ux-ink-3);opacity:0;transform:scale(.6);transition:opacity .15s,transform .35s cubic-bezier(.34,1.7,.5,1)}
+.u429-o[aria-selected="true"] .u429-en{opacity:1;transform:none}
+.u429-no{padding:12px 10px;font-size:13px;color:var(--ux-ink-3)}
+.u429-live{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){.u429.is-open .u429-o{animation:none}.u429-pill{transition:none}}
+
+/* ==========================================================================
+   #242 Category chip bar that follows scroll — Lucian (MIT (c) 2026 Seokwoooo)
+   https://lucianlabs.dev/uxui-prompt/#242
+   Dùng ở: hàng chip lọc danh mục trang Cửa hàng (ShopPage).
+   Khác bản gốc: bản gốc là khung điện thoại 300x480 có vùng cuộn riêng
+   + các mục món ăn để scrollspy; shop KHÔNG chia sản phẩm thành mục
+   theo danh mục mà LỌC danh sách, nên phần scrollspy không áp dụng —
+   chỉ port phần thanh chip dính: dính dưới header khi cuộn, có bóng
+   khi dính, viên pill trượt theo chip đang chọn, hàng chip tự cuộn
+   ngang để chip đang chọn luôn thấy được. Chip cao 40px (gốc 32px)
+   cho đủ vùng chạm trên điện thoại; chữ 14px (gốc 12px) cho dễ đọc.
+   Thanh dính ở top:68px (ngay dưới header khi header hiện) và trượt
+   lên top:0 khi header ẩn đi (site-header.is-hide) — qua :has().
+   ========================================================================== */
+.u242-cb{position:sticky;top:68px;z-index:30;background:#FAF6EC;transition:box-shadow .25s,top .38s cubic-bezier(.2,.8,.2,1)}
+#root:has(.site-header.is-hide) .u242-cb{top:0}
+.u242-cb.is-stuck{box-shadow:0 8px 16px -12px var(--ux-shadow-strong)}
+.u242-cr{position:relative;display:flex;gap:4px;padding:8px 14px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--ux-line)}
+.u242-cr::-webkit-scrollbar{display:none}
+.u242-ch{flex:none;height:40px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--ux-ink-3);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:color .2s}
+.u242-ch[aria-current="true"]{color:var(--ux-ink)}
+.u242-ch:focus-visible{outline:2px solid var(--ux-accent);outline-offset:-2px}
+.u242-ul{position:absolute;left:0;bottom:8px;height:40px;border-radius:999px;background:var(--ux-surface-2);box-shadow:inset 0 0 0 1px var(--ux-line);transition:transform .35s cubic-bezier(.3,1.2,.5,1),width .35s cubic-bezier(.3,1.2,.5,1);z-index:-1}
+.u242-cr>.u242-ch{position:relative;z-index:1}
+@media (prefers-reduced-motion: reduce){.u242-ul,.u242-cb{transition:none}}
+
+/* #403 dùng ở trang Đăng ký: các ô nhập rộng hết thẻ (không căn giữa 280px
+   như form Đăng nhập) — chỉ cần giữ phạm vi .u403 cho các luật focus. */
+.u403--register{display:block}
+.u403--register form{width:100%}
