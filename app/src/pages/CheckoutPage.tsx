@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { formatVND, useCart } from '../context/CartContext'
 import { getSessionUser } from '../data/users'
 import type { Order, OrderItem, OrderStatus } from '../data/types'
 import { createOrderApi } from '../lib/api'
+import CheckoutSteps from '../components/CheckoutSteps'
+import CouponBox from '../components/CouponBox'
+import { computeDiscount, type Coupon } from '../lib/coupons'
 
 /** Key lưu đơn hàng trong localStorage. */
 export const ORDERS_STORAGE_KEY = 'camping-orders'
@@ -11,6 +14,9 @@ export const ORDERS_STORAGE_KEY = 'camping-orders'
 /** Đơn hàng đã lưu: khớp kiểu Order trong types.ts + chi tiết items. */
 export interface StoredOrder extends Order {
   items: OrderItem[]
+  /** Mã giảm giá đã áp (nếu có) + số tiền đã giảm — chỉ lưu local. */
+  coupon_code?: string
+  discount?: number
 }
 
 function loadOrders(): StoredOrder[] {
@@ -32,6 +38,14 @@ function isValidPhone(phone: string): boolean {
 export default function CheckoutPage() {
   const { detailedItems, totalQty, totalPrice, clearCart } = useCart()
   const sessionUser = getSessionUser()
+  const navigate = useNavigate()
+
+  // #445 Lucian — mã giảm giá: CAMP10 giảm 10% (tối đa 200.000₫).
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
+  const discount = appliedCoupon
+    ? computeDiscount(appliedCoupon, totalPrice)
+    : 0
+  const payable = totalPrice - discount
 
   const [customerName, setCustomerName] = useState(sessionUser?.name ?? '')
   const [address, setAddress] = useState('')
@@ -40,9 +54,22 @@ export default function CheckoutPage() {
   const [placedOrder, setPlacedOrder] = useState<StoredOrder | null>(null)
   // 'api' = đơn đã lưu vào DB qua API; 'local' = API lỗi nên lưu localStorage.
   const [orderSource, setOrderSource] = useState<'api' | 'local' | null>(null)
+  // Chụp lại mã + số tiền giảm lúc đặt hàng (giỏ sẽ bị xóa ngay sau đó).
+  const [orderCoupon, setOrderCoupon] = useState<Coupon | null>(null)
+  const [orderDiscount, setOrderDiscount] = useState(0)
 
   // Màn hình thành công kiểu SweetAlert (chỉ dùng div + Tailwind, không cài thêm lib).
   if (placedOrder) {
+    // Đơn local đã lưu tổng sau giảm; đơn API thì server tính tổng chưa
+    // giảm nên trừ mã giảm giá ở đây để ra số tiền cần thanh toán.
+    const successSubtotal =
+      orderSource === 'local'
+        ? placedOrder.total + orderDiscount
+        : placedOrder.total
+    const successPayable =
+      orderSource === 'local'
+        ? placedOrder.total
+        : placedOrder.total - orderDiscount
     return (
       <main className="mx-auto max-w-lg px-4 py-16 text-center">
         <div className="rounded-2xl border border-emerald-200 bg-white p-8 shadow-lg">
@@ -65,9 +92,23 @@ export default function CheckoutPage() {
               #{placedOrder.id}
             </span>
             <br />
+            {orderDiscount > 0 && (
+              <>
+                Tạm tính:{' '}
+                <span className="font-bold text-emerald-800">
+                  {formatVND(successSubtotal)}
+                </span>
+                <br />
+                Giảm giá ({orderCoupon?.code ?? 'mã giảm giá'}):{' '}
+                <span className="font-bold text-emerald-800">
+                  −{formatVND(orderDiscount)}
+                </span>
+                <br />
+              </>
+            )}
             Tổng tiền:{' '}
             <span className="font-bold text-emerald-800">
-              {formatVND(placedOrder.total)}
+              {formatVND(successPayable)}
             </span>
             <br />
             Trạng thái: Chờ xử lý
@@ -141,17 +182,22 @@ export default function CheckoutPage() {
 
     // Thử tạo đơn qua API trước (trừ tồn kho + xóa giỏ phía server).
     // API lỗi (chưa chạy / hết hàng...) -> fallback lưu localStorage như trước.
+    // Mã giảm giá gửi kèm coupon_code (server hiện chưa tính giảm giá —
+    // xem DEPLOY.md; màn hình thành công trừ mã ở phía client).
     try {
       const created = await createOrderApi({
         user_id: sessionUser?.id ?? null,
         customer_name: name,
         phone: phoneDigits,
         address: addr,
+        coupon_code: appliedCoupon?.code,
         items: detailedItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
       })
+      setOrderCoupon(appliedCoupon)
+      setOrderDiscount(discount)
       clearCart()
       setError('')
       setOrderSource('api')
@@ -181,12 +227,14 @@ export default function CheckoutPage() {
     const order: StoredOrder = {
       id: orderId,
       user_id: sessionUser?.id ?? null,
-      total: totalPrice,
+      total: payable,
       status: 'pending' as OrderStatus,
       address: addr,
       phone: phoneDigits,
       customer_name: name,
       created_at: new Date().toISOString(),
+      coupon_code: appliedCoupon?.code,
+      discount,
       items: detailedItems.map((item, index) => ({
         id: orderId * 1000 + index,
         order_id: orderId,
@@ -209,6 +257,8 @@ export default function CheckoutPage() {
     clearCart()
     setError('')
     setOrderSource('local')
+    setOrderCoupon(appliedCoupon)
+    setOrderDiscount(discount)
     setPlacedOrder(order)
   }
 
@@ -220,6 +270,17 @@ export default function CheckoutPage() {
       <h1 className="text-2xl font-bold text-emerald-900 sm:text-3xl">
         Thanh toán
       </h1>
+
+      {/* #444 Lucian — các bước: Giỏ hàng (xong) -> Giao hàng (hiện tại) ->
+          Thanh toán -> Hoàn tất. Bấm bước Giỏ hàng để quay lại /cart. */}
+      <div className="mt-6">
+        <CheckoutSteps
+          current={1}
+          onStepClick={(step) => {
+            if (step === 0) navigate('/cart')
+          }}
+        />
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         <form
@@ -290,7 +351,7 @@ export default function CheckoutPage() {
             type="submit"
             className="mt-6 w-full rounded-lg bg-emerald-700 px-5 py-3 font-medium text-white hover:bg-emerald-800"
           >
-            Đặt hàng — {formatVND(totalPrice)}
+            Đặt hàng — {formatVND(payable)}
           </button>
         </form>
 
@@ -315,13 +376,31 @@ export default function CheckoutPage() {
             ))}
           </ul>
           <div className="mt-4 border-t border-gray-200 pt-4">
-            <p className="flex justify-between text-sm text-gray-600">
+            {/* #445 Lucian — vé mã giảm giá + ô nhập mã. */}
+            <CouponBox
+              subtotal={totalPrice}
+              applied={appliedCoupon}
+              discount={discount}
+              onApply={setAppliedCoupon}
+              onRemove={() => setAppliedCoupon(null)}
+            />
+            <p className="mt-4 flex justify-between text-sm text-gray-600">
               <span>Số lượng</span>
               <span>{totalQty} sản phẩm</span>
             </p>
+            <p className="mt-2 flex justify-between text-sm text-gray-600">
+              <span>Tạm tính</span>
+              <span>{formatVND(totalPrice)}</span>
+            </p>
+            {appliedCoupon && discount > 0 && (
+              <p className="mt-2 flex justify-between text-sm font-medium text-emerald-700">
+                <span>Giảm giá ({appliedCoupon.code})</span>
+                <span>−{formatVND(discount)}</span>
+              </p>
+            )}
             <p className="mt-2 flex justify-between text-base font-bold text-emerald-800">
               <span>Tổng tiền</span>
-              <span>{formatVND(totalPrice)}</span>
+              <span>{formatVND(payable)}</span>
             </p>
             <p className="mt-1 text-xs text-gray-500">
               Thanh toán khi nhận hàng (COD).

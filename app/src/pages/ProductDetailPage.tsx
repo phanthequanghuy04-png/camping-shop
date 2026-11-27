@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { dispatchAddToCart } from '../components/ProductCard'
@@ -11,6 +11,9 @@ import {
 } from '../data/products'
 import type { Product } from '../data/types'
 import { getProduct, getProducts } from '../lib/api'
+import { useCart } from '../context/CartContext'
+import { flyToCart } from '../lib/flyToCart'
+import { showToast } from '../lib/toast'
 
 /**
  * Trang chi tiết sản phẩm.
@@ -24,6 +27,8 @@ import { getProduct, getProducts } from '../lib/api'
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { openDrawer } = useCart()
+  const imgRef = useRef<HTMLImageElement>(null)
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
   // Sản phẩm: thử API trước (lấy tồn kho mới nhất), lỗi thì dùng local.
@@ -103,7 +108,12 @@ export default function ProductDetailPage() {
     if (outOfStock) return
     dispatchAddToCart(product.id, quantity)
     setAdded(true)
-    window.setTimeout(() => setAdded(false), 2000)
+    window.setTimeout(() => setAdded(false), 1400)
+    // #442 — ảnh bay vào giỏ, xong thì mở ngăn giỏ (#240).
+    flyToCart(resolveImage(product.image), imgRef.current, () =>
+      openDrawer(product.id),
+    )
+    showToast('Đã thêm vào giỏ')
   }
 
   const handleBuyNow = () => {
@@ -141,6 +151,7 @@ export default function ProductDetailPage() {
         <div className="mt-6 grid gap-8 md:grid-cols-2">
           <div data-aos="fade-right">
             <img
+              ref={imgRef}
               src={resolveImage(product.image)}
               alt={product.name}
               className="aspect-[4/3] w-full rounded-[24px] object-cover shadow-[0_8px_32px_rgba(27,67,50,0.12)]"
