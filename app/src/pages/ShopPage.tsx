@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
+import SearchAutocomplete from '../components/SearchAutocomplete'
 import {
   CATEGORIES,
   getActiveProducts,
@@ -20,6 +21,7 @@ type SortOrder = 'default' | 'price-asc' | 'price-desc'
  * - Lưới: 1 cột mobile → 2 tablet → 3-4 desktop.
  */
 export default function ShopPage() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const categoryParam = searchParams.get('category') ?? ''
   const qParam = searchParams.get('q') ?? ''
@@ -89,6 +91,77 @@ export default function ShopPage() {
     setSearchParams(params)
   }
 
+  // #242 Lucian — thanh chip dính khi cuộn: bóng khi dính, viên pill
+  // trượt theo chip đang chọn, hàng chip tự cuộn để chip đó luôn thấy được.
+  const chipBarRef = useRef<HTMLDivElement>(null)
+  const chipRowRef = useRef<HTMLElement>(null)
+  const chipPillRef = useRef<HTMLSpanElement>(null)
+  const chipRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [chipBarStuck, setChipBarStuck] = useState(false)
+  const reducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  // Bóng khi thanh dính: thanh đang dính khi mép trên của nó chạm ngưỡng
+  // top (68px lúc header hiện, 0 lúc header ẩn) — cả hai đều <= 69px.
+  useEffect(() => {
+    const onScroll = () => {
+      const bar = chipBarRef.current
+      if (!bar) return
+      setChipBarStuck(bar.getBoundingClientRect().top <= 69)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Viên pill trượt theo chip đang chọn + cuộn hàng chip để chip đó
+  // luôn thấy được (căn giữa như bản gốc).
+  useLayoutEffect(() => {
+    const row = chipRowRef.current
+    const pill = chipPillRef.current
+    if (!row || !pill) return
+    const activeIndex = categoryId
+      ? allCategories.findIndex((c) => c.id === categoryId) + 1
+      : 0
+    const chip = chipRefs.current[activeIndex]
+    if (!chip) return
+    pill.style.width = `${chip.offsetWidth}px`
+    pill.style.transform = `translateX(${chip.offsetLeft}px)`
+    const chipLeft = chip.offsetLeft
+    const chipRight = chipLeft + chip.offsetWidth
+    if (chipLeft < row.scrollLeft || chipRight > row.scrollLeft + row.clientWidth) {
+      const target = Math.max(
+        0,
+        Math.min(
+          row.scrollWidth - row.clientWidth,
+          chipLeft - (row.clientWidth - chip.offsetWidth) / 2,
+        ),
+      )
+      row.scrollTo({
+        left: target,
+        behavior: reducedMotion ? 'auto' : 'smooth',
+      })
+    }
+  }, [categoryId, allCategories, reducedMotion])
+
+  useEffect(() => {
+    const onResize = () => {
+      const row = chipRowRef.current
+      const pill = chipPillRef.current
+      if (!row || !pill) return
+      const activeIndex = categoryId
+        ? allCategories.findIndex((c) => c.id === categoryId) + 1
+        : 0
+      const chip = chipRefs.current[activeIndex]
+      if (!chip) return
+      pill.style.width = `${chip.offsetWidth}px`
+      pill.style.transform = `translateX(${chip.offsetLeft}px)`
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [categoryId, allCategories])
+
   return (
     <main className="bg-[#FAF6EC] text-[#1C2B1F]">
       <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 md:py-12">
@@ -109,18 +182,17 @@ export default function ShopPage() {
           )}
         </p>
 
-        {/* Tìm kiếm + sắp xếp */}
+        {/* Tìm kiếm + sắp xếp — ô tìm kiếm là #429 Lucian (gợi ý tự động) */}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="flex-1">
-            <span className="sr-only">Tìm kiếm sản phẩm</span>
-            <input
-              type="search"
-              value={qParam}
-              placeholder="Tìm lều, túi ngủ, bếp, đèn..."
-              onChange={(e) => updateParams({ q: e.target.value })}
-              className="min-h-11 w-full rounded-xl border border-[#DDD5BD] bg-white px-4 py-2.5 text-[#1C2B1F] placeholder:text-[#5A6B5A] focus:border-[#2D6A4F] focus:outline-2 focus:outline-[#2D6A4F]"
-            />
-          </label>
+          <SearchAutocomplete
+            value={qParam}
+            onChange={(v) => updateParams({ q: v })}
+            products={allProducts}
+            categories={allCategories}
+            onSelect={(p) => navigate(`/product/${p.id}`)}
+            placeholder="Tìm lều, túi ngủ, bếp, đèn..."
+            className="flex-1"
+          />
           <label className="flex items-center gap-2 text-sm font-medium text-[#5A6B5A]">
             Sắp xếp
             <select
@@ -135,34 +207,45 @@ export default function ShopPage() {
           </label>
         </div>
 
-        {/* Lọc theo danh mục */}
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Lọc theo danh mục">
-          <button
-            type="button"
-            onClick={() => updateParams({ category: '' })}
-            className={`min-h-11 cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition focus:outline-2 focus:outline-offset-2 focus:outline-[#2D6A4F] ${
-              !categoryId
-                ? 'bg-[#2D6A4F] text-white'
-                : 'border border-[#8B4513] bg-white text-[#5C2E0E] hover:bg-[#EFE9D8]'
-            }`}
+        {/* Lọc theo danh mục — #242 Lucian: thanh chip dính khi cuộn, viên
+            pill trượt theo chip đang chọn, hàng tự cuộn để chip đó thấy được.
+            Bấm chip để lọc (như trước), không phải để cuộn tới mục. */}
+        <div
+          ref={chipBarRef}
+          className={`u242-cb mt-4${chipBarStuck ? ' is-stuck' : ''}`}
+        >
+          <nav
+            className="u242-cr"
+            ref={chipRowRef}
+            aria-label="Lọc theo danh mục"
           >
-            Tất cả
-          </button>
-          {allCategories.map((c) => (
+            <span className="u242-ul" ref={chipPillRef} aria-hidden="true" />
             <button
-              key={c.id}
               type="button"
-              onClick={() => updateParams({ category: String(c.id) })}
-              aria-pressed={categoryId === c.id}
-              className={`min-h-11 cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition focus:outline-2 focus:outline-offset-2 focus:outline-[#2D6A4F] ${
-                categoryId === c.id
-                  ? 'bg-[#2D6A4F] text-white'
-                  : 'border border-[#8B4513] bg-white text-[#5C2E0E] hover:bg-[#EFE9D8]'
-              }`}
+              ref={(el) => {
+                chipRefs.current[0] = el
+              }}
+              onClick={() => updateParams({ category: '' })}
+              aria-current={!categoryId || undefined}
+              className="u242-ch"
             >
-              {c.name}
+              Tất cả
             </button>
-          ))}
+            {allCategories.map((c, i) => (
+              <button
+                key={c.id}
+                type="button"
+                ref={(el) => {
+                  chipRefs.current[i + 1] = el
+                }}
+                onClick={() => updateParams({ category: String(c.id) })}
+                aria-current={categoryId === c.id || undefined}
+                className="u242-ch"
+              >
+                {c.name}
+              </button>
+            ))}
+          </nav>
         </div>
 
         <p className="mt-6 text-sm text-[#5A6B5A]" role="status">
