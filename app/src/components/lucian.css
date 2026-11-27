@@ -1743,3 +1743,47 @@
 ::view-transition-new(root) {
   z-index: 2147483646;
 }
+
+/* ==========================================================================
+   #066 — Social sign-in buttons (Sign-in & Sign-up)
+   Lucian UX/UI Prompt #066 · MIT License (c) 2026 Seokwoooo ·
+   https://lucianlabs.dev/uxui-prompt/#066
+   --------------------------------------------------------------------------
+   Gốc: bấm 1 provider thì các nút khác gập lại lần lượt (stagger 40ms),
+   nút được chọn hiện spinner kết nối .7s linear, sau 1.5s (300ms khi giảm
+   chuyển động) thành hàng tài khoản đã kết nối + nút "Dùng cách khác".
+   Port giữ nguyên thời gian/easing/spinner; khác gốc: provider Kakao đổi
+   thành Facebook; không có thẻ ngoài 340x420 (component nằm trong thẻ trắng
+   của trang Đăng nhập/Đăng ký, trắng cố định cả 2 theme) nên chữ/viền
+   trung tính dùng màu sáng cố định thay vì token đổi theo theme; nút
+   "Tiếp tục bằng email" của gốc không cần vì form email nằm ngay bên dưới;
+   nút "Dùng cách khác" đặt trong luồng thay vì absolute; sau spinner báo rõ
+   là đăng nhập mạng xã hội chưa được thiết lập thay vì giả kết nối thành
+   công (shop chưa có OAuth thật).
+   ========================================================================== */
+.u066-list{display:flex;flex-direction:column}
+.u066-it{display:grid;grid-template-rows:1fr;opacity:1;transition:grid-template-rows .45s var(--ux-ease),opacity .3s,margin .45s var(--ux-ease);margin-bottom:10px}
+.u066-it>div{min-height:0;overflow:hidden;padding:2px}
+.u066-it.gone{grid-template-rows:0fr;opacity:0;margin-bottom:0;transition-delay:calc(var(--i) * 40ms)}
+.u066-b{position:relative;width:100%;height:54px;border:0;border-radius:16px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--bg);color:var(--fg);font-size:15px;font-weight:720;text-align:left;box-shadow:var(--bd,none);transition:transform .3s var(--ux-spring),height .45s var(--ux-ease),border-radius .45s}
+.u066-b:hover{transform:translateY(-1px)}
+.u066-b:active{transform:scale(.98)}
+.u066-b:focus-visible{outline:2px solid var(--ux-accent);outline-offset:2px}
+.u066-ic{width:24px;height:24px;flex:none;display:grid;place-items:center}
+.u066-ic svg{width:22px;height:22px}
+.u066-tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u066-st{width:0;height:22px;flex:none;position:relative;margin-left:-12px;transition:width .3s,margin .3s}
+.u066-b.busy .u066-st{width:22px;margin-left:0}
+.u066-st i{position:absolute;inset:0;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;opacity:0;animation:u066-spin .7s linear infinite}
+.u066-st svg{position:absolute;inset:0;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.u066-st path{stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .4s var(--ux-ease)}
+.u066-b.busy .u066-st i{opacity:1}
+@keyframes u066-spin{to{transform:rotate(360deg)}}
+.u066-or{display:flex;align-items:center;gap:10px;margin:8px 0 14px;font-size:12px;font-weight:700;color:#6b7280;transition:opacity .3s}
+.u066-or::before,.u066-or::after{content:"";flex:1;height:1px;background:#e5e7eb}
+.u066.is-pick .u066-or{opacity:0;pointer-events:none}
+.u066-back{width:100%;height:46px;border:0;border-radius:15px;background:none;box-shadow:inset 0 0 0 1.5px #d1d5db;color:#374151;font-size:14px;font-weight:700;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .3s,transform .4s var(--ux-spring)}
+.u066-back:focus-visible{outline:2px solid var(--ux-accent);outline-offset:2px}
+.u066.is-done .u066-back{opacity:1;transform:none;pointer-events:auto}
+.u066-msg:empty{min-height:0;margin:0}
+.u066-msg{margin:0 0 4px;font-size:13px;font-weight:650;color:#4b5563;text-align:center;min-height:20px;transition:transform .45s var(--ux-ease)}
