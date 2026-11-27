@@ -43,6 +43,9 @@ import '@designcodeio/threeui/style.css'
 // Ảnh hoàng hôn cắm trại (Unsplash, dùng trực tiếp — không cần tải về public/).
 const HERO_FALLBACK_IMAGE_URL =
   'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=1920&auto=format&fit=crop'
+// Bản nhẹ cho điện thoại (rộng 800px thay vì 1920px) để hero hiện nhanh trên 4G.
+const HERO_FALLBACK_IMAGE_URL_MOBILE =
+  'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=70&w=800&auto=format&fit=crop'
 
 /**
  * Kiểm tra WebGL trước khi render cảnh 3D.
@@ -64,14 +67,22 @@ export function isWebGLAvailable(): boolean {
 }
 
 export default function Hero3D() {
-  // Ép về ảnh tĩnh khi: WebGL không chạy, hoặc người dùng bật
-  // prefers-reduced-motion (design system yêu cầu tôn trọng cài đặt này).
+  // Màn hẹp (< 768px) = điện thoại / máy tính bảng: KHÔNG tải iframe
+  // cảnh 3D (file landscape.html ~2,4 MB + runtime Three.js chạy liên
+  // tục tốn pin/GPU) mà dùng ảnh tĩnh luôn — vừa nhẹ vừa hết lag khi
+  // cuộn trên điện thoại (sửa 2026-11-27).
+  const [isMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768,
+  )
+  // Ép về ảnh tĩnh khi: đang dùng điện thoại, WebGL không chạy, hoặc
+  // người dùng bật prefers-reduced-motion (design system yêu cầu tôn
+  // trọng cài đặt này).
   const [webglOK] = useState(() => {
     if (typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return false
     }
-    return isWebGLAvailable()
+    return !isMobile && isWebGLAvailable()
   })
 
   return (
@@ -87,7 +98,9 @@ export default function Hero3D() {
           className="hero__scene hero__scene--static"
           role="img"
           aria-label="Hoàng hôn trên núi — cắm trại dưới bầu trời sao"
-          style={{ backgroundImage: `url(${HERO_FALLBACK_IMAGE_URL})` }}
+          style={{
+            backgroundImage: `url(${isMobile ? HERO_FALLBACK_IMAGE_URL_MOBILE : HERO_FALLBACK_IMAGE_URL})`,
+          }}
         />
       )}
 
