@@ -1,0 +1,529 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;800&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+/* ==========================================================================
+   CAMPING SHOP — DESIGN TOKENS
+   Style: Organic Biophilic (UI UX Pro Max, style ID: organic-biophilic)
+   Copy từ _staging/design-tokens.css (Bước 4a). Xem DESIGN-SYSTEM.md.
+   ========================================================================== */
+
+:root {
+  /* ---------- Màu chính: Rừng (Forest) ---------- */
+  /* Gốc UI UX Pro Max: #228B22. Đã làm đậm để chữ/nút đạt tương phản ≥ 4.5:1
+     trên nền sáng (cần đo lại bằng công cụ tương phản khi tích hợp). */
+  --color-primary: #2d6a4f;        /* Xanh rừng chính — nút chính, link, icon */
+  --color-primary-dark: #1b4332;   /* Xanh rừng đậm — header, footer, tiêu đề lớn */
+  --color-primary-light: #74c69d;  /* Xanh lá nhạt — badge, hover nhẹ */
+  --color-primary-soft: #d8f3dc;   /* Nền nhạt xanh — highlight, chip */
+  --color-on-primary: #ffffff;     /* Chữ trên nền xanh rừng */
+
+  /* ---------- Màu phụ: Đất (Earth) ---------- */
+  --color-secondary: #8b4513;      /* Nâu đất — viền nhấn, giá cũ, chi tiết */
+  --color-secondary-dark: #5c2e0e; /* Nâu đất đậm — chữ nhấn trên nền kem */
+  --color-secondary-light: #c68a4b;/* Nâu nhạt — divider ấm, icon phụ */
+  --color-on-secondary: #ffffff;
+
+  /* ---------- Màu CTA: Đất nung (Terracotta) ---------- */
+  /* Lấy từ style nature-distilled (#C67B5C) trong cùng kết quả tra cứu,
+     làm đậm để chữ trắng đạt tương phản. Dùng RIÊNG cho hành động mua.
+     2026-11-27 (việc 6/8, đo WCAG thật bằng _staging/contrast-check.py):
+     #C05621 cũ chỉ đạt 4.24:1 khi làm CHỮ trên nền kem #FAF6EC (dưới 4.5),
+     nên làm đậm cùng tông -> #A8431A (trên kem 5.59:1, trên trắng 6.03:1,
+     chữ trắng trên nền 6.03:1). Hover cũ #9C4221 quá gần màu mới nên
+     cũng làm đậm -> #83361A (trắng trên nền 8.37:1) để hover nhìn rõ. */
+  --color-accent: #a8431a;         /* CTA chính: "Mua ngay", "Thêm vào giỏ" */
+  --color-accent-hover: #83361a;   /* CTA khi hover */
+  --color-accent-soft: #fdeede;    /* Nền nhạt cam — badge khuyến mãi */
+  --color-on-accent: #ffffff;
+  /* Biến chữ: light mode = chính màu primary/accent (đã đạt tương phản
+     trên nền sáng). Dark mode ghi đè bằng biến thể sáng hơn (xem .dark). */
+  --color-primary-text: #2d6a4f;   /* Chữ/link xanh rừng trên nền sáng */
+  --color-accent-text: #a8431a;    /* Chữ đất nung trên nền sáng */
+
+  /* ---------- Màu nền & bề mặt ---------- */
+  --color-background: #faf6ec;     /* Nền trang — kem ấm (gốc: #F5F5DC beige) */
+  --color-surface: #ffffff;        /* Nền card, modal, header */
+  --color-muted: #efe9d8;          /* Nền phụ — section xen kẽ, skeleton */
+  --color-border: #ddd5bd;         /* Viền card, input, divider */
+  --color-sky: #87ceeb;            /* Xanh trời — CHỈ dùng làm điểm nhấn nhỏ
+                                      (icon thời tiết, badge "mới") */
+
+  /* ---------- Màu chữ ---------- */
+  --color-foreground: #1c2b1f;     /* Chữ chính — xanh-đen rừng */
+  /* Chữ phụ #5A6B5A ĐO THẬT 2026-11-27: trên kem 5.28:1, trên trắng 5.70:1
+     — đã đạt ≥4.5:1 nên GIỮ NGUYÊN, không làm đậm thêm. */
+  --color-muted-foreground: #5a6b5a; /* Chữ phụ — mô tả, meta, placeholder */
+  --color-on-dark: #f5f0e1;        /* Chữ trên nền tối (header/footer xanh đậm) */
+
+  /* ---------- Màu trạng thái ---------- */
+  --color-success: #2d6a4f;
+  --color-warning: #b45309;
+  --color-destructive: #b91c1c;
+  --color-on-destructive: #ffffff;
+  --color-ring: #2d6a4f;           /* Viền focus bàn phím */
+
+  /* ---------- Font chữ (Google Fonts, đều hỗ trợ tiếng Việt) ---------- */
+  --font-display: "Be Vietnam Pro", "Inter", system-ui, -apple-system,
+    "Segoe UI", sans-serif;        /* Tiêu đề: Be Vietnam Pro 700/800 */
+  --font-body: "Inter", "Be Vietnam Pro", system-ui, -apple-system,
+    "Segoe UI", sans-serif;        /* Thân bài: Inter 400/500/600 */
+  --font-size-display: 2.5rem;     /* 40px — H1 mobile */
+  --font-size-h1: 2rem;            /* 32px */
+  --font-size-h2: 1.5rem;          /* 24px */
+  --font-size-h3: 1.25rem;         /* 20px */
+  --font-size-body: 1rem;          /* 16px */
+  --font-size-small: 0.875rem;     /* 14px */
+  --line-height-tight: 1.2;
+  --line-height-body: 1.6;
+
+  /* ---------- Khoảng cách (hệ 4px / 8px) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --section-gap: 64px;             /* Khoảng cách giữa các section (mobile: 48px) */
+  --container-max: 1200px;
+  --container-padding: 16px;       /* Mobile; desktop: 24px */
+
+  /* ---------- Bo góc — Organic Biophilic: 16–24px ---------- */
+  --radius-sm: 8px;                /* Badge, chip nhỏ */
+  --radius-md: 12px;               /* Nút, input */
+  --radius-lg: 20px;               /* Product card */
+  --radius-xl: 24px;               /* Hero, section lớn */
+  --radius-pill: 999px;            /* Nút CTA dạng viên nang (tùy chọn) */
+  --radius-organic: 24px 16px 28px 18px; /* Bo góc lệch — tạo cảm giác hữu cơ */
+
+  /* ---------- Bóng đổ — mềm, tự nhiên ---------- */
+  --shadow-sm: 0 1px 3px rgba(27, 67, 50, 0.08);
+  --shadow-md: 0 4px 12px rgba(27, 67, 50, 0.1);
+  --shadow-lg: 0 8px 32px rgba(27, 67, 50, 0.12);
+  --shadow-card-hover: 0 12px 32px rgba(27, 67, 50, 0.16);
+
+  /* ---------- Chuyển động ---------- */
+  --transition-fast: 150ms ease-out;
+  --transition-base: 250ms ease-out;
+  --transition-slow: 400ms ease-out;
+
+  /* ---------- Breakpoints (mobile-first, dùng trong media query) ---------- */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+}
+
+/* ---------- Dark mode (cơ bản, việc 6/8 — 2026-11-27) ----------
+   Bật bằng class `.dark` trên <html> (component ThemeToggle.tsx).
+   Nguyên tắc: nút giữ nguyên màu nền light (chữ trắng trên #2D6A4F = 6.39:1,
+   trên #A8431A = 6.03:1 — vẫn đạt trên mọi nền), chỉ đổi MÀU CHỮ sang
+   biến thể sáng qua --color-primary-text / --color-accent-text, vì màu
+   gốc làm chữ trên nền tối sẽ rớt (vd #2D6A4F trên #121A14 chỉ 2.78:1,
+   #C05621 cũ chỉ 3.88:1). Số liệu đo bằng _staging/contrast-check.py.
+   LƯU Ý: chỉ các class dùng var(--color-*) mới đổi theo dark mode.
+   Các class Tailwind hardcode hex trong pages/components (vd text-[#5A6B5A],
+   bg-white) KHÔNG tự đổi — cần luồng khác map sang token (xem DESIGN-SYSTEM.md §9). */
+:root { color-scheme: light; }
+
+.dark {
+  color-scheme: dark;
+  --color-background: #121a14;     /* Nền tối */
+  --color-surface: #1b2a20;        /* Card, modal */
+  --color-muted: #223528;          /* Section xen kẽ, skeleton */
+  --color-border: #2e4436;         /* Viền card, input, divider */
+  --color-foreground: #f5f0e1;     /* Chữ chính kem (trên nền tối 15.57:1) */
+  --color-muted-foreground: #a8b8a8; /* Chữ phụ sáng (8.52:1 / 7.21:1) */
+  --color-on-dark: #f5f0e1;
+  /* Nút giữ màu light; CHỮ/link dùng biến thể sáng: */
+  --color-primary-text: #74c69d;   /* 8.71:1 trên nền tối */
+  --color-accent-text: #e8834a;    /* 6.57:1 trên nền tối, 5.56:1 trên surface */
+  --color-secondary: #c68a4b;      /* 6.03:1 trên nền tối */
+  --color-secondary-dark: #d8ac72; /* 8.50:1 trên nền tối */
+  --color-primary-soft: #1e3527;   /* Nền nhạt xanh (chữ #74C69D trên đó 6.47:1) */
+  --color-accent-soft: #3a2318;    /* Nền nhạt cam (chữ #E8834A trên đó 5.42:1) */
+  --color-warning: #f0a832;        /* 8.75:1 (#B45309 gốc trên nền tối chỉ 3.53:1) */
+  --color-destructive: #f87171;    /* 6.41:1 (#B91C1C gốc trên nền tối chỉ 2.74:1) */
+  --color-ring: #74c69d;           /* Viền focus nhìn rõ trên nền tối */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Tailwind v4: map token sang utility ----------
+   Cho phép dùng bg-primary, text-foreground, border-border,
+   font-display, font-body, rounded-lg/xl... trực tiếp trong JSX. */
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-soft: var(--color-primary-soft);
+  --color-on-primary: var(--color-on-primary);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-dark: var(--color-secondary-dark);
+  --color-secondary-light: var(--color-secondary-light);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-accent-text: var(--color-accent-text);
+  --color-primary-text: var(--color-primary-text);
+  --color-on-accent: var(--color-on-accent);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-muted: var(--color-muted);
+  --color-border: var(--color-border);
+  --color-sky: var(--color-sky);
+  --color-foreground: var(--color-foreground);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-on-dark: var(--color-on-dark);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-destructive: var(--color-destructive);
+  --color-ring: var(--color-ring);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+/* ---------- Nền tảng ---------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: var(--line-height-tight);
+  color: var(--color-foreground);
+}
+
+h1 { font-size: var(--font-size-h1); }
+h2 { font-size: var(--font-size-h2); }
+h3 { font-size: var(--font-size-h3); }
+
+p { margin: 0; }
+
+/* Link dùng --color-primary-text (light: #2D6A4F; dark: #74C69D) thay vì
+   --color-primary, vì màu nút #2D6A4F làm chữ trên nền tối chỉ 2.78:1. */
+a { color: var(--color-primary-text); }
+
+/* Focus bàn phím luôn nhìn thấy rõ (design system §1, §7) */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Nút (design system §6.4) ----------
+   Quy tắc: CHỈ CTA mua hàng mới dùng terracotta (.btn-primary).
+   Nút chính (xanh rừng) dùng .btn-green, nút phụ dùng .btn-outline. */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--transition-base), transform var(--transition-fast);
+}
+
+.btn-primary:hover { background-color: var(--color-accent-hover); }
+.btn-primary:active { transform: translateY(1px); }
+
+.btn-green {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--transition-base), transform var(--transition-fast);
+}
+
+.btn-green:hover { background-color: var(--color-primary-dark); }
+.btn-green:active { transform: translateY(1px); }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px 24px;
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-secondary-dark);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--transition-base), border-color var(--transition-base);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+/* Biến thể sáng cho nút phụ đặt trên nền tối (vd hero xanh đậm #1B4332):
+   chữ kem #F5F0E1 trên #1B4332 đạt 9.72:1 (đo thật, _staging/contrast-check.py).
+   Lỗi cũ: .btn-outline chữ nâu đậm #5C2E0E trên nền hero chỉ 1,02:1,
+   gần như tàng hình — phát hiện khi kiểm tra bằng trình duyệt headless. */
+.btn-outline-light {
+  color: var(--color-on-dark);
+  border-color: var(--color-on-dark);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(245, 240, 225, 0.15);
+  border-color: var(--color-on-dark);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: var(--color-destructive);
+  color: var(--color-on-destructive);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-base);
+}
+
+.btn-primary:disabled,
+.btn-green:disabled,
+.btn-outline:disabled,
+.btn-danger:disabled {
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
+/* ---------- Card sản phẩm (design system §6.3) ---------- */
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-4px);
+}
+
+/* ---------- Header / Footer (design system §6.1) ----------
+   Nền xanh rừng đậm #1B4332, chữ kem #F5F0E1.
+   Class dùng trong App.tsx; giữ ở đây để trang khác tái dùng được. */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--color-primary-dark);
+  color: var(--color-on-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.site-header a { color: var(--color-on-dark); text-decoration: none; }
+
+.site-header .nav-link {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 8px 2px;
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.site-header .nav-link:hover { color: var(--color-primary-light); }
+
+.site-header .nav-link--active {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-on-dark);
+}
+
+.site-header .brand {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--color-on-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-footer {
+  margin-top: auto;
+  background-color: var(--color-primary-dark);
+  color: var(--color-on-dark);
+}
+
+.site-footer a { color: var(--color-on-dark); }
+.site-footer a:hover { color: var(--color-primary-light); }
+
+/* Badge số lượng giỏ: nền terracotta, chữ trắng */
+.cart-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ---------- Hero 3D (xem src/components/Hero3D.tsx) ---------- */
+
+.hero {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  /* Lớp lót phía dưới iframe: nếu quên copy public/landscape.html
+     hoặc iframe tải lỗi thì hero vẫn có nền hoàng hôn, không lộ trắng. */
+  background:
+    linear-gradient(180deg, rgba(27, 67, 50, 0.25) 0%, rgba(27, 67, 50, 0.55) 100%),
+    url("https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=1920&auto=format&fit=crop") center / cover no-repeat,
+    #1b4332;
+}
+
+.hero__scene,
+.hero__scene iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.hero__scene--static {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.hero__content {
+  position: relative;
+  z-index: 1;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 96px 16px 64px;
+  color: #ffffff;
+  text-shadow: 0 1px 12px rgba(27, 67, 50, 0.45);
+}
+
+.hero__eyebrow {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary-light);
+}
+
+.hero__content h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-tight);
+  color: #ffffff;
+  max-width: 640px;
+  margin: 16px 0;
+}
+
+.hero__content p.hero__sub {
+  font-size: 1.125rem;
+  color: #f5f0e1;
+  max-width: 560px;
+}
+
+@media (min-width: 1024px) {
+  .hero__content h1 { font-size: 3.5rem; } /* 56px desktop */
+  .hero__content { padding: 128px 24px 96px; }
+}
+
+/* ---------- Tôn trọng prefers-reduced-motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
