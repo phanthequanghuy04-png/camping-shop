@@ -84,7 +84,7 @@ export default function HomePage() {
           KHÔNG dùng animation khi cuộn cho phần này (theo yêu cầu): tiêu
           đề và các thẻ luôn hiện sẵn, chỉ giữ hiệu ứng hover.
           Bấm vào lọc tới /shop?category=id */}
-      <section className="cv-cats mx-auto max-w-[1200px] px-4 pt-10 pb-12 sm:px-6 md:pt-14 md:pb-16">
+      <section id="danh-muc" className="cv-cats mx-auto max-w-[1200px] scroll-mt-24 px-4 pt-10 pb-12 sm:px-6 md:pt-14 md:pb-16">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="home-eyebrow text-xs font-bold uppercase">
