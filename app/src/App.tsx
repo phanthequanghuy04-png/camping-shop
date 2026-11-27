@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BrowserRouter,
   Link,
@@ -22,6 +22,8 @@ import ThemeToggle from './components/ThemeToggle'
 import AccountMenu from './components/AccountMenu'
 import CartDrawer from './components/CartDrawer'
 import BackToTop from './components/BackToTop'
+import ProductDropdown from './components/ProductDropdown'
+import { CATEGORIES, getActiveProducts } from './data/products'
 import { useCart } from './context/CartContext'
 import { clearSession, getSessionUser } from './data/users'
 import type { User } from './data/types'
@@ -139,6 +141,16 @@ function Header() {
     return true
   })
 
+  // Số sản phẩm đang bán của từng danh mục — cho menu thả #413.
+  const productCountByCategory = useMemo(() => {
+    const counts = new Map<number, number>()
+    for (const p of getActiveProducts()) {
+      if (!p.id_category) continue
+      counts.set(p.id_category, (counts.get(p.id_category) ?? 0) + 1)
+    }
+    return counts
+  }, [])
+
   return (
     <header
       className={`site-header${headerSolid ? ' is-solid' : ''}${headerHidden ? ' is-hide' : ''}`}
@@ -236,22 +248,53 @@ function Header() {
         {/* Menu desktop: ngang đầy đủ, nằm giữa header (logo trái,
             menu giữa, cụm tác vụ phải); mobile: hiện khi bấm burger */}
         <nav
-          className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 md:order-2 md:flex md:w-auto md:flex-row md:gap-6`}
+          className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 md:order-2 md:flex md:w-auto md:flex-row md:items-center md:gap-6`}
           aria-label="Menu chính"
         >
           {visibleNavLinks.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.to === '/'}
-              className={({ isActive }) =>
-                `nav-link${isActive ? ' nav-link--active' : ''}`
-              }
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </NavLink>
+            <Fragment key={link.to}>
+              <NavLink
+                to={link.to}
+                end={link.to === '/'}
+                className={({ isActive }) =>
+                  `nav-link${isActive ? ' nav-link--active' : ''}`
+                }
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </NavLink>
+              {/* #413 Product dropdown — đặt ngay sau "Cửa hàng" (chỉ
+                  desktop): menu thả 8 danh mục thật. Mobile dùng danh
+                  sách danh mục gọn bên dưới (không dùng panel absolute). */}
+              {link.to === '/shop' && (
+                <div className="hidden md:inline-flex">
+                  <ProductDropdown
+                    categories={CATEGORIES}
+                    counts={productCountByCategory}
+                  />
+                </div>
+              )}
+            </Fragment>
           ))}
+          {/* Danh mục trên menu mobile: tiêu đề + 8 link danh mục. */}
+          <div className="mt-1 border-t border-white/15 pt-2 md:hidden">
+            <p className="px-3.5 pt-1 pb-1 text-[11px] font-extrabold tracking-[0.14em] text-white/60">
+              SẢN PHẨM
+            </p>
+            {CATEGORIES.map((category) => (
+              <NavLink
+                key={category.id}
+                to={`/shop?category=${category.id}`}
+                className="nav-link flex items-center justify-between"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span>{category.name}</span>
+                <span className="text-xs opacity-70">
+                  {productCountByCategory.get(category.id) ?? 0} sản phẩm
+                </span>
+              </NavLink>
+            ))}
+          </div>
         </nav>
       </div>
       {/* Thanh tiến trình đọc (#212): đầy dần theo % trang đã cuộn.
