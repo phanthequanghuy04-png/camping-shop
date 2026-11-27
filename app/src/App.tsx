@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   BrowserRouter,
   Link,
@@ -58,7 +58,12 @@ function Header() {
   // khi cuộn quá 20px + thanh tiến trình đọc 2px ở đáy header.
   const [headerSolid, setHeaderSolid] = useState(false)
   const [headerHidden, setHeaderHidden] = useState(false)
-  const [readProgress, setReadProgress] = useState(0)
+  // Thanh tiến trình đọc cập nhật trực tiếp qua ref, KHÔNG qua state:
+  // trước đây setReadProgress mỗi lần cuộn đều render lại toàn bộ
+  // header (cả App) theo từng pixel — đó là chỗ "làm lại" nặng nhất
+  // khi cuộn. Đổi sang ref thì thanh chạy y hệt (cùng giá trị scaleX)
+  // mà không render lại gì cả (sửa 2026-11-27, theo ý tưởng của Huy).
+  const progressRef = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     let last = window.scrollY
     let acc = 0
@@ -82,8 +87,13 @@ function Header() {
         hidden = nextHidden
         setHeaderHidden(hidden)
       }
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      setReadProgress(max > 0 ? Math.min(1, y / max) : 0)
+      // Thanh tiến trình: ghi thẳng vào style của span qua ref, không
+      // qua state nên không render lại header.
+      const bar = progressRef.current
+      if (bar) {
+        const max = document.documentElement.scrollHeight - window.innerHeight
+        bar.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`
+      }
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -245,12 +255,14 @@ function Header() {
           ))}
         </nav>
       </div>
-      {/* Thanh tiến trình đọc (#212): đầy dần theo % trang đã cuộn. */}
+      {/* Thanh tiến trình đọc (#212): đầy dần theo % trang đã cuộn.
+          Giá trị scaleX ban đầu 0, onScroll ghi đè qua progressRef. */}
       <span
+        ref={progressRef}
         className="header-progress"
         aria-hidden="true"
         style={{
-          transform: `scaleX(${readProgress})`,
+          transform: 'scaleX(0)',
           transformOrigin: '0 50%',
         }}
       />
