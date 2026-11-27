@@ -7,6 +7,7 @@ import {
   getCategoryById,
   getProductById,
   getProductsByCategory,
+  resolveImage,
 } from '../data/products'
 import type { Product } from '../data/types'
 import { getProduct, getProducts } from '../lib/api'
@@ -140,7 +141,7 @@ export default function ProductDetailPage() {
         <div className="mt-6 grid gap-8 md:grid-cols-2">
           <div>
             <img
-              src={product.image ?? ''}
+              src={resolveImage(product.image)}
               alt={product.name}
               className="aspect-[4/3] w-full rounded-[24px] object-cover shadow-[0_8px_32px_rgba(27,67,50,0.12)]"
             />
