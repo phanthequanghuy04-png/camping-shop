@@ -23,6 +23,7 @@ import {
   initAnimations,
   refreshAnimations,
   revealOnScroll,
+  scrollToTop,
 } from './lib/animations'
 
 const navLinks = [
@@ -176,8 +177,12 @@ function AppContent() {
     }
   }, [])
 
-  // Đổi route -> tính lại vị trí trigger của AOS / ScrollTrigger.
+  // Đổi route -> cuộn về đầu trang rồi tính lại vị trí trigger của
+  // AOS / ScrollTrigger. Không cuộn lên đầu thì trang mới giữ nguyên
+  // vị trí cuộn của trang cũ (vd bấm sản phẩm ở cuối danh sách thì
+  // trang chi tiết mở ra đã nằm ở phần "Sản phẩm liên quan").
   useEffect(() => {
+    scrollToTop()
     refreshAnimations()
   }, [location.pathname])
 
