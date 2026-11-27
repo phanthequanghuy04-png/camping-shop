@@ -891,3 +891,23 @@ a { color: var(--color-primary-text); }
    thắng class text-[#1B4332] của Tailwind và đổi h1 sang màu kem ở chế
    độ tối, chìm hẳn vào nền kem (bắt được khi kiểm tra live 2026-11-28). */
 .shop-page h1 { color: #1b4332; }
+
+/* ---------- Sửa tương phản sáng/tối toàn web (kiểm tra 2026-11-28) ----------
+   Nguyên nhân chung: luật a/h1/h2 không lớp ở đầu file thắng class
+   Tailwind (không lớp > có lớp), và các thẻ trắng (giỏ, thanh toán)
+   không đổi màu nền ở chế độ tối trong khi chữ đổi theo token. */
+/* Link dạng nút (chữ trắng trên nền màu): giữ chữ trắng ở cả 2 chế độ. */
+a.btn-white { color: #fff; }
+/* Link dạng nút phụ (chữ tối trên nền trắng): giữ chữ tối ở cả 2 chế độ
+   (luật a không lớp đổi nó sang xanh rừng/xanh nhạt). */
+a.btn-dark { color: #1c2b1f; }
+/* Trang giỏ: thẻ trắng cố định ở cả 2 chế độ nên tên sản phẩm + số lượng
+   phải giữ màu tối ở chế độ tối (mặc định chúng đổi theo token chữ và
+   thành kem/xanh nhạt trên nền trắng). */
+.dark .cart-name { color: #2d6a4f; }
+.dark .cart-qty { color: #1c2b1f; }
+/* Trang thanh toán: thẻ trắng cố định ở cả 2 chế độ nên tiêu đề h2 phải
+   giữ màu tối ở chế độ tối (luật h2 không lớp đổi nó sang kem). */
+.checkout-page h2 { color: #1c2b1f; }
+/* Link "Quay lại giỏ hàng": giữ xanh đậm trên nền trắng ở chế độ tối. */
+.dark .checkout-back { color: #047857; }
