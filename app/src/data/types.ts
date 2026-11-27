@@ -59,6 +59,24 @@ export interface Order {
   phone: string | null
   customer_name: string | null
   created_at: string
+  /** Tạm tính trước giảm giá (server tính khi tạo đơn). */
+  subtotal?: number
+  /** Số tiền đã giảm theo mã (vd CAMP10). */
+  discount_amount?: number
+  coupon_code?: string | null
+  /** Phí vận chuyển (0 = miễn phí). */
+  shipping_fee?: number
+  shipping_method?: string
+  /** Khu vực giao: 'hanoi' | 'hcm' | 'other'. */
+  shipping_region?: string | null
+  /** Cách thanh toán: 'cod' | 'bank_transfer'. */
+  payment_method?: 'cod' | 'bank_transfer'
+  /** 'unpaid' (chưa thanh toán) | 'paid' (đã thanh toán/đã nhận tiền). */
+  payment_status?: 'unpaid' | 'paid'
+  /** Mã vận đơn do admin nhập khi giao hàng. */
+  tracking_code?: string | null
+  /** Ngày giao dự kiến (yyyy-mm-dd). */
+  estimated_delivery?: string | null
 }
 
 /** Chi tiết một dòng trong đơn hàng (bảng order_items). */
