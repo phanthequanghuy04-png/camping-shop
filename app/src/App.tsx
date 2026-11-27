@@ -17,6 +17,7 @@ import RegisterPage from './pages/RegisterPage'
 import ShopPage from './pages/ShopPage'
 import ThemeToggle from './components/ThemeToggle'
 import { useCart } from './context/CartContext'
+import { getSessionUser } from './data/users'
 import {
   cleanupAnimations,
   initAnimations,
@@ -43,6 +44,15 @@ const navLinks = [
 function Header() {
   const { totalQty } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
+  // useLocation để Header render lại mỗi lần đổi trang, nhờ đó link
+  // "Quản trị" cập nhật đúng ngay sau khi đăng nhập/đăng xuất.
+  useLocation()
+  // Link "Quản trị" chỉ hiện với tài khoản admin; khách và user thường
+  // không thấy link (trang /admin vẫn chặn riêng bằng guard của nó).
+  const isAdmin = getSessionUser()?.role === 'admin'
+  const visibleNavLinks = navLinks.filter(
+    (link) => link.to !== '/admin' || isAdmin,
+  )
 
   return (
     <header className="site-header">
@@ -113,7 +123,7 @@ function Header() {
           className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 md:flex md:w-auto md:flex-row md:gap-6`}
           aria-label="Menu chính"
         >
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
