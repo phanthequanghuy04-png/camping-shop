@@ -97,14 +97,10 @@
    hiệu ứng hover mờ dần, brand hover nhẹ.
    ========================================================================== */
 .site-header {
-  transition:
-    transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
-    background-color 0.3s,
-    box-shadow 0.3s,
-    backdrop-filter 0.3s,
-    border-radius 0.3s;
-}
-.site-header.is-solid {
+  /* Header mềm ngay từ đầu trang (không chỉ khi đã cuộn): bo tròn
+     đáy 24px, nền xanh rừng mờ + blur, bóng mềm — hoàn thiện yêu cầu
+     làm lại header mềm hơn / bo tròn / fade / hover của Huy (trước
+     đây chỉ hiện khi đã cuộn, đầu trang vẫn là thanh vuông đặc). */
   border-radius: 0 0 24px 24px;
   background-color: color-mix(
     in srgb,
@@ -116,6 +112,23 @@
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.08),
     0 8px 20px -14px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.3s,
+    box-shadow 0.3s,
+    backdrop-filter 0.3s,
+    border-radius 0.3s;
+}
+.site-header.is-solid {
+  /* Khi cuộn: nền đặc hơn một chút + bóng rõ hơn, còn lại giữ nguyên. */
+  background-color: color-mix(
+    in srgb,
+    var(--color-primary-dark) 94%,
+    transparent
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 28px -14px rgba(0, 0, 0, 0.55);
 }
 .site-header.is-hide {
   transform: translateY(-110%);
