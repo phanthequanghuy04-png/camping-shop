@@ -56,13 +56,14 @@ export default function AccountMenu({ user, onLogout }: AccountMenuProps) {
   }, [open ])
 
   // Kẹp menu vào trong màn hình (sửa 2026-11-27): menu rộng 232px,
-  // CSS mặc định căn phải dưới avatar — trên điện thoại avatar nằm
-  // giữa header nên menu tràn ra ngoài mép trái, chữ bị cắt mất đầu
-  // ("Quản trị" thành "ản trị"). Đo vị trí thật của avatar khi mở
-  // menu rồi dời menu sang phải vừa đủ để mép trái cách mép màn hình
-  // 8px; gốc hiệu ứng bật (transform-origin) cũng dời theo để menu
-  // vẫn bật ra từ đúng chỗ avatar. Dùng useLayoutEffect để đo trước
-  // khi vẽ khung hình đầu tiên, khỏi chớp vị trí cũ.
+  // CSS mặc định căn phải dưới avatar — nếu avatar nằm quá trái
+  // (màn hẹp) menu sẽ tràn ra ngoài mép trái, chữ bị cắt mất đầu
+  // ("Quản trị" thành "ản trị", đã gặp khi avatar còn nằm giữa header
+  // mobile). Đo vị trí thật của avatar khi mở menu rồi dời menu sang
+  // phải vừa đủ để mép trái cách mép màn hình 8px; gốc hiệu ứng bật
+  // (transform-origin) cũng dời theo để menu vẫn bật ra từ đúng chỗ
+  // avatar. Dùng useLayoutEffect để đo trước khi vẽ khung hình đầu
+  // tiên, khỏi chớp vị trí cũ.
   useLayoutEffect(() => {
     if (!open) return
     const MENU_WIDTH = 232 // phải khớp width của .u408-m trong lucian.css
