@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Product } from '../data/types'
-import { formatPrice, getCategoryById } from '../data/products'
+import { formatPrice, getCategoryById, resolveImage } from '../data/products'
 
 /**
  * Thêm vào giỏ:
@@ -45,7 +45,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     >
       <Link to={`/product/${product.id}`} className="block focus:outline-2 focus:outline-[#2D6A4F]">
         <img
-          src={product.image ?? ''}
+          src={resolveImage(product.image)}
           alt={product.name}
           loading="lazy"
           className="aspect-[4/3] w-full object-cover"
