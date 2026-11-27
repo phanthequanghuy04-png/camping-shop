@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CategoryIcon, { categoryTileBg } from '../components/CategoryIcons'
-import HeroIllustrated from '../components/HeroIllustrated'
+import HeroKairn from '../components/HeroKairn'
+import HomeCombos from '../components/HomeCombos'
+import HomeReviews from '../components/HomeReviews'
 import ProductCard from '../components/ProductCard'
 import { CATEGORIES, getActiveProducts } from '../data/products'
 import type { Category, Product } from '../data/types'
 import { getCategories, getProducts } from '../lib/api'
 
 /**
- * Trang chủ — hero 3D (ThreeUI LandscapeScene, variant hoàng hôn) qua
- * component Hero3D; bên dưới giữ nguyên danh mục + sản phẩm nổi bật.
+ * Trang chủ — hero kiểu KAIRN (MotionSites, prompt viết lại 2026-11-28):
+ * ảnh lều vàng lúc hoàng hôn + tiêu đề lớn bên trái + cụm tile 2×2 bên
+ * phải + thẻ câu chuyện + CTA, hiệu ứng vào trang 2,2s.
+ * Bên dưới giữ danh mục (icon 3D) + sản phẩm nổi bật, thêm 2 mục mới
+ * theo prompt viết lại: "Combo cắm trại" và "Đánh giá khách hàng".
  * Màu theo DESIGN-SYSTEM.md: rừng #2D6A4F / #1B4332, CTA đất nung #C05621,
  * nền kem #FAF6EC, font Be Vietnam Pro (tiêu đề) / Inter (thân bài).
  * Màu viết bằng token theme (bg-background, text-foreground,
@@ -68,9 +73,10 @@ export default function HomePage() {
 
   return (
     <main className="home-clean text-foreground">
-      {/* Hero minh họa (thiết kế lại 2026-11-28): tranh SVG bầu trời,
-          rừng thông, lều vàng — thay cảnh 3D/ảnh lều cũ */}
-      <HeroIllustrated />
+      {/* Hero kiểu KAIRN (2026-11-28): ảnh lều vàng lúc hoàng hôn + tiêu đề
+          lớn bên trái + cụm tile 2×2 bên phải + thẻ câu chuyện + CTA.
+          HeroIllustrated (tranh SVG) tạm không dùng — file vẫn còn. */}
+      <HeroKairn />
 
       {/* Danh mục nổi bật — thẻ icon 3D (CategoryIcons.tsx, SVG vẽ tay):
           icon nảy lên + nghiêng nhẹ khi trỏ chuột, mỗi icon có chuyển
@@ -191,6 +197,13 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Combo cắm trại + Đánh giá khách hàng — 2 mục mới theo prompt
+          KAIRN viết lại (2026-11-28) */}
+      <HomeCombos />
+      <div className="pb-16">
+        <HomeReviews />
+      </div>
     </main>
   )
 }
