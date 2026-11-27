@@ -1,9 +1,9 @@
 // Lucian UX/UI Prompt #408 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#408
 // Menu tài khoản: nút avatar tròn; bấm thì menu bật ra từ avatar, các mục
-// hiện lần lượt (tên + email, Yêu thích, Đơn hàng, Trợ giúp, Đăng xuất đỏ).
-// Điều hướng bằng phím mũi tên, Esc đóng, bấm ra ngoài đóng lại.
-// Mục menu gắn với tính năng thật của shop (avatar dùng chữ cái đầu của tên
-// vì shop chưa có ảnh đại diện).
+// hiện lần lượt (tên + email, [Quản trị nếu là admin,] Yêu thích, Đơn hàng,
+// Trợ giúp, Đăng xuất đỏ). Điều hướng bằng phím mũi tên, Esc đóng, bấm ra
+// ngoài đóng lại. Mục menu gắn với tính năng thật của shop (avatar dùng
+// chữ cái đầu của tên vì shop chưa có ảnh đại diện).
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '../data/types'
@@ -55,6 +55,25 @@ export default function AccountMenu({ user, onLogout }: AccountMenuProps) {
   }
 
   const menuItems = [
+    // Tài khoản quản trị: mục "Quản trị" dẫn tới trang admin, chỉ hiện
+    // khi user.role === 'admin', đứng đầu danh sách mục menu.
+    ...(user.role === 'admin'
+      ? [
+          {
+            key: 'admin',
+            label: 'Quản trị',
+            icon: (
+              <svg viewBox="0 0 18 18" aria-hidden="true">
+                <rect x="3" y="3" width="5" height="5" rx="1" />
+                <rect x="10" y="3" width="5" height="5" rx="1" />
+                <rect x="3" y="10" width="5" height="5" rx="1" />
+                <rect x="10" y="10" width="5" height="5" rx="1" />
+              </svg>
+            ),
+            action: () => navigate('/admin'),
+          },
+        ]
+      : []),
     {
       key: 'wishlist',
       label: 'Sản phẩm yêu thích',
@@ -178,16 +197,16 @@ export default function AccountMenu({ user, onLogout }: AccountMenuProps) {
           <div
             className="u408-hr"
             role="separator"
-            style={{ '--i': 4 } as React.CSSProperties}
+            style={{ '--i': menuItems.length + 1 } as React.CSSProperties}
           />
           <button
             type="button"
             className="u408-it is-out"
             role="menuitem"
             tabIndex={-1}
-            style={{ '--i': 5 } as React.CSSProperties}
+            style={{ '--i': menuItems.length + 2 } as React.CSSProperties}
             ref={(el) => {
-              itemRefs.current[3] = el
+              itemRefs.current[menuItems.length] = el
             }}
             onClick={() => handleItemClick(onLogout)}
           >
