@@ -113,6 +113,15 @@ let initialized = false;
 let initToken = 0;
 /** Tôn trọng "Reduce motion" của hệ điều hành / trình duyệt. */
 let reducedMotion = false;
+/**
+ * true khi chạy trên điện thoại / máy tính bảng (con trỏ thô hoặc màn
+ * hẹp). Trên thiết bị này Lenis + GSAP + AOS được TẮT hẳn (xem
+ * initAnimations): cuộn native trên cảm ứng đã mượt, còn vòng
+ * requestAnimationFrame của Lenis/GSAP và hiệu ứng hiện-lại của AOS
+ * (mirror) làm máy yếu giật, thậm chí kẹt tiêu đề đang chạy hiệu ứng
+ * chồng lên dòng chữ bên dưới (ghi nhận trên điện thoại 2026-11-27).
+ */
+let mobileDevice = false;
 
 /* ------------------------------------------------------------------ */
 /* Khởi tạo                                                           */
@@ -147,8 +156,19 @@ export async function initAnimations(
   reducedMotion =
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // 1. Lenis — cuộn mượt. Bỏ qua nếu người dùng bật Reduce motion.
-  if (smoothScroll && !reducedMotion) {
+  // Điện thoại / máy tính bảng: tắt hẳn Lenis + GSAP + AOS.
+  // Cuộn native trên cảm ứng đã mượt; giữ lại các engine này chỉ
+  // tốn pin/CPU và gây giật (vòng rAF chạy liên tục, AOS mirror
+  // hiện-ẩn lại mỗi lần cuộn qua). Nội dung vẫn hiện đủ vì
+  // revealOnScroll() tự hiện phần tử ngay khi không có GSAP, còn AOS
+  // không init thì không ẩn phần tử nào.
+  mobileDevice =
+    window.matchMedia('(pointer: coarse)').matches ||
+    window.innerWidth < 768;
+
+  // 1. Lenis — cuộn mượt. Bỏ qua nếu người dùng bật Reduce motion
+  // hoặc đang dùng điện thoại / máy tính bảng.
+  if (smoothScroll && !reducedMotion && !mobileDevice) {
     try {
       const { default: Lenis } = await import('lenis');
       if (!stillCurrent()) return;
@@ -166,39 +186,43 @@ export async function initAnimations(
   }
 
   // 2. GSAP + ScrollTrigger — engine animation chính.
-  try {
-    const gsapModule = await import('gsap');
-    const scrollTriggerModule = await import('gsap/ScrollTrigger');
-    if (!stillCurrent()) return;
+  // Bỏ qua trên mobile (xem mobileDevice ở trên): revealOnScroll()
+  // tự hiện nội dung ngay khi không có GSAP, khỏi tốn vòng ticker.
+  if (!mobileDevice) {
+    try {
+      const gsapModule = await import('gsap');
+      const scrollTriggerModule = await import('gsap/ScrollTrigger');
+      if (!stillCurrent()) return;
 
-    const gsap = (gsapModule.default ??
-      gsapModule.gsap) as unknown as GsapLike;
-    const ScrollTrigger = (scrollTriggerModule.default ??
-      scrollTriggerModule.ScrollTrigger) as unknown as ScrollTriggerLike;
+      const gsap = (gsapModule.default ??
+        gsapModule.gsap) as unknown as GsapLike;
+      const ScrollTrigger = (scrollTriggerModule.default ??
+        scrollTriggerModule.ScrollTrigger) as unknown as ScrollTriggerLike;
 
-    gsap.registerPlugin(ScrollTrigger as unknown);
-    gsapInstance = gsap;
-    scrollTriggerInstance = ScrollTrigger;
+      gsap.registerPlugin(ScrollTrigger as unknown);
+      gsapInstance = gsap;
+      scrollTriggerInstance = ScrollTrigger;
 
-    if (lenisInstance) {
-      // Đồng bộ Lenis với ScrollTrigger (cách làm chuẩn của GSAP + Lenis).
-      lenisInstance.on('scroll', () => {
-        scrollTriggerInstance?.update();
-      });
-      // Để GSAP ticker lái Lenis thay cho vòng requestAnimationFrame riêng.
-      gsapTickerCallback = (time: number) => {
-        lenisInstance?.raf(time * 1000);
-      };
-      gsap.ticker.add(gsapTickerCallback);
-      gsap.ticker.lagSmoothing(0);
+      if (lenisInstance) {
+        // Đồng bộ Lenis với ScrollTrigger (cách làm chuẩn của GSAP + Lenis).
+        lenisInstance.on('scroll', () => {
+          scrollTriggerInstance?.update();
+        });
+        // Để GSAP ticker lái Lenis thay cho vòng requestAnimationFrame riêng.
+        gsapTickerCallback = (time: number) => {
+          lenisInstance?.raf(time * 1000);
+        };
+        gsap.ticker.add(gsapTickerCallback);
+        gsap.ticker.lagSmoothing(0);
+      }
+    } catch (error) {
+      console.warn(
+        '[animations] Chưa cài gsap — bỏ qua hiệu ứng GSAP / ScrollTrigger. Cài bằng: npm install gsap',
+        error,
+      );
+      gsapInstance = null;
+      scrollTriggerInstance = null;
     }
-  } catch (error) {
-    console.warn(
-      '[animations] Chưa cài gsap — bỏ qua hiệu ứng GSAP / ScrollTrigger. Cài bằng: npm install gsap',
-      error,
-    );
-    gsapInstance = null;
-    scrollTriggerInstance = null;
   }
 
   // 3. Vòng requestAnimationFrame riêng cho Lenis, chỉ khi không có GSAP lái.
@@ -211,7 +235,10 @@ export async function initAnimations(
   }
 
   // 4. AOS — hiệu ứng hiện khi cuộn tới.
-  if (useAos) {
+  // Bỏ qua trên mobile (xem mobileDevice ở trên): không init thì
+  // AOS không ẩn phần tử nào, nội dung hiện ngay, hết kẹt tiêu đề
+  // đang chạy hiệu ứng chồng lên dòng chữ bên dưới.
+  if (useAos && !mobileDevice) {
     try {
       const aosModule = await import('aos');
       // CSS của AOS — Vite tự chèn vào trang khi import động chạy.
@@ -277,8 +304,9 @@ export function revealOnScroll(
   const elements = document.querySelectorAll<HTMLElement>(selector);
   if (elements.length === 0) return;
 
-  // Không có GSAP (chưa cài / init lỗi) -> hiện nội dung ngay, không ẩn.
-  if (!gsapInstance || !scrollTriggerInstance || reducedMotion) {
+  // Không có GSAP (chưa cài / init lỗi / đang dùng mobile) -> hiện
+  // nội dung ngay, không ẩn.
+  if (!gsapInstance || !scrollTriggerInstance || reducedMotion || mobileDevice) {
     elements.forEach((el) => {
       el.style.opacity = '1';
     });
