@@ -44,12 +44,25 @@ const navLinks = [
 function Header() {
   const { totalQty } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
-  // useLocation để Header render lại mỗi lần đổi trang, nhờ đó link
-  // "Quản trị" cập nhật đúng ngay sau khi đăng nhập/đăng xuất.
+  // useLocation để Header render lại mỗi lần đổi trang.
   useLocation()
-  // Link "Quản trị" chỉ hiện với tài khoản admin; khách và user thường
-  // không thấy link (trang /admin vẫn chặn riêng bằng guard của nó).
-  const isAdmin = getSessionUser()?.role === 'admin'
+  // Link "Quản trị" chỉ hiện với tài khoản admin. Đồng bộ lại ngay khi
+  // phiên đăng nhập thay đổi (đăng nhập/đăng xuất ở trang /login không
+  // chuyển trang, nên chỉ đọc localStorage lúc render sẽ làm link hiện
+  // nốt sau khi đăng xuất cho tới lần chuyển trang sau). users.ts phát
+  // sự kiện 'camping-auth-changed' mỗi khi saveSession/clearSession.
+  const [isAdmin, setIsAdmin] = useState(
+    () => getSessionUser()?.role === 'admin',
+  )
+  useEffect(() => {
+    const syncAdmin = () => setIsAdmin(getSessionUser()?.role === 'admin')
+    window.addEventListener('camping-auth-changed', syncAdmin)
+    window.addEventListener('storage', syncAdmin)
+    return () => {
+      window.removeEventListener('camping-auth-changed', syncAdmin)
+      window.removeEventListener('storage', syncAdmin)
+    }
+  }, [])
   const visibleNavLinks = navLinks.filter(
     (link) => link.to !== '/admin' || isAdmin,
   )
