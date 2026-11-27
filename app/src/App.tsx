@@ -17,6 +17,8 @@ import ProductDetailPage from './pages/ProductDetailPage'
 import RegisterPage from './pages/RegisterPage'
 import ShopPage from './pages/ShopPage'
 import ThemeToggle from './components/ThemeToggle'
+import CartDrawer from './components/CartDrawer'
+import BackToTop from './components/BackToTop'
 import { useCart } from './context/CartContext'
 import { clearSession, getSessionUser } from './data/users'
 import type { User } from './data/types'
@@ -47,8 +49,43 @@ const navLinks = [
  * thay cho CART_COUNT = 0 tĩnh trước đây).
  */
 function Header() {
-  const { totalQty } = useCart()
+  const { totalQty, openDrawer } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
+  // #212 Lucian — header ẩn khi cuộn xuống, hiện khi cuộn lên, đặc lại
+  // khi cuộn quá 20px + thanh tiến trình đọc 2px ở đáy header.
+  const [headerSolid, setHeaderSolid] = useState(false)
+  const [headerHidden, setHeaderHidden] = useState(false)
+  const [readProgress, setReadProgress] = useState(0)
+  useEffect(() => {
+    let last = window.scrollY
+    let acc = 0
+    let solid = false
+    let hidden = false
+    const onScroll = () => {
+      const y = window.scrollY
+      const d = y - last
+      last = y
+      acc = (d > 0) === (acc > 0) ? acc + d : d
+      const nextSolid = y > 20
+      if (nextSolid !== solid) {
+        solid = nextSolid
+        setHeaderSolid(solid)
+      }
+      let nextHidden = hidden
+      if (y < 60) nextHidden = false
+      else if (acc > 8) nextHidden = true
+      else if (acc < -6) nextHidden = false
+      if (nextHidden !== hidden) {
+        hidden = nextHidden
+        setHeaderHidden(hidden)
+      }
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      setReadProgress(max > 0 ? Math.min(1, y / max) : 0)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   // useLocation để Header render lại mỗi lần đổi trang.
   useLocation()
   const navigate = useNavigate()
@@ -95,7 +132,9 @@ function Header() {
   })
 
   return (
-    <header className="site-header">
+    <header
+      className={`site-header${headerSolid ? ' is-solid' : ''}${headerHidden ? ' is-hide' : ''}`}
+    >
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-6">
         <Link to="/" className="brand" aria-label="Camping Shop — Trang chủ">
           {/* Icon lều SVG (design system: không dùng emoji làm icon) */}
@@ -118,10 +157,15 @@ function Header() {
         <div className="flex items-center gap-3">
           {/* Chuyển sáng/tối (dark mode, lưu localStorage `camping-theme`) */}
           <ThemeToggle />
-          {/* Nút giỏ hàng + badge số lượng thật từ CartContext */}
-          <Link
-            to="/cart"
-            className="relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[12px] px-2"
+          {/* Nút giỏ hàng + badge số lượng thật từ CartContext.
+              Bấm thì mở ngăn giỏ trượt (#240) thay vì chuyển trang;
+              trang /cart đầy đủ vẫn tới được từ link "Giỏ hàng" trong menu
+              và từ nút "Xem giỏ hàng đầy đủ" trong ngăn. */}
+          <button
+            type="button"
+            id="header-cart-button"
+            onClick={() => openDrawer()}
+            className="relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[12px] px-2 transition duration-200 ease-out hover:bg-white/10 focus:outline-2 focus:outline-[#74C69D]"
             aria-label={`Giỏ hàng, ${totalQty} sản phẩm`}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -138,7 +182,7 @@ function Header() {
             <span className="cart-badge absolute -right-1 -top-1" aria-hidden="true">
               {totalQty}
             </span>
-          </Link>
+          </button>
 
           {/* Đã đăng nhập: hiện tên người dùng + nút Đăng xuất thay cho
               link Đăng nhập / Đăng ký trong menu. */}
@@ -220,6 +264,15 @@ function Header() {
           ))}
         </nav>
       </div>
+      {/* Thanh tiến trình đọc (#212): đầy dần theo % trang đã cuộn. */}
+      <span
+        className="header-progress"
+        aria-hidden="true"
+        style={{
+          transform: `scaleX(${readProgress})`,
+          transformOrigin: '0 50%',
+        }}
+      />
     </header>
   )
 }
@@ -352,6 +405,10 @@ function AppContent() {
           }
         />
       </Routes>
+
+      {/* Ngăn giỏ trượt (#240) + nút về đầu trang / hỗ trợ (#450). */}
+      <CartDrawer />
+      <BackToTop />
 
       <footer className="site-footer">
         <div className="mx-auto grid max-w-[1200px] gap-8 px-4 py-10 text-sm md:grid-cols-3 md:px-6">
