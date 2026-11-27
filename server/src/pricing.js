@@ -68,10 +68,22 @@ function calcShippingFee(subtotal, region) {
 /** Ngày giao dự kiến (ISO yyyy-mm-dd), tính từ hôm nay. */
 function estimateDelivery(region, from = new Date()) {
   const [minDays, maxDays] = SHIPPING_DAYS[normalizeRegion(region)];
-  const toISODate = (date) => date.toISOString().slice(0, 10);
-  const max = new Date(from);
+  // "Hôm nay" theo giờ Việt Nam — server cloud chạy UTC, nếu lấy ngày
+  // theo UTC thì vào khoảng 00:00–07:00 giờ VN ngày giao sẽ sớm hơn
+  // thực tế 1 ngày. Tính toàn bộ bằng ngày-không-giờ (local getters)
+  // để không bị toISOString() đẩy sang UTC.
+  const vnToday = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(from);
+  const [y, m, d] = vnToday.split('-').map(Number);
+  const toISODate = (date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const max = new Date(y, m - 1, d);
   max.setDate(max.getDate() + maxDays);
-  const min = new Date(from);
+  const min = new Date(y, m - 1, d);
   min.setDate(min.getDate() + minDays);
   return { min: toISODate(min), max: toISODate(max), date: toISODate(max) };
 }
