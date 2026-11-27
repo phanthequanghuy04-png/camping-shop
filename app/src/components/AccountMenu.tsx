@@ -4,7 +4,7 @@
 // Trợ giúp, Đăng xuất đỏ). Điều hướng bằng phím mũi tên, Esc đóng, bấm ra
 // ngoài đóng lại. Mục menu gắn với tính năng thật của shop (avatar dùng
 // chữ cái đầu của tên vì shop chưa có ảnh đại diện).
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '../data/types'
 
@@ -17,6 +17,12 @@ export default function AccountMenu({ user, onLogout }: AccountMenuProps) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const avatarRef = useRef<HTMLButtonElement>(null)
+  // Vị trí menu đã kẹp vào trong màn hình (xem effect bên dưới).
+  // null = chưa đo (dùng vị trí mặc định trong CSS: căn phải avatar).
+  const [menuPos, setMenuPos] = useState<{
+    left: number
+    originX: number
+  } | null>(null)
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([])
   const navigate = useNavigate()
 
@@ -47,6 +53,42 @@ export default function AccountMenu({ user, onLogout }: AccountMenuProps) {
     }
     document.addEventListener('pointerdown', onPointerDown, true)
     return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [open ])
+
+  // Kẹp menu vào trong màn hình (sửa 2026-11-27): menu rộng 232px,
+  // CSS mặc định căn phải dưới avatar — trên điện thoại avatar nằm
+  // giữa header nên menu tràn ra ngoài mép trái, chữ bị cắt mất đầu
+  // ("Quản trị" thành "ản trị"). Đo vị trí thật của avatar khi mở
+  // menu rồi dời menu sang phải vừa đủ để mép trái cách mép màn hình
+  // 8px; gốc hiệu ứng bật (transform-origin) cũng dời theo để menu
+  // vẫn bật ra từ đúng chỗ avatar. Dùng useLayoutEffect để đo trước
+  // khi vẽ khung hình đầu tiên, khỏi chớp vị trí cũ.
+  useLayoutEffect(() => {
+    if (!open) return
+    const MENU_WIDTH = 232 // phải khớp width của .u408-m trong lucian.css
+    const measure = () => {
+      const btn = avatarRef.current
+      const wrap = btn?.parentElement
+      if (!btn || !wrap) return
+      const r = btn.getBoundingClientRect()
+      const wrapRect = wrap.getBoundingClientRect()
+      // Mép trái menu nếu căn phải avatar (như CSS mặc định).
+      const naturalLeft = r.right - MENU_WIDTH
+      // Kẹp vào trong màn hình, chừa 8px mỗi bên.
+      const clampedLeft = Math.max(
+        8,
+        Math.min(naturalLeft, window.innerWidth - MENU_WIDTH - 8),
+      )
+      setMenuPos({
+        // Đổi sang tọa độ trong .u408-w (khối chứa của menu).
+        left: clampedLeft - wrapRect.left,
+        // Tâm avatar tính từ mép trái menu — gốc của hiệu ứng bật.
+        originX: r.left + r.width / 2 - clampedLeft,
+      })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
   }, [open ])
 
   const handleItemClick = (action: () => void) => {
@@ -149,6 +191,15 @@ export default function AccountMenu({ user, onLogout }: AccountMenuProps) {
           className="u408-m"
           role="menu"
           aria-label="Menu tài khoản"
+          style={
+            menuPos
+              ? ({
+                  left: menuPos.left,
+                  right: 'auto',
+                  transformOrigin: `${menuPos.originX}px -12px`,
+                } as React.CSSProperties)
+              : undefined
+          }
           onKeyDown={(e) => {
             const items = itemRefs.current
             const i = items.indexOf(document.activeElement as HTMLButtonElement)
