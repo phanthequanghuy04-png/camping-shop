@@ -885,3 +885,9 @@ a { color: var(--color-primary-text); }
 @media (prefers-reduced-motion: reduce) {
   .kairn-in, .kairn-ln > span { animation: none; }
 }
+
+/* Trang cửa hàng: nền kem cố định ở cả 2 chế độ (bg-[#FAF6EC] hardcode),
+   nên tiêu đề h1 phải giữ màu xanh đậm — luật h1 không lớp ở đầu file
+   thắng class text-[#1B4332] của Tailwind và đổi h1 sang màu kem ở chế
+   độ tối, chìm hẳn vào nền kem (bắt được khi kiểm tra live 2026-11-28). */
+.shop-page h1 { color: #1b4332; }
