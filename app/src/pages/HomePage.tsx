@@ -1,30 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import CategoryIcon, { categoryTileBg } from '../components/CategoryIcons'
 import Hero3D from '../components/Hero3D'
 import ProductCard from '../components/ProductCard'
-import {
-  CATEGORIES,
-  getActiveProducts,
-  resolveImage,
-} from '../data/products'
+import { CATEGORIES, getActiveProducts } from '../data/products'
 import type { Category, Product } from '../data/types'
 import { getCategories, getProducts } from '../lib/api'
-
-/**
- * Ảnh đại diện cho từng danh mục (file ảnh riêng trong public/images/).
- * Dùng ảnh của 1 sản phẩm tiêu biểu trong danh mục đó; resolveImage()
- * thêm BASE_URL nên chạy đúng cả trên GitHub Pages (/camping-shop/).
- */
-const CATEGORY_COVERS: Record<number, string> = {
-  1: '/images/leu-trai-2-nguoi.jpg',
-  2: '/images/tui-ngu-mua-dong.jpg',
-  3: '/images/bep-ga-mini.jpg',
-  4: '/images/den-long-led.jpg',
-  5: '/images/ba-lo-leo-nui-65l.jpg',
-  6: '/images/ghe-xep-da-ngoai.jpg',
-  7: '/images/ao-khoac-chong-nuoc.jpg',
-  8: '/images/dao-da-nang.jpg',
-}
 
 /**
  * Trang chủ — hero 3D (ThreeUI LandscapeScene, variant hoàng hôn) qua
@@ -90,7 +71,9 @@ export default function HomePage() {
       {/* Hero 3D — cảnh hoàng hôn ThreeUI, tự fallback ảnh tĩnh khi không có WebGL */}
       <Hero3D />
 
-      {/* Danh mục nổi bật — thẻ ảnh: ảnh đại diện + tên + số sản phẩm.
+      {/* Danh mục nổi bật — thẻ icon 3D (CategoryIcons.tsx, SVG vẽ tay):
+          icon nảy lên + nghiêng nhẹ khi trỏ chuột, mỗi icon có chuyển
+          động riêng (cờ vẫy, lửa nhấp nháy, kim la bàn quay...).
           KHÔNG dùng animation khi cuộn cho phần này (theo yêu cầu): tiêu
           đề và các thẻ luôn hiện sẵn, chỉ giữ hiệu ứng hover.
           Bấm vào lọc tới /shop?category=id */}
@@ -114,35 +97,27 @@ export default function HomePage() {
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {categories.map((category) => {
             const count = productCountByCategory.get(category.id) ?? 0
-            const cover = CATEGORY_COVERS[category.id]
             return (
               <Link
                 key={category.id}
                 to={`/shop?category=${category.id}`}
                 className="group overflow-hidden rounded-[24px] border border-border bg-surface shadow-[0_1px_3px_rgba(27,67,50,0.08)] transition duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(27,67,50,0.18)] focus:outline-2 focus:outline-offset-2 focus:outline-ring"
               >
-                {cover && (
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={resolveImage(cover)}
-                      alt={category.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="aspect-[4/3] w-full object-cover transition duration-500 ease-out group-hover:scale-105"
-                    />
-                    {/* Chip số sản phẩm nằm trên ảnh, chỉ trên điện thoại:
-                        lưới 2 cột hẹp (~170px/thẻ) nên để chip cạnh tên
-                        sẽ bóp tên thành 4–5 dòng; đưa chip lên ảnh thì
-                        tên có trọn chiều rộng thẻ mà thẻ vẫn gọn, không
-                        thêm hàng mới (khác bản xếp dọc đã hoàn tác vì
-                        Huy thấy không đẹp). Desktop giữ chip cạnh tên
-                        như cũ (sm:hidden ở đây, hidden sm:inline-block
-                        ở chip dưới). */}
-                    <span className="absolute top-3 left-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-white backdrop-blur-[2px] sm:hidden">
-                      {count} sản phẩm
-                    </span>
-                  </div>
-                )}
+                <div
+                  className="cat3d-tile relative aspect-[4/3] w-full"
+                  style={{ backgroundColor: categoryTileBg(category.id) }}
+                >
+                  <CategoryIcon id={category.id} />
+                  {/* Chip số sản phẩm nằm trên ô icon, chỉ trên điện thoại:
+                      lưới 2 cột hẹp (~170px/thẻ) nên để chip cạnh tên
+                      sẽ bóp tên thành 4–5 dòng; đưa chip lên ô icon thì
+                      tên có trọn chiều rộng thẻ mà thẻ vẫn gọn, không
+                      thêm hàng mới. Desktop giữ chip cạnh tên như cũ
+                      (sm:hidden ở đây, hidden sm:inline-block ở chip dưới). */}
+                  <span className="absolute top-3 left-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-white backdrop-blur-[2px] sm:hidden">
+                    {count} sản phẩm
+                  </span>
+                </div>
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-lg leading-snug font-bold text-foreground">
