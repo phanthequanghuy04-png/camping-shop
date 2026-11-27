@@ -9,6 +9,7 @@ import {
 } from '../data/users'
 import { loginApi } from '../lib/api'
 import { showToast } from '../lib/toast'
+import SocialSignInButtons from '../components/SocialSignInButtons'
 import type { User } from '../data/types'
 
 export default function LoginPage() {
@@ -76,6 +77,12 @@ export default function LoginPage() {
             Đăng ký ngay
           </Link>
         </p>
+
+        {/* Đăng nhập mạng xã hội (#066 Lucian): Google / Facebook / Apple.
+            Chưa có OAuth thật nên bấm vào sẽ báo là chưa thiết lập. */}
+        <div className="mt-6">
+          <SocialSignInButtons mode="login" />
+        </div>
 
         {error && (
           <p

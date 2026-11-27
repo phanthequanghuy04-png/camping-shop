@@ -6,6 +6,7 @@ import {
   saveSession,
 } from '../data/users'
 import { clearToken, registerApi } from '../lib/api'
+import SocialSignInButtons from '../components/SocialSignInButtons'
 import type { User } from '../data/types'
 
 export default function RegisterPage() {
@@ -128,6 +129,12 @@ export default function RegisterPage() {
             Đăng nhập
           </Link>
         </p>
+
+        {/* Đăng ký bằng mạng xã hội (#066 Lucian): Google / Facebook /
+            Apple. Chưa có OAuth thật nên bấm vào sẽ báo là chưa thiết lập. */}
+        <div className="mt-6">
+          <SocialSignInButtons mode="register" />
+        </div>
 
         {error && (
           <p
