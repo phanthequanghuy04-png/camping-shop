@@ -212,9 +212,9 @@ const inputClass =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600'
 const labelClass = 'mb-1 block text-sm font-medium text-gray-700'
 const primaryButtonClass =
-  'rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50'
+  'btn-white rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50'
 const secondaryButtonClass =
-  'rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+  'btn-dark rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
 
 export default function AdminPage() {
   const [session, setSession] = useState<SessionInfo | null | undefined>(
@@ -308,7 +308,7 @@ export default function AdminPage() {
   if (session === undefined) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <p className="text-gray-600">Đang kiểm tra quyền truy cập…</p>
+        <p className="text-muted-foreground">Đang kiểm tra quyền truy cập…</p>
       </main>
     )
   }
@@ -320,7 +320,7 @@ export default function AdminPage() {
         <h1 className="text-2xl font-bold text-gray-900">
           Bạn cần đăng nhập để xem trang này
         </h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-muted-foreground">
           Trang quản trị chỉ dành cho tài khoản admin. Vui lòng đăng nhập
           bằng tài khoản admin để tiếp tục.
         </p>
@@ -343,7 +343,7 @@ export default function AdminPage() {
         <h1 className="text-2xl font-bold text-gray-900">
           Chỉ admin mới xem được trang này
         </h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-muted-foreground">
           Tài khoản hiện tại không có quyền quản trị. Vui lòng đăng nhập
           bằng tài khoản admin để tiếp tục.
         </p>
@@ -535,7 +535,7 @@ export default function AdminPage() {
       <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
         Trang quản trị
       </h1>
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-muted-foreground">
         {`Đăng nhập với quyền admin${session?.name ? ` — ${session.name}` : ''}.`}
       </p>
 
@@ -587,7 +587,7 @@ export default function AdminPage() {
             className={`shrink-0 rounded-t-lg px-4 py-2 text-sm font-medium whitespace-nowrap ${
               tab === t.id
                 ? 'border border-b-0 border-gray-200 bg-white text-emerald-800'
-                : 'text-gray-600 hover:text-emerald-700'
+                : 'text-muted-foreground hover:text-emerald-700'
             }`}
           >
             {t.label}
@@ -765,7 +765,7 @@ export default function AdminPage() {
               </table>
             </div>
           )}
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             Thay đổi được lưu vào localStorage key{' '}
             <code>camping-admin-products</code> và sẽ hiển thị lại khi mở
             trang. Nút “Xóa” chỉ ẩn sản phẩm (chuyển trạng thái thành Ẩn),
@@ -885,7 +885,7 @@ export default function AdminPage() {
               </button>
             </div>
           </form>
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             Sản phẩm mới được lưu vào localStorage key{' '}
             <code>camping-admin-products</code> và xuất hiện ngay trong tab
             “Sản phẩm”.
@@ -1043,7 +1043,7 @@ export default function AdminPage() {
               </table>
             </div>
           )}
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             Nhấn nút ở cột “Thao tác” để chuyển trạng thái đơn theo vòng:{' '}
             Chờ xử lý → Đã thanh toán → Đang giao hàng → Hoàn thành. Đơn
             chuyển khoản: nhấn “Xác nhận đã nhận tiền” khi tiền đã về tài

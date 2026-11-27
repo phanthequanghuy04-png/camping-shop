@@ -82,9 +82,14 @@ export default function HomePage() {
           <p className="mx-auto mt-3 max-w-[560px] text-muted-foreground">
             Được đánh giá cao nhất bởi khách cắm trại.
           </p>
+        </div>
+        {/* Link "Xem tất cả" nằm bên phải, thẳng hàng với mép phải của
+            lưới sản phẩm bên dưới (Huy yêu cầu 2026-11-28 — đặt giữa
+            thì nhìn lạc, đặt phải cho gọn). */}
+        <div className="mt-4 text-right">
           <Link
             to="/shop"
-            className="mt-4 inline-block font-medium text-primary-text underline-offset-4 hover:underline focus:outline-2 focus:outline-ring"
+            className="font-medium text-primary-text underline-offset-4 hover:underline focus:outline-2 focus:outline-ring"
           >
             Xem tất cả →
           </Link>

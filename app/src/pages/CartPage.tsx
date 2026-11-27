@@ -30,7 +30,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    <main className="cart-page mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-2xl font-bold text-emerald-900 sm:text-3xl">
         Giỏ hàng ({totalQty} sản phẩm)
       </h1>
@@ -57,7 +57,7 @@ export default function CartPage() {
               {item.product ? (
                 <Link
                   to={`/product/${item.product.id}`}
-                  className="font-semibold text-gray-900 hover:text-emerald-700 hover:underline"
+                  className="cart-name font-semibold text-gray-900 hover:text-emerald-700 hover:underline"
                 >
                   {item.product.name}
                 </Link>
@@ -88,7 +88,7 @@ export default function CartPage() {
                   −
                 </button>
                 <span
-                  className="w-10 text-center font-medium"
+                  className="cart-qty w-10 text-center font-medium"
                   aria-label="Số lượng"
                 >
                   {item.quantity}
@@ -131,7 +131,7 @@ export default function CartPage() {
         </div>
         <Link
           to="/checkout"
-          className="mt-4 inline-block rounded-lg bg-emerald-700 px-6 py-3 text-center font-medium text-white hover:bg-emerald-800 sm:mt-0"
+          className="btn-white mt-4 inline-block rounded-lg bg-emerald-700 px-6 py-3 text-center font-medium text-white hover:bg-emerald-800 sm:mt-0"
         >
           Tiến hành thanh toán
         </Link>
