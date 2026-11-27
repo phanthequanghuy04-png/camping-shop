@@ -2260,3 +2260,50 @@ body.has-sticky-sheet .u450-wrap{bottom:228px}
     transition: none;
   }
 }
+
+/* ==========================================================================
+   #413 — Product dropdown (Navigation)
+   Nút "Sản phẩm" trên header: trỏ/bấm vào thì menu 8 danh mục bật ra
+   từ nút (spring .55s), chevron xoay 180°, vệt highlight trượt theo
+   mục đang trỏ, phím ↓/↑/Home/End/Esc đầy đủ, hover-intent mở 120ms /
+   đóng 240ms. Nguồn: Lucian #413, MIT.
+   Đã điều chỉnh so với bản gốc (xem ProductDropdown.tsx): root relative
+   inline-flex theo nút thật (gốc là khung demo cố định 340×300, nút
+   absolute giữa khung); panel top: calc(100% + 8px) thay cho top:66px;
+   8 danh mục thật thay cho 4 mục mẫu; màu chip dùng luật .dark thay
+   cho light-dark() inline của gốc. Mọi số đo còn lại giữ nguyên.
+   ========================================================================== */
+.u413 { position: relative; display: inline-flex; color: var(--ux-ink); }
+.u413-tr { position: relative; display: inline-flex; align-items: center; gap: 5px; height: 36px; padding: 0 12px 0 15px; border: 0; border-radius: 99px; background: var(--ux-surface); box-shadow: 0 0 0 1px var(--ux-line-2), 0 1px 2px var(--ux-shadow); font-size: 13px; font-weight: 650; color: var(--ux-ink); cursor: pointer; transition: box-shadow .2s, background-color .2s, transform .45s cubic-bezier(.34, 1.7, .5, 1); }
+.u413-tr:hover, .u413-tr[aria-expanded="true"] { background: var(--ux-surface-2); }
+.u413-tr:active { transform: scale(.96); transition: transform .1s var(--ux-ease); }
+.u413-tr svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .7; transition: transform .5s cubic-bezier(.3, 1.6, .5, 1); }
+.u413-tr[aria-expanded="true"] svg { transform: rotate(180deg); }
+.u413-tr:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: 2px; }
+
+.u413-pn { position: absolute; left: 50%; top: calc(100% + 8px); width: 272px; margin-left: -136px; padding: 6px; border-radius: 18px; background: var(--ux-surface); box-shadow: 0 0 0 1px var(--ux-line-2), 0 2px 4px -2px var(--ux-shadow), 0 26px 50px -18px var(--ux-shadow-strong); transform-origin: 50% -10px; opacity: 0; visibility: hidden; transform: translateY(-8px) scale(.9); transition: opacity .15s ease-in, transform .2s ease-in, visibility 0s .2s; z-index: 60; }
+.u413.is-open .u413-pn { opacity: 1; visibility: visible; transform: none; transition: opacity .2s var(--ux-ease), transform .55s cubic-bezier(.25, 1.45, .45, 1), visibility 0s; }
+.u413-pn::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+.u413-hl { position: absolute; left: 6px; right: 6px; top: 0; height: 52px; border-radius: 12px; background: var(--ux-surface-2); opacity: 0; transform: translateY(var(--hy, 6px)); transition: transform .4s cubic-bezier(.3, 1.35, .5, 1), opacity .2s; }
+.u413-pn.is-hl .u413-hl { opacity: 1; }
+.u413-ls { position: relative; margin: 0; padding: 0; list-style: none; }
+.u413-it { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 10px; border-radius: 12px; color: var(--ux-ink); text-decoration: none; opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .3s var(--ux-ease); }
+.u413.is-open .u413-it { opacity: 1; transform: none; transition: opacity .3s var(--ux-ease) calc(60ms + var(--i) * 35ms), transform .5s cubic-bezier(.3, 1.4, .5, 1) calc(60ms + var(--i) * 35ms); }
+.u413-it:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: -2px; }
+.u413-ic { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 10px; background: var(--c1); color: var(--c2); transition: transform .45s var(--ux-spring); }
+.u413-it.is-on .u413-ic { transform: scale(1.08) rotate(-4deg); }
+.u413-ic svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.u413-it b { display: block; font-size: 13px; font-weight: 700; letter-spacing: -.02em; color: var(--ux-ink); }
+/* Màu chữ tên mục đặt trực tiếp ở đây (gốc không đặt vì <a> đã mang
+   màu): luật .site-header a trong index.css thắng .u413-it nên tên mục
+   bị chữ kem trên nền kem, không đọc được — bắt được khi kiểm tra. */
+.u413-it small { display: block; margin-top: 2px; font-size: 11px; color: var(--ux-ink-3); }
+.u413-c1 { --c1: #EEEBFF; --c2: #6A57F2; }
+.u413-c2 { --c1: #E3F1FF; --c2: #2F7FD8; }
+.u413-c3 { --c1: #FFF1DE; --c2: #D6731E; }
+.u413-c4 { --c1: #DFF7EE; --c2: #119C72; }
+.dark .u413-c1 { --c1: rgba(139, 123, 255, .16); --c2: #B7A4FF; }
+.dark .u413-c2 { --c1: rgba(61, 139, 255, .16); --c2: #7DB4FF; }
+.dark .u413-c3 { --c1: rgba(255, 170, 80, .15); --c2: #FFB26B; }
+.dark .u413-c4 { --c1: rgba(126, 232, 192, .14); --c2: #7EE8C0; }
+@media (prefers-reduced-motion: reduce) { .u413-pn, .u413-it, .u413-hl, .u413-tr svg { transition: none !important; } }

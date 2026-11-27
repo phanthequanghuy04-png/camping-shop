@@ -97,12 +97,12 @@ export default function HeroKairn() {
               >
                 Mua sắm ngay
               </Link>
-              <a
-                href="#danh-muc"
+              <Link
+                to="/shop"
                 className="kairn-cta inline-flex min-h-12 items-center rounded-full bg-white/15 px-7 py-3 text-base font-bold text-white shadow-[inset_0_0_0_2px_rgba(255,255,255,0.85)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/25 focus:outline-2 focus:outline-offset-2 focus:outline-white"
               >
                 Xem bộ sưu tập
-              </a>
+              </Link>
             </div>
             <p
               className="kairn-in mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-white/85"
@@ -151,11 +151,11 @@ export default function HeroKairn() {
               </Link>
             ))}
 
-            {/* Vòng tròn kính: 8 danh mục — cuộn tới mục danh mục trên
-                trang chủ thay vì sang trang cửa hàng (giảm nút sang shop,
-                theo yêu cầu của Huy 2026-11-28). */}
-            <a
-              href="#danh-muc"
+            {/* Vòng tròn kính: 8 danh mục — sang cửa hàng (mục danh mục
+                trên trang chủ đã bỏ, thay bằng menu thả #413 trên
+                header — Huy yêu cầu 2026-11-28). */}
+            <Link
+              to="/shop"
               className="kairn-in kairn-tile kairn-glass-circle"
               style={{ animationDelay: '0.8s' }}
               aria-label="Xem tất cả 8 danh mục"
@@ -169,7 +169,7 @@ export default function HeroKairn() {
               <span className="text-xs font-semibold opacity-85">
                 8 danh mục đồ cắm trại
               </span>
-            </a>
+            </Link>
 
             {/* Thẻ sản phẩm bán chạy nhất */}
             {TENT && (
