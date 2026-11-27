@@ -338,6 +338,265 @@
   transform: none;
 }
 
+/* Lucian UX/UI Prompt #441 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#441
+   Product card (Commerce & Pricing) — CSS đầy đủ cho thẻ sản phẩm shop.
+   File này CHỈ chứa các luật CHƯA CÓ trong app/src/components/lucian.css.
+   Khi tích hợp: nối nội dung file này vào lucian.css, ngay sau khối
+   "#441 — Nút tim yêu thích + nút Thêm morph (Product card)".
+
+   DỰA VÀO (đã có sẵn trong lucian.css — KHÔNG lặp lại ở đây):
+   - .u441-wl (+ :active, svg, [aria-pressed], keyframes u441-heart,
+     b/is-burst/u441-burst, i/is-burst/u441-ring): tim yêu thích.
+   - .u441-add (+ :active, > span, > span + span, .is-ok và các trạng thái
+     span): morph nút Thêm. Lưu ý .u441-add.is-ok dùng background
+     var(--ux-mint) !important (xanh rừng #2d6a4f sáng / mint #6ee7b7 tối).
+   - Token --ux-* ở đầu lucian.css (ánh xạ sang --color-* của shop, tự đổi
+     theo .dark) và .ux base.
+
+   ADAPTATIONS (so với bản gốc 441.txt — ghi lại đầy đủ, khớp file TSX):
+   1. Không port .u441-sw / .u441-sws (swatch màu — sản phẩm không có biến
+      thể màu), .u441-pc .dc / s (% giảm giá + giá gạch ngang — không có dữ
+      liệu giá gốc), .u441-pr + keyframes u441-bump + ::after (bình giữ
+      nhiệt SVG — thay bằng ảnh thật), khung demo .u441 (340×300).
+   2. .u441-c rộng 100% thay vì 260px cố định (thẻ là item fluid trong
+      lưới sản phẩm); nền sáng var(--ux-surface), tối var(--ux-surface-2)
+      theo đúng cặp light-dark() của bản gốc. Thêm display:flex column để
+      nút Add dính đáy khi các thẻ trong hàng cao không đều (hành vi của
+      thẻ hiện tại); hover nâng -4px + bóng mạnh hơn (thẻ hiện tại có,
+      bản gốc không).
+   3. .u441-img giữ đúng height 150px + bo 16px + gradient radial gốc
+      (bản khai token thuần, tự đổi theo .dark qua ánh xạ --ux-*); bỏ
+      display:grid/place-items:center (chỉ để căn bình SVG gốc).
+   4. .u441-row giữ đúng flex/space-between/margin-top 12px của bản gốc;
+      margin-top:auto + padding-top:12px để hàng dính đáy (xem 2) mà vẫn
+      giữ khoảng 12px. flex-wrap:wrap là lưới an toàn (lưới shop
+      grid-cols-1 sm:2 lg:3 xl:4 — hàng đủ chỗ ở mọi khổ, không cần media
+      query đổi nút Add thành full-width).
+   5. Màu chữ giá / chip / hover tên dùng token --color-primary-text /
+      --color-primary-soft của shop (tự đổi theo .dark); sao rating dùng
+      --ux-warn thay vì hex #C68A4B hardcode của thẻ hiện tại. Chỉ còn hex
+      hardcode là 2 xanh thương hiệu #2D6A4F / #1B4332 của nút Add.
+   6. Nút Add nghỉ dùng xanh rừng #2D6A4F (hover #1B4332) như thẻ hiện tại
+      thay vì --ux-ink của bản gốc; .u441-add.is-ok đổi màu chữ sang
+      var(--ux-accent-ink) để "Đã thêm" đủ tương phản ở cả 2 chế độ
+      (trắng trên #2d6a4f sáng, chữ tối trên #6ee7b7 tối).
+   7. Focus-visible tim + Add lấy từ bản gốc, scope .u441 → .u441-c (không
+      còn khung demo .u441).
+   8. 441.txt KHÔNG có luật CSS prefers-reduced-motion — fallback giảm
+      chuyển động duy nhất của bản gốc là timeout morph 900ms trong JS
+      (đã port trong file TSX); file này không thêm luật nào ngoài gốc.
+*/
+
+/* ---------- Khung thẻ (.u441-c) ---------- */
+.u441-c {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 8px 8px 12px;
+  border-radius: 22px;
+  background: var(--ux-surface);
+  box-shadow:
+    0 0 0 1px var(--ux-line-2),
+    0 22px 44px -24px var(--ux-shadow-strong);
+  transition:
+    transform 0.25s var(--ux-ease),
+    box-shadow 0.25s var(--ux-ease);
+}
+.dark .u441-c {
+  background: var(--ux-surface-2);
+}
+.u441-c:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px var(--ux-line-2),
+    0 12px 32px -12px var(--ux-shadow-strong);
+}
+
+/* ---------- Vùng ảnh (.u441-img) — ảnh thật thay bình SVG ---------- */
+.u441-img {
+  position: relative;
+  height: 150px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: radial-gradient(
+    120% 90% at 50% 25%,
+    var(--ux-surface),
+    var(--ux-surface-2) 55%,
+    var(--ux-surface-3)
+  );
+}
+.u441-img > a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.u441-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Thân thẻ (.u441-bd) ---------- */
+.u441-bd {
+  padding: 12px 6px 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chip danh mục — giữ từ thẻ hiện tại (bg-primary-soft / text-primary-text). */
+.u441-ct {
+  display: inline-block;
+  width: fit-content;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-text);
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Tên sản phẩm — 15px/650 như bản gốc; giữ line-clamp 2 dòng của thẻ hiện tại. */
+.u441-nm {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ux-ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.u441-nm:hover {
+  color: var(--color-primary-text);
+}
+
+/* Giá — 16px/750 như bản gốc; màu xanh chữ của shop (tự đổi theo .dark). */
+.u441-pc {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.u441-pc b {
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--color-primary-text);
+}
+
+/* ---------- Hàng dưới (.u441-row): rating + tồn kho | nút Add ---------- */
+.u441-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+/* Khối trái của hàng: rating + tồn kho (thay cho cụm swatch của bản gốc). */
+.u441-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Rating — giữ hiển thị của thẻ hiện tại (sao + "x.x / 5"). */
+.u441-rt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ux-ink-2);
+}
+.u441-rt svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--ux-warn);
+}
+.u441-rt b {
+  font-weight: 650;
+  color: var(--ux-ink);
+}
+
+/* Tồn kho — giữ 3 trạng thái của thẻ hiện tại. */
+.u441-st {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ux-ink-3);
+}
+.u441-st.is-low {
+  color: var(--ux-warn);
+  font-weight: 600;
+}
+.u441-st.is-out {
+  color: var(--ux-danger);
+  font-weight: 600;
+}
+
+/* ---------- Nút Thêm (.u441-add) — phần chưa có trong lucian.css ----------
+   lucian.css đã có: position/display/transform/transition, :active,
+   > span, > span + span, .is-ok (nền --ux-mint !important). Ở đây chỉ
+   thêm kích thước/màu/chữ/icon/disabled/focus theo đúng bản gốc. */
+.u441-add {
+  height: 36px;
+  min-width: 84px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #2d6a4f;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.u441-add:hover {
+  background: #1b4332;
+}
+.u441-add:disabled {
+  cursor: not-allowed;
+  background: var(--ux-surface-2);
+  color: var(--ux-ink-3);
+}
+.u441-add svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* "Đã thêm": chữ tối trên nền mint sáng ở dark mode, trắng ở light mode. */
+.u441-add.is-ok {
+  color: var(--ux-accent-ink);
+}
+.u441-c .u441-add:focus-visible,
+.u441-c .u441-wl:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 3px;
+}
+
+/* ---------- Ẩn với mắt thường, đọc được bằng trình đọc màn hình ---------- */
+.u441-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ==========================================================================
    #442 — Ảnh bay vào giỏ + badge nảy (Add to cart)
    Bản sao ảnh 56px bay theo đường cong bezier 13 khung hình, 720ms,

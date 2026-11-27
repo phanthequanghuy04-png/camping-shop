@@ -1,4 +1,71 @@
-import { useRef, useState } from 'react'
+/* Lucian UX/UI Prompt #441 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#441
+   Product card (Commerce & Pricing) — port TOÀN BỘ sang React cho Camping Shop.
+   DROP-IN REPLACEMENT cho app/src/components/ProductCard.tsx: copy file này
+   đè lên ProductCard.tsx (giữ nguyên tên file + import tương đối bên dưới,
+   vì chúng được viết theo vị trí app/src/components/).
+
+   File này DỰA VÀO 2 khối CSS:
+   - app/src/components/lucian.css, khối "#441 — Nút tim yêu thích + nút Thêm
+     morph": toàn bộ .u441-wl (tim, nảy, 6 hạt văng, vòng lan tỏa, keyframes
+     u441-heart / u441-burst / u441-ring) và .u441-add (morph, :active,
+     > span, > span + span, .is-ok + các trạng thái span). KHÔNG lặp lại
+     các luật đó ở đây.
+   - _staging/u441-full.css (file kèm theo): khung thẻ, vùng ảnh, thân thẻ,
+     tên, giá, hàng (rating + nút Add), tồn kho, chip danh mục, sr-only.
+
+   ADAPTATIONS (so với bản gốc 441.txt — ghi lại đầy đủ):
+   1. Không có swatch màu: sản phẩm của shop không có biến thể màu (đã xác
+      lập từ đợt port #441 đầu tiên, 2026-11-27) — không port .u441-sw /
+      .u441-sws, không có logic setColor / phím mũi tên đổi màu.
+   2. Không có % giảm giá / giá gạch ngang: shop không có dữ liệu giá gốc —
+      không port .u441-pc .dc / s; chỉ hiện giá thật qua formatPrice().
+   3. Không có bình giữ nhiệt SVG / animation bump: vùng ảnh hiện ảnh thật
+      của sản phẩm (resolveImage như thẻ hiện tại); không port .u441-pr,
+      .u441-pr.is-bump, keyframes u441-bump, ::after (bóng dưới bình).
+   4. Khung demo .u441 (340×300, căn giữa) không port: thẻ là item fluid
+      trong lưới sản phẩm (grid-cols-1 sm:2 lg:3 xl:4) nên .u441-c rộng
+      100%; giữ nguyên bo 22px, padding 8px 8px 12px, bóng gốc.
+   5. Vùng ảnh giữ đúng height 150px + bo 16px + gradient nền radial gốc
+      (đổi sang token --ux-* để tự đổi theo dark mode); ảnh thật object-fit
+      cover lấp đầy vùng; bỏ display:grid/place-items:center (chỉ để căn
+      bình SVG gốc).
+   6. Giữ nguyên tên/giá theo kích thước gốc: tên 15px/650, giá 16px/750.
+      Tên giữ line-clamp 2 dòng như thẻ hiện tại (bản gốc không có clamp).
+   7. Hàng dưới (.u441-row) giữ đúng cấu trúc gốc (flex, space-between,
+      margin-top 12px): ô trái là rating + tồn kho (thay cho cụm swatch),
+      ô phải là nút Add pill 36px. Nút Add KHÔNG full-width như thẻ hiện
+      tại — đúng bản gốc (min-width 84px, padding 0 16px).
+   8. Giữ rating + tồn kho thật của thẻ hiện tại (bản gốc không có):
+      rating sao + "x.x / 5", tồn kho "Còn N sản phẩm" / "Sắp hết hàng —
+      chỉ còn N sản phẩm" / "Hết hàng"; hết hàng thì Add disabled.
+   9. Màu nút Add giữ xanh rừng #2D6A4F (hover #1B4332) như thẻ hiện tại
+      thay vì --ux-ink của bản gốc; trạng thái "Đã thêm" dùng .is-ok có
+      sẵn trong lucian.css (nền --ux-mint). Chữ "Đã thêm" ở dark mode
+      đổi sang --ux-accent-ink (luật trong u441-full.css) để đủ tương phản
+      trên nền mint sáng.
+   10. Giá + chip danh mục + hover tên dùng token --color-primary-text /
+       --color-primary-soft (token chữ/nền xanh của shop, tự đổi theo
+       .dark); sao rating dùng --ux-warn thay vì hex #C68A4B hardcode của
+       thẻ hiện tại. Không còn hex hardcode nào ngoài 2 xanh thương hiệu
+       #2D6A4F / #1B4332 của nút Add.
+   11. Giảm chuyển động: 441.txt KHÔNG có luật CSS prefers-reduced-motion
+       (chỉ có fallback JS: timeout morph 900ms thay vì 1400ms) — port
+       đúng fallback này (kèm clearTimeout + dọn timer khi unmount).
+   12. Thẻ là flex column, thân thẻ flex:1, hàng dưới margin-top:auto
+       (giữ khoảng 12px bằng padding-top) để nút Add luôn dính đáy thẻ
+       khi các thẻ trong cùng một hàng lưới cao không đều — hành vi của
+       thẻ hiện tại (mt-auto), bản gốc là thẻ đơn lẻ nên không có.
+   13. Thêm vùng live sr-only (role="status") như bản gốc để đọc thông
+       báo "Đã thêm vào giỏ" / yêu thích cho trình đọc màn hình (thẻ hiện
+       tại chỉ dùng toast).
+   14. Focus-visible cho tim + Add lấy từ bản gốc (scope .u441 → .u441-c,
+       vì không còn khung demo .u441); tim + Add vẫn là <button> có
+       aria-label / aria-pressed như thẻ hiện tại.
+   15. Giữ nguyên data-aos fade-up + data-aos-delay theo index, event
+       'add-to-cart' (dispatchAddToCart), flyToCart (#442) + mở ngăn giỏ
+       (#240) và toast như thẻ hiện tại.
+*/
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Product } from '../data/types'
 import { formatPrice, getCategoryById, resolveImage } from '../data/products'
@@ -30,25 +97,40 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   // #441 Lucian — tim yêu thích (lưu localStorage, giữ qua các lần vào web).
   const [wished, setWished] = useState(() => isWishlisted(product.id))
   const [burstKey, setBurstKey] = useState(0)
+  const [liveMessage, setLiveMessage] = useState('')
   const imgRef = useRef<HTMLImageElement>(null)
+  const addTimer = useRef<number | undefined>(undefined)
   const category = product.id_category
     ? getCategoryById(product.id_category)
     : undefined
   const outOfStock = product.quantity <= 0
 
+  // Dọn timer morph khi unmount (bản gốc chỉ clearTimeout khi bấm lại).
+  useEffect(() => () => window.clearTimeout(addTimer.current), [])
+
   const handleWishlist = () => {
     const next = toggleWishlist(product.id)
     setWished(next)
     if (next) setBurstKey((k) => k + 1)
+    setLiveMessage(next ? 'Đã lưu vào yêu thích' : 'Đã bỏ khỏi yêu thích')
     showToast(next ? 'Đã lưu vào yêu thích' : 'Đã bỏ khỏi yêu thích')
   }
 
   const handleAddToCart = () => {
     if (outOfStock) return
     addToCart(product.id, 1)
-    // #441 — nút morph thành tick "Đã thêm" nền xanh mint, 1400ms sau trở lại.
+    // #441 — nút morph thành tick "Đã thêm" nền xanh mint; bản gốc:
+    // 1400ms sau trở lại, 900ms khi bật prefers-reduced-motion.
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
     setAdded(true)
-    window.setTimeout(() => setAdded(false), 1400)
+    window.clearTimeout(addTimer.current)
+    addTimer.current = window.setTimeout(
+      () => setAdded(false),
+      reducedMotion ? 900 : 1400,
+    )
+    setLiveMessage('Đã thêm vào giỏ')
     // #442 — ảnh bay vào giỏ, xong thì mở ngăn giỏ (#240) với món mới nhấp nháy.
     flyToCart(resolveImage(product.image), imgRef.current, () =>
       openDrawer(product.id),
@@ -60,17 +142,20 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     <article
       data-aos="fade-up"
       data-aos-delay={(index % 4) * 100}
-      className="flex flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_1px_3px_rgba(27,67,50,0.08)] transition duration-250 ease-out hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(27,67,50,0.16)]"
+      className="u441-c"
     >
-      <div className="relative">
-        <Link to={`/product/${product.id}`} className="block focus:outline-2 focus:outline-ring">
+      <div className="u441-img">
+        <Link
+          to={`/product/${product.id}`}
+          aria-label={product.name}
+          className="focus:outline-2 focus:outline-ring"
+        >
           <img
             ref={imgRef}
             src={resolveImage(product.image)}
             alt={product.name}
             loading="lazy"
             decoding="async"
-            className="aspect-[4/3] w-full object-cover"
           />
         </Link>
         {/* #441 — tim yêu thích: bấm thì tim đầy + nảy, 6 hạt văng ra + vòng lan tỏa. */}
@@ -94,67 +179,76 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        {category && (
-          <span className="w-fit rounded-lg bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary-text">
-            {category.name}
-          </span>
-        )}
+      <div className="u441-bd">
+        {category && <span className="u441-ct">{category.name}</span>}
 
-        <Link to={`/product/${product.id}`} className="focus:outline-2 focus:outline-ring">
-          <h3 className="line-clamp-2 font-[Be_Vietnam_Pro,Inter,sans-serif] text-lg leading-snug font-bold text-foreground hover:text-primary-text">
-            {product.name}
-          </h3>
+        <Link
+          to={`/product/${product.id}`}
+          className="focus:outline-2 focus:outline-ring"
+        >
+          <h3 className="u441-nm">{product.name}</h3>
         </Link>
 
-        <p className="flex items-center gap-1 text-sm text-muted-foreground" aria-label={`Đánh giá ${product.rating} trên 5`}>
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4 text-[#C68A4B]">
-            <path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9L10 1.5z" />
-          </svg>
-          <span className="font-semibold text-foreground">{product.rating.toFixed(1)}</span>
-          <span>/ 5</span>
-        </p>
+        <div className="u441-pc">
+          <b>{formatPrice(product.price)}</b>
+        </div>
 
-        <p className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-xl font-bold text-primary-text">
-          {formatPrice(product.price)}
-        </p>
+        <div className="u441-row">
+          <div className="u441-meta">
+            <p
+              className="u441-rt"
+              aria-label={`Đánh giá ${product.rating} trên 5`}
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9L10 1.5z" />
+              </svg>
+              <b>{product.rating.toFixed(1)}</b>
+              <span>/ 5</span>
+            </p>
+            <p
+              className={`u441-st${outOfStock ? ' is-out' : product.quantity <= 5 ? ' is-low' : ''}`}
+            >
+              {outOfStock
+                ? 'Hết hàng'
+                : product.quantity <= 5
+                  ? `Sắp hết hàng — chỉ còn ${product.quantity} sản phẩm`
+                  : `Còn ${product.quantity} sản phẩm`}
+            </p>
+          </div>
 
-        <p className="text-sm text-muted-foreground">
-          {outOfStock ? (
-            <span className="font-medium text-destructive">Hết hàng</span>
-          ) : product.quantity <= 5 ? (
-            <span className="font-medium text-warning">Sắp hết hàng — chỉ còn {product.quantity} sản phẩm</span>
-          ) : (
-            <>Còn {product.quantity} sản phẩm</>
-          )}
-        </p>
-
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          disabled={outOfStock}
-          className={`u441-add${added ? ' is-ok' : ''} mt-auto min-h-11 w-full cursor-pointer place-items-center rounded-xl bg-[#2D6A4F] px-4 py-2.5 font-medium text-white transition duration-250 ease-out hover:bg-[#1B4332] focus:outline-2 focus:outline-offset-2 focus:outline-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground`}
-        >
-          {outOfStock ? (
-            <span>Hết hàng</span>
-          ) : (
-            <>
-              <span>
-                <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
-                  <path d="M12 6v12M6 12h12" />
-                </svg>
-                Thêm vào giỏ
-              </span>
-              <span aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m5 12.5 4.5 4.5L19 7.5" />
-                </svg>
-                Đã thêm
-              </span>
-            </>
-          )}
-        </button>
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={outOfStock}
+            className={`u441-add${added ? ' is-ok' : ''}`}
+            aria-label={outOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
+          >
+            {outOfStock ? (
+              <span>Hết hàng</span>
+            ) : (
+              <>
+                <span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 6v12M6 12h12" />
+                  </svg>
+                  Thêm vào giỏ
+                </span>
+                <span aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                  </svg>
+                  Đã thêm
+                </span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Vùng live của bản gốc (role="status") — đọc thông báo thêm giỏ / yêu thích. */}
+      <p className="u441-sr" role="status">
+        {liveMessage}
+      </p>
     </article>
   )
 }
