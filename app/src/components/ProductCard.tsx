@@ -60,10 +60,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     <article
       data-aos="fade-up"
       data-aos-delay={(index % 4) * 100}
-      className="flex flex-col overflow-hidden rounded-[20px] border border-[#DDD5BD] bg-white shadow-[0_1px_3px_rgba(27,67,50,0.08)] transition duration-250 ease-out hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(27,67,50,0.16)]"
+      className="flex flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_1px_3px_rgba(27,67,50,0.08)] transition duration-250 ease-out hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(27,67,50,0.16)]"
     >
       <div className="relative">
-        <Link to={`/product/${product.id}`} className="block focus:outline-2 focus:outline-[#2D6A4F]">
+        <Link to={`/product/${product.id}`} className="block focus:outline-2 focus:outline-ring">
           <img
             ref={imgRef}
             src={resolveImage(product.image)}
@@ -95,34 +95,34 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         {category && (
-          <span className="w-fit rounded-lg bg-[#D8F3DC] px-2 py-0.5 text-xs font-medium text-[#1B4332]">
+          <span className="w-fit rounded-lg bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary-text">
             {category.name}
           </span>
         )}
 
-        <Link to={`/product/${product.id}`} className="focus:outline-2 focus:outline-[#2D6A4F]">
-          <h3 className="line-clamp-2 font-[Be_Vietnam_Pro,Inter,sans-serif] text-lg leading-snug font-bold text-[#1C2B1F] hover:text-[#2D6A4F]">
+        <Link to={`/product/${product.id}`} className="focus:outline-2 focus:outline-ring">
+          <h3 className="line-clamp-2 font-[Be_Vietnam_Pro,Inter,sans-serif] text-lg leading-snug font-bold text-foreground hover:text-primary-text">
             {product.name}
           </h3>
         </Link>
 
-        <p className="flex items-center gap-1 text-sm text-[#5A6B5A]" aria-label={`Đánh giá ${product.rating} trên 5`}>
+        <p className="flex items-center gap-1 text-sm text-muted-foreground" aria-label={`Đánh giá ${product.rating} trên 5`}>
           <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4 text-[#C68A4B]">
             <path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9L10 1.5z" />
           </svg>
-          <span className="font-semibold text-[#1C2B1F]">{product.rating.toFixed(1)}</span>
+          <span className="font-semibold text-foreground">{product.rating.toFixed(1)}</span>
           <span>/ 5</span>
         </p>
 
-        <p className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-xl font-bold text-[#2D6A4F]">
+        <p className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-xl font-bold text-primary-text">
           {formatPrice(product.price)}
         </p>
 
-        <p className="text-sm text-[#5A6B5A]">
+        <p className="text-sm text-muted-foreground">
           {outOfStock ? (
-            <span className="font-medium text-[#B91C1C]">Hết hàng</span>
+            <span className="font-medium text-destructive">Hết hàng</span>
           ) : product.quantity <= 5 ? (
-            <span className="font-medium text-[#B45309]">Sắp hết hàng — chỉ còn {product.quantity} sản phẩm</span>
+            <span className="font-medium text-warning">Sắp hết hàng — chỉ còn {product.quantity} sản phẩm</span>
           ) : (
             <>Còn {product.quantity} sản phẩm</>
           )}
@@ -132,7 +132,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           type="button"
           onClick={handleAddToCart}
           disabled={outOfStock}
-          className={`u441-add${added ? ' is-ok' : ''} mt-auto min-h-11 w-full cursor-pointer place-items-center rounded-xl bg-[#2D6A4F] px-4 py-2.5 font-medium text-white transition duration-250 ease-out hover:bg-[#1B4332] focus:outline-2 focus:outline-offset-2 focus:outline-[#2D6A4F] disabled:cursor-not-allowed disabled:bg-[#EFE9D8] disabled:text-[#5A6B5A]`}
+          className={`u441-add${added ? ' is-ok' : ''} mt-auto min-h-11 w-full cursor-pointer place-items-center rounded-xl bg-[#2D6A4F] px-4 py-2.5 font-medium text-white transition duration-250 ease-out hover:bg-[#1B4332] focus:outline-2 focus:outline-offset-2 focus:outline-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground`}
         >
           {outOfStock ? (
             <span>Hết hàng</span>
