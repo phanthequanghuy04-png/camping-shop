@@ -5,15 +5,18 @@ import {
   products as baseProducts,
 } from '../data/products'
 import type { Order, OrderStatus, Product } from '../data/types'
-import { getAdminOrdersApi } from '../lib/api'
+import { getAdminOrdersApi, updateAdminOrderApi } from '../lib/api'
 
 /**
  * Trang quản trị — Camping Shop.
  *
  * Đơn hàng: thử lấy từ API (GET /api/admin/orders, cần token admin)
  * khi đã đăng nhập admin; API lỗi/chưa chạy thì fallback đơn trong
- * localStorage / đơn mẫu như trước. Các thao tác sửa sản phẩm / đổi
- * trạng thái đơn vẫn lưu localStorage (chưa có endpoint admin tương ứng).
+ * localStorage / đơn mẫu như trước. Đổi trạng thái đơn, đánh dấu đã
+ * nhận tiền và nhập mã vận đơn gọi PATCH /api/admin/orders/:id khi
+ * API chạy; API lỗi thì chỉ đổi trong phiên này (lưu localStorage).
+ * Các thao tác sửa sản phẩm vẫn lưu localStorage (chưa có endpoint
+ * admin tương ứng).
  *
  * Kiểm tra quyền — chỉ tài khoản role 'admin' mới được vào:
  * - Đọc localStorage key 'camping-session' (do trang Đăng nhập ghi).
@@ -249,6 +252,11 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>(() => {
     return readStoredOrders() ?? SAMPLE_ORDERS
   })
+  // Mã vận đơn admin đang gõ (theo từng đơn) + đơn đang lưu qua API.
+  const [trackingDrafts, setTrackingDrafts] = useState<Record<number, string>>(
+    {},
+  )
+  const [savingOrderId, setSavingOrderId] = useState<number | null>(null)
   const [usingSampleOrders, setUsingSampleOrders] = useState<boolean>(
     () => readStoredOrders() === null,
   )
@@ -455,19 +463,65 @@ export default function AdminPage() {
     setNewImage('')
   }
 
-  function advanceOrderStatus(order: Order) {
-    const nextStatus = NEXT_STATUS[order.status]
-    if (!nextStatus) return
+  /** Đổi trạng thái đơn qua API (fallback local khi API chưa chạy). */
+  async function patchOrder(
+    order: Order,
+    patch: {
+      status?: OrderStatus
+      payment_status?: 'unpaid' | 'paid'
+      tracking_code?: string | null
+    },
+  ): Promise<void> {
     const next = orders.map((o) =>
-      o.id === order.id ? { ...o, status: nextStatus } : o,
+      o.id === order.id ? { ...o, ...patch } : o,
     )
-    setOrders(next)
-    setUsingSampleOrders(false)
+    if (!apiOrdersLoaded) {
+      setOrders(next)
+      setUsingSampleOrders(false)
+      persistOrders(next)
+      return
+    }
+    setSavingOrderId(order.id)
+    try {
+      const updated = await updateAdminOrderApi(order.id, patch)
+      const { items: _items, ...rest } = updated
+      setOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? (rest as Order) : o)),
+      )
+      setUsingSampleOrders(false)
+    } catch {
+      // API lỗi giữa chừng: vẫn đổi trong phiên này để admin làm tiếp.
+      setOrders(next)
+      setUsingSampleOrders(false)
+      persistOrders(next)
+    } finally {
+      setSavingOrderId(null)
+    }
+  }
+
+  function persistOrders(next: Order[]): void {
     try {
       localStorage.setItem(ORDERS_KEY, JSON.stringify(next))
     } catch {
       // Vẫn hiện trạng thái mới trong phiên này.
     }
+  }
+
+  function advanceOrderStatus(order: Order) {
+    const nextStatus = NEXT_STATUS[order.status]
+    if (!nextStatus) return
+    void patchOrder(order, { status: nextStatus })
+  }
+
+  /** Khách chuyển khoản xong: admin xác nhận đã nhận tiền. */
+  function markOrderPaid(order: Order) {
+    void patchOrder(order, { payment_status: 'paid' })
+  }
+
+  /** Lưu mã vận đơn admin vừa nhập. */
+  function saveTrackingCode(order: Order) {
+    const code = (trackingDrafts[order.id] ?? order.tracking_code ?? '').trim()
+    void patchOrder(order, { tracking_code: code || null })
   }
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
@@ -859,7 +913,7 @@ export default function AdminPage() {
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-              <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+              <table className="w-full min-w-[980px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-gray-700">
                     <th className="px-4 py-3 font-semibold">Mã đơn</th>
@@ -868,13 +922,21 @@ export default function AdminPage() {
                     <th className="px-4 py-3 text-right font-semibold">
                       Tổng tiền
                     </th>
+                    <th className="px-4 py-3 font-semibold">Thanh toán</th>
                     <th className="px-4 py-3 font-semibold">Trạng thái</th>
+                    <th className="px-4 py-3 font-semibold">Mã vận đơn</th>
                     <th className="px-4 py-3 font-semibold">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((order) => {
                     const nextStatus = NEXT_STATUS[order.status]
+                    const paymentMethod =
+                      order.payment_method ?? 'cod'
+                    const isPaid = order.payment_status === 'paid'
+                    const trackingValue =
+                      trackingDrafts[order.id] ?? order.tracking_code ?? ''
+                    const saving = savingOrderId === order.id
                     return (
                       <tr
                         key={order.id}
@@ -902,6 +964,30 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-right font-medium text-gray-900">
                           {formatVnd(order.total)}
                         </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-gray-700">
+                          {paymentMethod === 'bank_transfer'
+                            ? 'Chuyển khoản'
+                            : 'COD'}
+                          <span
+                            className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                              isPaid
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {isPaid ? 'Đã nhận tiền' : 'Chưa thanh toán'}
+                          </span>
+                          {paymentMethod === 'bank_transfer' && !isPaid && (
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => markOrderPaid(order)}
+                              className="mt-1 block rounded-md border border-emerald-600 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                            >
+                              Xác nhận đã nhận tiền
+                            </button>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${ORDER_STATUS_STYLES[order.status]}`}
@@ -910,11 +996,38 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="text"
+                              value={trackingValue}
+                              disabled={saving}
+                              onChange={(e) =>
+                                setTrackingDrafts((prev) => ({
+                                  ...prev,
+                                  [order.id]: e.target.value,
+                                }))
+                              }
+                              placeholder="VD: GHN-123456"
+                              aria-label={`Mã vận đơn cho đơn #${order.id}`}
+                              className="w-28 rounded-md border border-gray-300 px-2 py-1 text-xs focus:border-emerald-600 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => saveTrackingCode(order)}
+                              className="rounded-md bg-gray-700 px-2 py-1 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                            >
+                              Lưu
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
                           {nextStatus ? (
                             <button
                               type="button"
+                              disabled={saving}
                               onClick={() => advanceOrderStatus(order)}
-                              className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white hover:bg-emerald-800"
+                              className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white hover:bg-emerald-800 disabled:opacity-50"
                             >
                               → {ORDER_STATUS_LABELS[nextStatus]}
                             </button>
@@ -931,8 +1044,12 @@ export default function AdminPage() {
           )}
           <p className="mt-3 text-xs text-gray-500">
             Nhấn nút ở cột “Thao tác” để chuyển trạng thái đơn theo vòng:{' '}
-            Chờ xử lý → Đã thanh toán → Đang giao hàng → Hoàn thành. Thay
-            đổi được lưu vào localStorage key <code>camping-orders</code>.
+            Chờ xử lý → Đã thanh toán → Đang giao hàng → Hoàn thành. Đơn
+            chuyển khoản: nhấn “Xác nhận đã nhận tiền” khi tiền đã về tài
+            khoản. Nhập mã vận đơn (GHN/GHTK/Viettel Post) rồi nhấn “Lưu” —
+            khách sẽ thấy mã này ở trang Đơn hàng của tôi. Thay đổi được
+            lưu qua API khi backend chạy, nếu không thì lưu vào
+            localStorage key <code>camping-orders</code>.
           </p>
         </section>
       )}

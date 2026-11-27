@@ -7,6 +7,16 @@ import { createOrderApi } from '../lib/api'
 import CheckoutSteps from '../components/CheckoutSteps'
 import CouponBox from '../components/CouponBox'
 import { computeDiscount, type Coupon } from '../lib/coupons'
+import {
+  calcShippingFee,
+  estimateDeliveryDate,
+  estimateDeliveryISO,
+  PAYMENT_METHODS,
+  SHIPPING_REGIONS,
+  type PaymentMethod,
+  type ShippingRegion,
+} from '../lib/pricing'
+import { getBankConfig, vietQrUrl } from '../lib/bankTransfer'
 
 /** Key lưu đơn hàng trong localStorage. */
 export const ORDERS_STORAGE_KEY = 'camping-orders'
@@ -14,8 +24,7 @@ export const ORDERS_STORAGE_KEY = 'camping-orders'
 /** Đơn hàng đã lưu: khớp kiểu Order trong types.ts + chi tiết items. */
 export interface StoredOrder extends Order {
   items: OrderItem[]
-  /** Mã giảm giá đã áp (nếu có) + số tiền đã giảm — chỉ lưu local. */
-  coupon_code?: string
+  /** Số tiền đã giảm — chỉ lưu local (trùng discount_amount của Order). */
   discount?: number
 }
 
@@ -45,7 +54,14 @@ export default function CheckoutPage() {
   const discount = appliedCoupon
     ? computeDiscount(appliedCoupon, totalPrice)
     : 0
-  const payable = totalPrice - discount
+  // Thanh toán + giao hàng: phí ship tính trên tạm tính (khớp server),
+  // miễn phí khi tạm tính >= 500.000₫ (xem lib/pricing.ts).
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod')
+  const [shippingRegion, setShippingRegion] =
+    useState<ShippingRegion>('other')
+  const shippingFee = calcShippingFee(totalPrice, shippingRegion)
+  const deliveryDateText = estimateDeliveryDate(shippingRegion)
+  const payable = totalPrice - discount + shippingFee
 
   const [customerName, setCustomerName] = useState(sessionUser?.name ?? '')
   const [address, setAddress] = useState('')
@@ -60,16 +76,20 @@ export default function CheckoutPage() {
 
   // Màn hình thành công kiểu SweetAlert (chỉ dùng div + Tailwind, không cài thêm lib).
   if (placedOrder) {
-    // Đơn local đã lưu tổng sau giảm; đơn API thì server tính tổng chưa
-    // giảm nên trừ mã giảm giá ở đây để ra số tiền cần thanh toán.
+    // Server đã tính sẵn toàn bộ (tạm tính, giảm giá, phí ship, tổng cuối)
+    // khi đơn qua API; đơn local fallback cũng lưu đủ các trường này lúc tạo.
     const successSubtotal =
-      orderSource === 'local'
-        ? placedOrder.total + orderDiscount
-        : placedOrder.total
-    const successPayable =
-      orderSource === 'local'
-        ? placedOrder.total
-        : placedOrder.total - orderDiscount
+      placedOrder.subtotal ?? placedOrder.total + orderDiscount
+    const successDiscount =
+      placedOrder.discount_amount ?? orderDiscount
+    const successShipping = placedOrder.shipping_fee ?? 0
+    const successPayable = placedOrder.total
+    const successPaymentMethod = placedOrder.payment_method ?? 'cod'
+    const successDelivery = placedOrder.estimated_delivery
+      ? new Date(placedOrder.estimated_delivery).toLocaleDateString('vi-VN')
+      : null
+    const bankConfig =
+      successPaymentMethod === 'bank_transfer' ? getBankConfig() : null
     return (
       <main className="mx-auto max-w-lg px-4 py-16 text-center">
         <div className="rounded-2xl border border-emerald-200 bg-white p-8 shadow-lg">
@@ -92,25 +112,43 @@ export default function CheckoutPage() {
               #{placedOrder.id}
             </span>
             <br />
-            {orderDiscount > 0 && (
+            Tạm tính:{' '}
+            <span className="font-bold text-emerald-800">
+              {formatVND(successSubtotal)}
+            </span>
+            <br />
+            {successDiscount > 0 && (
               <>
-                Tạm tính:{' '}
+                Giảm giá ({orderCoupon?.code ?? placedOrder.coupon_code ?? 'mã giảm giá'}):{' '}
                 <span className="font-bold text-emerald-800">
-                  {formatVND(successSubtotal)}
-                </span>
-                <br />
-                Giảm giá ({orderCoupon?.code ?? 'mã giảm giá'}):{' '}
-                <span className="font-bold text-emerald-800">
-                  −{formatVND(orderDiscount)}
+                  −{formatVND(successDiscount)}
                 </span>
                 <br />
               </>
             )}
+            Phí vận chuyển:{' '}
+            <span className="font-bold text-emerald-800">
+              {successShipping === 0
+                ? 'Miễn phí'
+                : formatVND(successShipping)}
+            </span>
+            <br />
             Tổng tiền:{' '}
             <span className="font-bold text-emerald-800">
               {formatVND(successPayable)}
             </span>
             <br />
+            Thanh toán:{' '}
+            {successPaymentMethod === 'bank_transfer'
+              ? 'Chuyển khoản ngân hàng / VietQR'
+              : 'Thanh toán khi nhận hàng (COD)'}
+            <br />
+            {successDelivery && (
+              <>
+                Giao dự kiến: {successDelivery}
+                <br />
+              </>
+            )}
             Trạng thái: Chờ xử lý
             <br />
             <span className="text-xs text-gray-500">
@@ -119,6 +157,58 @@ export default function CheckoutPage() {
                 : 'API chưa chạy nên đơn tạm lưu trên trình duyệt này.'}
             </span>
           </p>
+          {successPaymentMethod === 'bank_transfer' && (
+            <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-left text-sm text-gray-700">
+              {bankConfig ? (
+                <>
+                  <p className="font-semibold text-sky-900">
+                    Chuyển khoản để shop đóng gói sớm:
+                  </p>
+                  <img
+                    src={vietQrUrl(
+                      bankConfig,
+                      successPayable,
+                      placedOrder.id,
+                    )}
+                    alt="Mã VietQR thanh toán đơn hàng"
+                    className="mx-auto mt-3 h-48 w-48 rounded-lg bg-white p-2"
+                  />
+                  <p className="mt-3">
+                    Ngân hàng: {bankConfig.bankName}
+                    <br />
+                    Số tài khoản:{' '}
+                    <span className="font-bold">{bankConfig.accountNumber}</span>
+                    <br />
+                    Chủ tài khoản: {bankConfig.accountName}
+                    <br />
+                    Số tiền:{' '}
+                    <span className="font-bold">
+                      {formatVND(successPayable)}
+                    </span>
+                    <br />
+                    Nội dung: CampingShop DH{placedOrder.id}
+                  </p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Quét mã bằng app ngân hàng bất kỳ. Shop xác nhận tiền
+                    về rồi mới giao hàng.
+                  </p>
+                </>
+              ) : (
+                <p>
+                  Bạn đã chọn chuyển khoản. Shop sẽ liên hệ qua số{' '}
+                  {placedOrder.phone} để gửi thông tin chuyển khoản và xác
+                  nhận đơn hàng.
+                </p>
+              )}
+            </div>
+          )}
+          {successPaymentMethod === 'cod' && (
+            <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-left text-sm text-gray-700">
+              Bạn đã chọn thanh toán khi nhận hàng. Vui lòng chuẩn bị đủ{' '}
+              <span className="font-bold">{formatVND(successPayable)}</span>{' '}
+              và kiểm tra hàng trước khi trả tiền.
+            </p>
+          )}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               to="/shop"
@@ -182,8 +272,9 @@ export default function CheckoutPage() {
 
     // Thử tạo đơn qua API trước (trừ tồn kho + xóa giỏ phía server).
     // API lỗi (chưa chạy / hết hàng...) -> fallback lưu localStorage như trước.
-    // Mã giảm giá gửi kèm coupon_code (server hiện chưa tính giảm giá —
-    // xem DEPLOY.md; màn hình thành công trừ mã ở phía client).
+    // Server tự tính giảm giá + phí ship + tổng cuối (không tin con số
+    // client gửi lên); client chỉ gửi mã giảm giá, cách thanh toán và
+    // khu vực giao hàng.
     try {
       const created = await createOrderApi({
         user_id: sessionUser?.id ?? null,
@@ -191,6 +282,8 @@ export default function CheckoutPage() {
         phone: phoneDigits,
         address: addr,
         coupon_code: appliedCoupon?.code,
+        payment_method: paymentMethod,
+        shipping_region: shippingRegion,
         items: detailedItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -227,13 +320,22 @@ export default function CheckoutPage() {
     const order: StoredOrder = {
       id: orderId,
       user_id: sessionUser?.id ?? null,
+      subtotal: totalPrice,
+      discount_amount: discount,
+      coupon_code: appliedCoupon?.code ?? null,
+      shipping_fee: shippingFee,
+      shipping_method: 'standard',
+      shipping_region: shippingRegion,
+      payment_method: paymentMethod,
+      payment_status: 'unpaid',
+      tracking_code: null,
+      estimated_delivery: estimateDeliveryISO(shippingRegion),
       total: payable,
       status: 'pending' as OrderStatus,
       address: addr,
       phone: phoneDigits,
       customer_name: name,
       created_at: new Date().toISOString(),
-      coupon_code: appliedCoupon?.code,
       discount,
       items: detailedItems.map((item, index) => ({
         id: orderId * 1000 + index,
@@ -347,6 +449,64 @@ export default function CheckoutPage() {
             </span>
           </label>
 
+          <label className="mt-4 block">
+            <span className="text-sm font-medium text-gray-700">
+              Khu vực giao hàng <span className="text-red-600">*</span>
+            </span>
+            <select
+              value={shippingRegion}
+              onChange={(e) =>
+                setShippingRegion(e.target.value as ShippingRegion)
+              }
+              className={`${inputClass} mt-1`}
+            >
+              {SHIPPING_REGIONS.map((region) => (
+                <option key={region.value} value={region.value}>
+                  {region.label} — phí {formatVND(region.fee)} · giao{' '}
+                  {region.days}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-xs text-gray-500">
+              Miễn phí vận chuyển cho đơn từ 500.000₫.
+            </span>
+          </label>
+
+          <fieldset className="mt-4">
+            <legend className="text-sm font-medium text-gray-700">
+              Phương thức thanh toán <span className="text-red-600">*</span>
+            </legend>
+            <div className="mt-2 space-y-2">
+              {PAYMENT_METHODS.map((method) => (
+                <label
+                  key={method.value}
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 ${
+                    paymentMethod === method.value
+                      ? 'border-emerald-600 bg-emerald-50'
+                      : 'border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="payment-method"
+                    value={method.value}
+                    checked={paymentMethod === method.value}
+                    onChange={() => setPaymentMethod(method.value)}
+                    className="mt-1 accent-emerald-700"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-gray-900">
+                      {method.label}
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      {method.note}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
           <button
             type="submit"
             className="mt-6 w-full rounded-lg bg-emerald-700 px-5 py-3 font-medium text-white hover:bg-emerald-800"
@@ -398,12 +558,24 @@ export default function CheckoutPage() {
                 <span>−{formatVND(discount)}</span>
               </p>
             )}
+            <p className="mt-2 flex justify-between text-sm text-gray-600">
+              <span>Phí vận chuyển</span>
+              <span>
+                {shippingFee === 0 ? 'Miễn phí' : formatVND(shippingFee)}
+              </span>
+            </p>
+            <p className="mt-2 flex justify-between text-sm text-gray-600">
+              <span>Giao dự kiến</span>
+              <span>{deliveryDateText}</span>
+            </p>
             <p className="mt-2 flex justify-between text-base font-bold text-emerald-800">
               <span>Tổng tiền</span>
               <span>{formatVND(payable)}</span>
             </p>
             <p className="mt-1 text-xs text-gray-500">
-              Thanh toán khi nhận hàng (COD).
+              {paymentMethod === 'bank_transfer'
+                ? 'Chuyển khoản ngân hàng / VietQR — quét mã sau khi đặt hàng.'
+                : 'Thanh toán khi nhận hàng (COD).'}
             </p>
           </div>
           <Link

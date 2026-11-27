@@ -1,13 +1,15 @@
 /**
  * Trang Đơn hàng của tôi — liệt kê các đơn đã đặt bằng tài khoản đang
- * đăng nhập (lưu ở localStorage `camping-orders` khi API chưa chạy).
+ * đăng nhập. Ưu tiên lấy từ API (GET /api/orders?user_id=) khi backend
+ * chạy; API lỗi thì đọc localStorage `camping-orders` như trước.
  * Đơn đặt lúc chưa đăng nhập (user_id null) không gắn với tài khoản nào
  * nên không hiện ở đây.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getSessionUser } from '../data/users'
 import { formatVND } from '../context/CartContext'
+import { getMyOrdersApi } from '../lib/api'
 
 /** Key lưu đơn hàng trong localStorage (xem CheckoutPage). */
 const ORDERS_STORAGE_KEY = 'camping-orders'
@@ -19,6 +21,14 @@ interface LocalOrder {
   status: string
   created_at: string
   items: Array<{ quantity: number }>
+  subtotal?: number
+  discount_amount?: number
+  coupon_code?: string | null
+  shipping_fee?: number
+  payment_method?: 'cod' | 'bank_transfer'
+  payment_status?: 'unpaid' | 'paid'
+  tracking_code?: string | null
+  estimated_delivery?: string | null
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -27,6 +37,17 @@ const STATUS_LABELS: Record<string, string> = {
   shipped: 'Đang giao hàng',
   done: 'Hoàn tất',
   cancelled: 'Đã hủy',
+}
+
+const PAYMENT_LABELS: Record<string, string> = {
+  cod: 'Thanh toán khi nhận hàng (COD)',
+  bank_transfer: 'Chuyển khoản / VietQR',
+}
+
+function formatDeliveryDate(value: string | null | undefined): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString('vi-VN')
 }
 
 function loadOrders(): LocalOrder[] {
@@ -42,7 +63,35 @@ function loadOrders(): LocalOrder[] {
 
 export default function OrdersPage() {
   const sessionUser = getSessionUser()
-  const [orders] = useState<LocalOrder[]>(loadOrders)
+  const [orders, setOrders] = useState<LocalOrder[]>(() => loadOrders())
+  const [fromApi, setFromApi] = useState(false)
+
+  // Khi backend chạy, đơn đặt qua API mới là nguồn đúng (đơn lưu local
+  // chỉ là bản dự phòng lúc API chưa chạy). Lấy từ API, lỗi thì giữ
+  // danh sách local đã nạp sẵn.
+  useEffect(() => {
+    if (!sessionUser) return
+    let cancelled = false
+    getMyOrdersApi(sessionUser.id)
+      .then((apiOrders) => {
+        if (cancelled) return
+        setOrders(
+          apiOrders.map((order) => ({
+            ...order,
+            items: order.items.map((item) => ({
+              quantity: item.quantity,
+            })),
+          })),
+        )
+        setFromApi(true)
+      })
+      .catch(() => {
+        // API chưa chạy: giữ danh sách local.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sessionUser])
 
   if (!sessionUser) {
     return (
@@ -74,6 +123,9 @@ export default function OrdersPage() {
         {mine.length === 0
           ? 'Bạn chưa có đơn hàng nào.'
           : `${mine.length} đơn hàng`}
+        {fromApi && mine.length > 0 && (
+          <span className="text-gray-500"> · lấy từ hệ thống</span>
+        )}
       </p>
 
       {mine.length === 0 ? (
@@ -95,6 +147,10 @@ export default function OrdersPage() {
               (sum, item) => sum + (item.quantity ?? 0),
               0,
             )
+            const deliveryDate = formatDeliveryDate(order.estimated_delivery)
+            const paymentLabel =
+              PAYMENT_LABELS[order.payment_method ?? 'cod'] ??
+              'Thanh toán khi nhận hàng (COD)'
             return (
               <li
                 key={order.id}
@@ -108,6 +164,31 @@ export default function OrdersPage() {
                     {new Date(order.created_at).toLocaleDateString('vi-VN')}{' '}
                     · {itemCount} sản phẩm
                   </p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {paymentLabel}
+                    {order.payment_status === 'paid'
+                      ? ' · Đã thanh toán'
+                      : ' · Chưa thanh toán'}
+                    {order.tracking_code && (
+                      <> · Mã vận đơn: {order.tracking_code}</>
+                    )}
+                    {deliveryDate && <> · Giao dự kiến: {deliveryDate}</>}
+                  </p>
+                  {(order.subtotal !== undefined ||
+                    (order.discount_amount ?? 0) > 0 ||
+                    (order.shipping_fee ?? 0) > 0) && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      Tạm tính{' '}
+                      {formatVND(order.subtotal ?? order.total)}
+                      {(order.discount_amount ?? 0) > 0 && (
+                        <> · Giảm giá −{formatVND(order.discount_amount ?? 0)}</>
+                      )}
+                      {' · '}Phí ship{' '}
+                      {(order.shipping_fee ?? 0) === 0
+                        ? 'miễn phí'
+                        : formatVND(order.shipping_fee ?? 0)}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800">
