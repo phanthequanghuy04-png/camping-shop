@@ -163,7 +163,7 @@ export default function ShopPage() {
   }, [categoryId, allCategories])
 
   return (
-    <main className="bg-[#FAF6EC] text-[#1C2B1F]">
+    <main className="shop-page bg-[#FAF6EC] text-[#1C2B1F]">
       <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 md:py-12">
         <h1
           data-aos="fade-up"

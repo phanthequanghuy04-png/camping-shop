@@ -61,30 +61,30 @@ export default function HomePage() {
           HeroIllustrated (tranh SVG) tạm không dùng — file vẫn còn. */}
       <HeroKairn />
 
-      {/* Sản phẩm nổi bật */}
-      <section className="cv-feat mx-auto max-w-[1200px] px-4 pb-16 sm:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            {/* Tiêu đề dùng fade (chỉ mờ dần) thay vì fade-up: fade-up
-                trượt tiêu đề từ dưới lên nên giữa hiệu ứng nó chồng
-                lên dòng mô tả bên dưới trên điện thoại (sửa 2026-11-27).
-                Các thẻ sản phẩm bên dưới vẫn giữ fade-up như cũ. */}
-            <p className="home-eyebrow text-xs font-bold uppercase">
-              Được yêu thích nhất
-            </p>
-            <h2
-              data-aos="fade"
-              className="mt-2 font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-foreground"
-            >
-              Sản phẩm nổi bật
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Được đánh giá cao nhất bởi khách cắm trại.
-            </p>
-          </div>
+      {/* Sản phẩm nổi bật — tiêu đề căn giữa như mục Combo/Đánh giá
+          (trước đây lệch trái, link "Xem tất cả" nằm lệch phải —
+          Huy yêu cầu chỉnh lại bố cục 2026-11-28). */}
+      <section className="cv-feat mx-auto max-w-[1200px] px-4 pt-14 pb-16 sm:px-6 md:pt-16">
+        <div className="text-center">
+          {/* Tiêu đề dùng fade (chỉ mờ dần) thay vì fade-up: fade-up
+              trượt tiêu đề từ dưới lên nên giữa hiệu ứng nó chồng
+              lên dòng mô tả bên dưới trên điện thoại (sửa 2026-11-27).
+              Các thẻ sản phẩm bên dưới vẫn giữ fade-up như cũ. */}
+          <p className="home-eyebrow text-xs font-bold uppercase">
+            Được yêu thích nhất
+          </p>
+          <h2
+            data-aos="fade"
+            className="mt-2 font-[Be_Vietnam_Pro,Inter,sans-serif] text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl"
+          >
+            Sản phẩm nổi bật
+          </h2>
+          <p className="mx-auto mt-3 max-w-[560px] text-muted-foreground">
+            Được đánh giá cao nhất bởi khách cắm trại.
+          </p>
           <Link
             to="/shop"
-            className="font-medium text-primary-text underline-offset-4 hover:underline focus:outline-2 focus:outline-ring"
+            className="mt-4 inline-block font-medium text-primary-text underline-offset-4 hover:underline focus:outline-2 focus:outline-ring"
           >
             Xem tất cả →
           </Link>
