@@ -138,8 +138,31 @@ function Header() {
     <header
       className={`site-header${headerSolid ? ' is-solid' : ''}${headerHidden ? ' is-hide' : ''}`}
     >
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-6">
-        <Link to="/" className="brand" aria-label="Camping Shop — Trang chủ">
+      {/* Hàng header: mobile 1 hàng — [burger + logo] trái, [đổi theme,
+          giỏ hàng, avatar] phải (ml-auto); desktop giữ logo trái, menu
+          giữa (order-2), cụm tác vụ phải (order-3). Menu mobile bung
+          xuống thành hàng riêng (w-full) khi bấm burger. */}
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-2 px-3 py-3 sm:gap-4 sm:px-4 md:flex-nowrap md:justify-between md:px-6 md:py-4">
+        {/* Nhóm trái: nút mở menu (chỉ mobile) + logo */}
+        <div className="flex min-w-0 items-center gap-2 md:order-1">
+          {/* Burger menu mobile — nằm bên trái, trước logo */}
+          <button
+            type="button"
+            className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-[12px] md:hidden"
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              {menuOpen ? (
+                <path d="M6 6l12 12M18 6 6 18" stroke="#f5f0e1" strokeWidth="2" strokeLinecap="round" />
+              ) : (
+                <path d="M4 7h16M4 12h16M4 17h16" stroke="#f5f0e1" strokeWidth="2" strokeLinecap="round" />
+              )}
+            </svg>
+          </button>
+
+          <Link to="/" className="brand" aria-label="Camping Shop — Trang chủ">
           {/* Icon lều SVG (design system: không dùng emoji làm icon) */}
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
@@ -156,11 +179,14 @@ function Header() {
           </svg>
           Camping Shop
         </Link>
+        </div>
 
         {/* Cụm tác vụ bên phải header: đổi theme, giỏ hàng, avatar
-            tài khoản. Trên desktop (md+) dùng order-3 để nằm bên phải,
-            sau menu điều hướng (order-2). */}
-        <div className="flex items-center gap-3 md:order-3">
+            tài khoản. ml-auto đẩy cụm sang phải trên mobile; trên
+            desktop (md+) dùng order-3 để nằm bên phải, sau menu điều
+            hướng (order-2), ml-0 để justify-between của header chia
+            đều 3 phần như cũ. */}
+        <div className="ml-auto flex items-center gap-1 sm:gap-3 md:order-3 md:ml-0">
           {/* Chuyển sáng/tối (dark mode, lưu localStorage `camping-theme`) */}
           <ThemeToggle />
           {/* Nút giỏ hàng + badge số lượng thật từ CartContext.
@@ -196,23 +222,6 @@ function Header() {
           {sessionUser && (
             <AccountMenu user={sessionUser} onLogout={handleLogout} />
           )}
-
-          {/* Burger menu mobile */}
-          <button
-            type="button"
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[12px] md:hidden"
-            aria-expanded={menuOpen}
-            aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              {menuOpen ? (
-                <path d="M6 6l12 12M18 6 6 18" stroke="#f5f0e1" strokeWidth="2" strokeLinecap="round" />
-              ) : (
-                <path d="M4 7h16M4 12h16M4 17h16" stroke="#f5f0e1" strokeWidth="2" strokeLinecap="round" />
-              )}
-            </svg>
-          </button>
         </div>
 
         {/* Menu desktop: ngang đầy đủ, nằm giữa header (logo trái,
