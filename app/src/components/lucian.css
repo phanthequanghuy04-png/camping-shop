@@ -1508,3 +1508,187 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ==========================================================================
+   #408 — Menu tài khoản (Account menu)
+   Nút avatar tròn; bấm thì menu bật ra từ avatar (scale .16 -> 1,
+   .55s cubic-bezier(.34,1.45,.64,1), gốc transform phía trên avatar),
+   các mục hiện lần lượt (70ms + i*35ms): tên + email, mục menu, divider,
+   Đăng xuất màu đỏ. Bấm lại, Esc hoặc bấm ra ngoài thì gập lại.
+   Khác bản gốc: menu căn phải dưới avatar trong header (rộng 232px),
+   avatar dùng chữ cái đầu của tên (shop chưa có ảnh đại diện), mục menu
+   đổi theo tính năng thật của shop (Yêu thích, Đơn hàng, Trợ giúp).
+   ========================================================================== */
+.u408-w {
+  position: relative;
+}
+.u408-av {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  box-shadow: 0 0 0 0 transparent;
+  transition:
+    box-shadow 0.3s,
+    transform 0.45s var(--ux-spring);
+}
+.u408-av:hover {
+  transform: scale(1.05);
+}
+.u408-av:active {
+  transform: scale(0.94);
+  transition-duration: 0.3s, 0.1s;
+}
+.u408-av[aria-expanded="true"] {
+  box-shadow:
+    0 0 0 3px var(--color-primary-dark),
+    0 0 0 5px var(--color-primary-light);
+}
+.u408 .u408-av:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 3px;
+}
+.u408-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ux-mint);
+  box-shadow: 0 0 0 2.5px var(--color-primary-dark);
+  pointer-events: none;
+}
+.u408-m {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+  width: 232px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--ux-surface);
+  box-shadow:
+    inset 0 0 0 1px var(--ux-line),
+    0 22px 44px -18px var(--ux-shadow-strong),
+    0 4px 12px -6px var(--ux-shadow);
+  transform-origin: calc(100% - 22px) -12px;
+  transform: scale(0.16);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.28s var(--ux-ease),
+    opacity 0.2s,
+    visibility 0s 0.28s;
+  z-index: 60;
+}
+.u408-m::before {
+  content: "";
+  position: absolute;
+  right: 17px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--ux-surface);
+  box-shadow: -1px -1px 0 0 var(--ux-line);
+  transform: rotate(45deg);
+}
+.u408.is-open .u408-m {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.55s var(--ux-spring),
+    opacity 0.15s,
+    visibility 0s;
+}
+.u408-m > * {
+  position: relative;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.15s,
+    transform 0.35s var(--ux-spring);
+}
+.u408.is-open .u408-m > * {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(70ms + var(--i) * 35ms);
+}
+.u408-hd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+}
+.u408-hd b {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ux-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.u408-hd span {
+  font-size: 12px;
+  color: var(--ux-ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.u408-it {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ux-ink);
+  text-align: left;
+}
+.u408-it:hover,
+.u408-it:focus-visible {
+  background: var(--ux-surface-2);
+  outline: none;
+}
+.u408-it svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: var(--ux-ink-2);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.u408-it.is-out {
+  color: var(--ux-danger);
+}
+.u408-it.is-out svg {
+  stroke: var(--ux-danger);
+}
+.u408-it.is-out:hover,
+.u408-it.is-out:focus-visible {
+  background: color-mix(in srgb, var(--ux-danger) 10%, transparent);
+}
+.u408-hr {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--ux-line);
+}

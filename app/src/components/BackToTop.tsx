@@ -66,6 +66,13 @@ export default function BackToTop() {
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, chatOpen])
 
+  // Menu tài khoản (#408) có mục "Trợ giúp" mở panel này.
+  useEffect(() => {
+    const open = () => openChat()
+    window.addEventListener('camping-open-support', open)
+    return () => window.removeEventListener('camping-open-support', open)
+  }, [])
+
   const later = (fn: () => void, ms: number) => {
     const g = genRef.current
     window.setTimeout(() => {
