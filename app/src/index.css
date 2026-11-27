@@ -795,3 +795,90 @@ a { color: var(--color-primary-text); }
   color: var(--color-primary-text);
   letter-spacing: 0.22em;
 }
+
+/* ---------- Hero kiểu KAIRN (MotionSites, prompt viết lại 2026-11-28) ---------- */
+/* Ảnh nền lều vàng lúc hoàng hôn + tiêu đề trái + cụm tile 2×2 phải +
+   thẻ câu chuyện + CTA trên đường kẻ, hiệu ứng vào trang ~2,2s. */
+.kairn-shade {
+  background:
+    linear-gradient(90deg, rgba(27, 67, 50, 0.62) 0%, rgba(27, 67, 50, 0.28) 55%, rgba(27, 67, 50, 0.34) 100%),
+    linear-gradient(0deg, rgba(20, 51, 42, 0.55) 0%, rgba(20, 51, 42, 0) 42%);
+}
+.kairn-in {
+  animation: kairn-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes kairn-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Tiêu đề: từng dòng trượt lên trong khung cắt (giống KAIRN "types up"). */
+.kairn-ln { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.kairn-ln > span {
+  display: block;
+  animation: kairn-line 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes kairn-line {
+  from { transform: translateY(112%); }
+  to { transform: translateY(0); }
+}
+.kairn-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 168px;
+  border-radius: 20px;
+  padding: 18px;
+  text-align: left;
+  transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.3s ease;
+}
+.kairn-tile:hover { transform: translateY(-6px); box-shadow: 0 18px 36px rgba(10, 40, 28, 0.35); }
+/* Nút CTA trong hero: chữ trắng. Luật `a` không lớp ở index.css thắng
+   class text-white của Tailwind (cùng bẫy cascade với h1/h2/h3) nên phải
+   viết luật riêng có độ ưu tiên cao hơn ở đây. */
+.kairn-hero a.kairn-cta { color: #fff; }
+.kairn-tile-green { background: #2d6a4f; color: #fff; }
+.kairn-tile-cream { background: #faf6ec; color: #1c2b1f; }
+.dark .kairn-tile-cream { background: var(--color-surface); color: var(--color-foreground); }
+.kairn-glass-circle {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+}
+.kairn-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+.kairn-story {
+  background: rgba(27, 67, 50, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+}
+.kairn-soc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+.kairn-soc:nth-child(2) { box-shadow: inset 0 0 0 2px rgba(231, 111, 81, 0.9); }
+@media (prefers-reduced-motion: reduce) {
+  .kairn-in, .kairn-ln > span { animation: none; }
+}
