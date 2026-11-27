@@ -1930,3 +1930,301 @@
    như form Đăng nhập) — chỉ cần giữ phạm vi .u403 cho các luật focus. */
 .u403--register{display:block}
 .u403--register form{width:100%}
+
+/* ---------- Lucian #261 — Review filter by star bars (port 2026-11-28) ---------- */
+/* Lucian UX/UI Prompt #261 — Review filter by star bars (Social Proof).
+   MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#261
+   File này là bản CSS đầy đủ của component ReviewFilter.tsx — người tích
+   hợp append toàn bộ nội dung vào app/src/components/lucian.css.
+   Kích thước, thời gian, easing giữ nguyên như gốc; chỉ đổi layout:
+   gốc là khung cố định 340×340, danh sách cuộn trong, vị trí absolute —
+   bản này fluid full-width (max-width 720px), chiều cao tự nhiên, không
+   cuộn trong, không absolute. Tóm tắt + thanh lọc xếp ngang trên
+   desktop, xếp dọc trên mobile (media query cuối file).
+   Màu dùng token --ux-* (đã map sang theme shop trong lucian.css),
+   KHÔNG dùng light-dark() hay hex hardcode cho nền/chữ; màu sao/thanh
+   dùng token --ux-warn. */
+.u261{width:100%;max-width:720px;border-radius:30px;background:var(--ux-surface);box-shadow:0 0 0 1px var(--ux-line),0 30px 60px -36px var(--ux-shadow-strong);color:var(--ux-ink);padding:18px}
+.u261-tp{display:flex;gap:16px;align-items:center}
+.u261-av{flex:none;width:96px;text-align:center}
+.u261-av b{display:block;font-size:36px;line-height:1;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.u261-st{position:relative;display:inline-block;margin-top:5px;font-size:14px;letter-spacing:1px;line-height:1;color:var(--ux-line)}
+.u261-st i{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;color:var(--ux-warn);font-style:normal;width:0;transition:width 1s cubic-bezier(.3,.8,.3,1) .2s}
+.u261-av small{display:block;margin-top:5px;font-size:10px;font-weight:700;color:var(--ux-ink-3)}
+.u261-bs{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.u261-br{display:flex;align-items:center;gap:7px;height:19px;padding:0 6px;margin:0 -6px;border:0;border-radius:7px;background:none;color:var(--ux-ink-2);font:inherit;font-size:10px;font-weight:800;cursor:pointer;transition:opacity .25s,background .2s}
+.u261-br:hover,.u261-br.g-hov{background:var(--ux-surface-2)}
+.u261-br:focus-visible{outline:2px solid var(--ux-accent);outline-offset:1px}
+.u261-br>span:first-child{width:22px;text-align:left;font-variant-numeric:tabular-nums}
+.u261-br em{flex:1;height:7px;border-radius:4px;background:var(--ux-surface-3);overflow:hidden}
+.u261-br em i{display:block;height:100%;border-radius:4px;background:var(--ux-warn);transform:scaleX(0);transform-origin:0 50%;transition:transform .8s cubic-bezier(.3,1.1,.4,1)}
+.u261-br>span:last-child{width:30px;text-align:right;color:var(--ux-ink-3);font-variant-numeric:tabular-nums}
+.u261.is-f .u261-br{opacity:.38}
+.u261.is-f .u261-br.is-on{opacity:1;background:var(--ux-surface-2)}
+.u261-hd{display:flex;align-items:center;margin-top:16px;font-size:11.5px;font-weight:850}
+.u261-hd span+span{margin-left:6px;font-size:10px;color:var(--ux-ink-3);font-weight:750}
+.u261-ls{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+.u261-rv{padding:10px 11px;border-radius:13px;background:var(--ux-surface-2);box-shadow:inset 0 0 0 1px var(--ux-line);animation:u261-in .4s cubic-bezier(.3,1.2,.5,1) backwards}
+@keyframes u261-in{from{opacity:0;transform:translateY(10px)}}
+.u261-rv header{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--ux-ink-3)}
+.u261-rv header i{font-style:normal;color:var(--ux-warn);letter-spacing:-.5px}
+.u261-rv header time{font-weight:700;color:var(--ux-ink-3)}
+.u261-rv p{margin:4px 0 0;font-size:11px;line-height:1.4;font-weight:650}
+.u261-ti{display:block;margin-top:4px;font-size:11px;font-weight:800;color:var(--ux-ink)}
+.u261-empty{margin:0;padding:12px;font-size:11.5px;font-weight:650;color:var(--ux-ink-2);text-align:center}
+.u261-hp{margin-left:auto;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border:0;border-radius:999px;background:var(--ux-surface);box-shadow:inset 0 0 0 1px var(--ux-line);color:var(--ux-ink-2);font:inherit;font-size:9.5px;font-weight:800;cursor:pointer;transition:background .2s,color .2s}
+.u261-hp[aria-pressed="true"]{background:var(--ux-ink);color:var(--ux-surface);box-shadow:none}
+.u261-hp svg{width:10px;height:10px;transition:transform .35s cubic-bezier(.3,1.8,.5,1)}
+.u261-hp[aria-pressed="true"] svg{transform:rotate(-12deg) scale(1.2)}
+.u261-hp:focus-visible{outline:2px solid var(--ux-accent);outline-offset:2px}
+/* Mobile: tóm tắt xếp thành 1 hàng ngang (điểm + sao + số lượng),
+   thanh lọc xuống dưới, chiếm trọn chiều rộng. */
+@media (max-width:560px){
+.u261-tp{flex-direction:column;align-items:stretch}
+.u261-av{width:auto;display:flex;align-items:baseline;gap:10px;text-align:left}
+.u261-av b{font-size:28px}
+.u261-st{margin-top:0}
+.u261-av small{margin-top:0}
+}
+@media (prefers-reduced-motion: reduce){.u261-st i,.u261-br em i{transition:none}.u261-rv{animation:none}}
+
+/* ---------- Lucian #221 — Sticky buy bar with option sheet (port 2026-11-28) ---------- */
+/* Lucian UX/UI Prompt #221 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#221
+   Sticky buy bar with option sheet — CSS port cho Camping Shop.
+   File tạm ở _staging/u221.css — người tích hợp append vào lucian.css
+   (KHÔNG sửa lucian.css trong luồng này). Giữ thời gian/easing gốc:
+   thanh .45s cubic-bezier(.3,1.2,.5,1), sheet .4s cùng easing, chiều cao
+   thanh .45s cubic-bezier(.3,1,.4,1), nền mờ .3s.
+   Thích ứng so với gốc: khung demo 300×480px bỏ đi — thanh là fixed
+   bottom full-width, nội dung căn giữa max-width 1200px; nền mờ phủ toàn
+   màn hình; lưới size thay bằng bộ chọn số lượng + tổng tiền; sheet có 2
+   nút (Thêm vào giỏ xanh rừng / Mua ngay cam); chiều cao sheet 196px
+   (vừa nội dung: đầu 12 + tiêu đề 28 + 14 + hàng số lượng 48 + 14 +
+   hàng nút 48 + đáy 14, thừa 18px). z-index: thanh 60, nền mờ 55. */
+
+/* Khung gốc của demo (300×480px) không còn: wrapper chỉ giữ class để
+   làm móc cho .is-bar / .is-sheet, không chiếm diện tích. */
+.u221-ov{position:fixed;inset:0;z-index:55;background:rgba(10,10,20,.38);opacity:0;pointer-events:none;transition:opacity .3s}
+.u221.is-sheet .u221-ov{opacity:1;pointer-events:auto}
+.u221-br{position:fixed;left:0;right:0;bottom:0;z-index:60;height:72px;background:var(--ux-surface);box-shadow:0 -1px 0 var(--ux-line),0 -18px 30px -20px var(--ux-shadow-strong);transform:translateY(110%);visibility:hidden;transition:transform .45s cubic-bezier(.3,1.2,.5,1),height .45s cubic-bezier(.3,1,.4,1),visibility 0s .45s}
+.u221.is-bar .u221-br{transform:none;visibility:visible;transition:transform .45s cubic-bezier(.3,1.2,.5,1),height .45s cubic-bezier(.3,1,.4,1),visibility 0s 0s}
+.u221.is-sheet .u221-br{height:196px;transform:none}
+.u221-in{position:relative;max-width:1200px;height:100%;margin:0 auto;padding:12px 16px 14px}
+.u221-rw{display:flex;align-items:center;gap:10px;height:46px;transition:opacity .2s}
+.u221.is-sheet .u221-rw{opacity:0;pointer-events:none}
+.u221-th{flex:none;width:44px;height:44px;border-radius:11px;background:linear-gradient(160deg,var(--ux-accent-soft),var(--ux-accent-2))}
+img.u221-th{object-fit:cover}
+.u221-ri{flex:1;min-width:0}
+.u221-nm{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u221-pr{display:block;font-size:13px;font-weight:800;color:var(--ux-ink)}
+.u221-oos{display:block;font-size:13px;font-weight:800;color:var(--ux-danger)}
+.u221-by{flex:none;height:42px;padding:0 18px;border:0;border-radius:12px;background:#C05621;color:#fff;font:inherit;font-size:12.5px;font-weight:850;cursor:pointer;transition:background .2s}
+.u221-by:hover{background:#9C4221}
+.u221-by:disabled{opacity:.35;cursor:not-allowed}
+.u221-op{position:absolute;left:16px;right:16px;top:12px;opacity:0;transform:translateY(16px);transition:opacity .25s,transform .4s cubic-bezier(.3,1.2,.5,1);pointer-events:none}
+.u221.is-sheet .u221-op{opacity:1;transform:none;transition-delay:.12s;pointer-events:auto}
+.u221-oh{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:900}
+.u221-x{width:28px;height:28px;border:0;border-radius:50%;background:var(--ux-surface-2);color:var(--ux-ink-2);display:grid;place-items:center;cursor:pointer}
+.u221-x svg{width:10px;height:10px}
+.u221-qt{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+.u221-qty{display:flex;align-items:center;height:48px;border-radius:12px;background:var(--ux-surface-2);box-shadow:inset 0 0 0 1px var(--ux-line)}
+.u221-qty button{width:44px;height:48px;border:0;background:none;color:var(--ux-ink);font:inherit;font-size:18px;font-weight:800;cursor:pointer}
+.u221-qty button:disabled{color:var(--ux-ink-3);cursor:not-allowed}
+.u221-qty span{min-width:32px;text-align:center;font-size:15px;font-weight:800}
+.u221-tt{text-align:right}
+.u221-tt small{display:block;font-size:11px;font-weight:700;color:var(--ux-ink-2)}
+.u221-tt b{display:block;font-size:16px;font-weight:900}
+.u221-bt{display:flex;gap:10px;margin-top:14px}
+.u221-ad{display:flex;align-items:center;justify-content:center;gap:6px;flex:1;height:48px;border:0;border-radius:13px;background:#2D6A4F;color:#fff;font:inherit;font-size:13px;font-weight:850;cursor:pointer;transition:background .3s,opacity .2s}
+.u221-ad:hover{background:#1B4332}
+.u221-ad:disabled{opacity:.35;cursor:not-allowed}
+.u221-ad.is-ok{background:#047857;color:#fff;opacity:1}
+.u221-ad svg{width:14px;height:14px;display:none}
+.u221-ad.is-ok svg{display:block}
+.u221-bn{flex:1;height:48px;border:0;border-radius:13px;background:#C05621;color:#fff;font:inherit;font-size:13px;font-weight:850;cursor:pointer;transition:background .2s,opacity .2s}
+.u221-bn:hover{background:#9C4221}
+.u221-bn:disabled{opacity:.35;cursor:not-allowed}
+.u221 button:focus-visible{outline:2px solid var(--ux-accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.u221-br,.u221-op,.u221-ov,.u221-rw{transition:none}}
+/* Thanh/sheet hiện thì đẩy cụm nút nổi #450 (về đầu trang + chat, z-65)
+   lên trên khỏi thanh (cao 72px) / sheet (cao 196px): 16 + 72 + 16 = 104,
+   16 + 196 + 16 = 228. Class body do StickyBuyBar.tsx bật/tắt. */
+body.has-sticky-bar .u450-wrap{bottom:104px;transition:bottom .45s cubic-bezier(.3,1.2,.5,1)}
+body.has-sticky-sheet .u450-wrap{bottom:228px}
+
+/* ---------- Lucian #288 — Expandable product details (port 2026-11-28) ---------- */
+/* Lucian UX/UI Prompt #288 — Expandable product details (MIT License (c) 2026 Seokwoooo).
+   Nguồn: https://lucianlabs.dev/uxui-prompt/#288
+   Port sang React cho Camping Shop. File này CHƯA append vào lucian.css —
+   luồng tích hợp sẽ append vào đó (token --ux-* và class .ux base đã có
+   sẵn ở đầu lucian.css, không lặp lại ở đây).
+
+   Giữ nguyên thời gian/easing gốc: khối nở .65s cubic-bezier(.3,.8,.25,1),
+   fade mờ .4s, mũi tên xoay .35s. KHÔNG dùng light-dark() — token --ux-*
+   đã tự đổi theo .dark. KHÔNG dùng màu hex hardcode cho nền/chữ.
+
+   Khác bản gốc (ghi rõ để luồng tích hợp khỏi nhầm):
+   - Gốc là khung điện thoại 300×480 có vùng cuộn riêng (.u288-sc) với ảnh,
+     giá, chọn màu, bảng cỡ, review mẫu — các class khung đó (.u288-sc,
+     .u288-ph, .u288-if, .u288-pr, .u288-bn, .u288-sw, .u288-md, .u288-rv)
+     KHÔNG port sang đây; root .u288 được định nghĩa lại thành section
+     thật trên trang (rộng 100%, không bo tròn/đổ bóng như khung gốc).
+   - Fade dưới khối (.u288-dt::after) blend vào --ux-page (nền trang kem
+     #FAF6EC / tối #121A14) thay cho --ux-surface như gốc, vì section nằm
+     trực tiếp trên nền trang. Nếu đặt section lên card thì đổi sang
+     --ux-surface.
+   - Cỡ chữ tăng từ 10.5–13px (khung 300px) lên 14px cho trang thật;
+     tiêu đề section (.u288-st) là h2 20px thay cho h4 13px có vạch ngăn;
+     nút (.u288-mr) rộng 100% thay vì calc(100% - 28px).
+   - Bảng .u288-tb gốc là bảng cỡ (S/M/L/XL, căn giữa) — ở đây là bảng
+     thông số 2 cột (nhãn / giá trị), giữ vạch ngăn hàng của gốc. */
+
+.u288 {
+  position: relative;
+  width: 100%;
+  color: var(--ux-ink);
+}
+
+/* Tiêu đề section (h2). */
+.u288-st {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ux-ink);
+}
+
+/* Khối chi tiết: đóng ở 170px, mở ra bằng chiều cao thật (JS đặt inline). */
+.u288-dt {
+  position: relative;
+  height: 170px;
+  overflow: hidden;
+  margin-top: 12px;
+  transition: height 0.65s cubic-bezier(0.3, 0.8, 0.25, 1);
+}
+
+/* Fade mờ dần ở đáy khối khi đóng; biến mất khi mở. */
+.u288-dt::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 110px;
+  background: linear-gradient(transparent, var(--ux-page) 88%);
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.u288.is-open .u288-dt::after {
+  opacity: 0;
+}
+
+/* Mô tả đầy đủ của sản phẩm. */
+.u288-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  font-weight: 500;
+  color: var(--ux-ink-2);
+  white-space: pre-line;
+}
+
+/* Khối con: Thông số / Giao hàng & thanh toán. */
+.u288-bk {
+  margin: 20px 0 0;
+}
+.u288-bk h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 850;
+  color: var(--ux-ink);
+}
+
+/* Bảng thông số 2 cột (nhãn / giá trị), giữ vạch ngăn hàng của gốc. */
+.u288-tb {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-weight: 600;
+}
+.u288-tb th,
+.u288-tb td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ux-line);
+  text-align: left;
+  vertical-align: top;
+}
+.u288-tb th {
+  width: 38%;
+  padding-right: 12px;
+  color: var(--ux-ink-3);
+  font-weight: 700;
+}
+.u288-tb td {
+  color: var(--ux-ink);
+}
+
+/* Danh sách giao hàng & thanh toán. */
+.u288-ship {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.65;
+  font-weight: 600;
+  color: var(--ux-ink-2);
+}
+.u288-ship li + li {
+  margin-top: 4px;
+}
+
+/* Dòng hỗ trợ đổi trả (shop chưa có chính sách đổi trả có thời hạn nên
+   chỉ hướng tới khung chat, không bịa số ngày). */
+.u288-support {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 600;
+  color: var(--ux-ink-2);
+}
+
+/* Nút Xem thêm / Thu gọn — giữ y hệt gốc, chỉ rộng 100% cho section thật. */
+.u288-mr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 42px;
+  margin: 16px 0 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ux-surface);
+  box-shadow: inset 0 0 0 1.5px var(--ux-ink);
+  color: var(--ux-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+.u288-mr:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 2px;
+}
+.u288-mr svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.35s;
+}
+.u288.is-open .u288-mr svg {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .u288-dt,
+  .u288-dt::after,
+  .u288-mr svg {
+    transition: none;
+  }
+}
