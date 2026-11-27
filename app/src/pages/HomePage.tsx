@@ -131,17 +131,12 @@ export default function HomePage() {
                     />
                   </div>
                 )}
-                {/* Thẻ danh mục: tên chiếm trọn chiều rộng thẻ, chip số
-                    sản phẩm xuống dòng riêng — trên điện thoại lưới 2 cột
-                    hẹp (~170px/thẻ), để tên và chip chung 1 dòng sẽ bóp
-                    tên thành 4–5 dòng, thẻ cao thấp không đều (sửa
-                    2026-11-27). */}
-                <div className="p-4 sm:p-5">
-                  <h3 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-base leading-snug font-bold text-foreground sm:text-lg">
-                    {category.name}
-                  </h3>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-primary-text">
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-lg leading-snug font-bold text-foreground">
+                      {category.name}
+                    </h3>
+                    <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-primary-text">
                       {count} sản phẩm
                     </span>
                   </div>
