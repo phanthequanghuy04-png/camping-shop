@@ -32,7 +32,17 @@ function parseDatabaseUrl(url) {
 
 let urlConfig = null;
 if (process.env.DATABASE_URL) {
-  urlConfig = parseDatabaseUrl(process.env.DATABASE_URL);
+  try {
+    urlConfig = parseDatabaseUrl(process.env.DATABASE_URL);
+  } catch (err) {
+    // URL sai định dạng (vd mật khẩu có ký tự @ # % ? chưa URL-encode):
+    // báo rõ rồi dùng các biến DB_* thay vì crash ngay lúc require
+    // (crash lúc require làm service không khởi động được chút nào).
+    console.error(
+      `[db] DATABASE_URL không hợp lệ (${err.message}) — dùng biến DB_* thay thế.`,
+    );
+    urlConfig = null;
+  }
 }
 
 const useSsl = urlConfig
@@ -74,31 +84,43 @@ const config = {
   ...(useSsl ? { ssl: { rejectUnauthorized: true } } : {}),
   waitForConnections: true,
   connectionLimit: 10,
-  connectTimeout: 2000,
+  // TiDB Starter scale-to-zero: lần kết nối đầu sau lúc ngủ có thể mất
+  // vài giây, 2s sẽ timeout oan rồi rơi về fallback. Để 10s.
+  connectTimeout: 10000,
 };
 
 let pool = null;
 let available = false;
 let lastError = null;
 
-async function initDb() {
-  try {
-    pool = mysql.createPool(config);
-    await pool.query('SELECT 1');
-    available = true;
-    lastError = null;
-    console.log(
-      `[db] MySQL OK — ${config.socketPath ? `socket ${config.socketPath}` : `${config.user}@${config.host}:${config.port}`}/${config.database}`,
-    );
-  } catch (err) {
-    available = false;
-    lastError = err.message;
-    pool = null;
-    console.warn(
-      `[db] MySQL chưa kết nối được (${err.message}). ` +
-        'Chạy ở chế độ FALLBACK (dữ liệu mẫu trong bộ nhớ). ' +
-        'Cài/import xong MySQL thì khởi động lại server để dùng DB thật.',
-    );
+async function initDb(retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      pool = mysql.createPool(config);
+      await pool.query('SELECT 1');
+      available = true;
+      lastError = null;
+      console.log(
+        `[db] MySQL OK — ${config.socketPath ? `socket ${config.socketPath}` : `${config.user}@${config.host}:${config.port}`}/${config.database}`,
+      );
+      return true;
+    } catch (err) {
+      available = false;
+      lastError = err.message;
+      pool = null;
+      if (attempt < retries) {
+        console.warn(
+          `[db] Kết nối MySQL lần ${attempt}/${retries} thất bại (${err.message}) — thử lại sau 5s...`,
+        );
+        await new Promise((r) => setTimeout(r, 5000));
+      } else {
+        console.warn(
+          `[db] MySQL chưa kết nối được (${err.message}). ` +
+            'Chạy ở chế độ FALLBACK (dữ liệu mẫu trong bộ nhớ). ' +
+            'Cài/import xong MySQL thì khởi động lại server để dùng DB thật.',
+        );
+      }
+    }
   }
   return available;
 }
