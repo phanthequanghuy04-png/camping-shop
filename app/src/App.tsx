@@ -41,7 +41,6 @@ const navLinks = [
   { to: '/cart', label: 'Giỏ hàng' },
   { to: '/login', label: 'Đăng nhập' },
   { to: '/register', label: 'Đăng ký' },
-  { to: '/admin', label: 'Quản trị' },
 ]
 
 /**
@@ -102,7 +101,7 @@ function Header() {
   // useLocation để Header render lại mỗi lần đổi trang.
   useLocation()
   const navigate = useNavigate()
-  // Người đang đăng nhập (null khi chưa đăng nhập) + có phải admin không.
+  // Người đang đăng nhập (null khi chưa đăng nhập).
   // Đồng bộ lại ngay khi phiên đăng nhập thay đổi (đăng nhập/đăng xuất
   // ở trang /login không chuyển trang, nên chỉ đọc localStorage lúc
   // render sẽ làm header cập nhật chậm). users.ts phát sự kiện
@@ -110,14 +109,10 @@ function Header() {
   const [sessionUser, setSessionUser] = useState<User | null>(() =>
     getSessionUser(),
   )
-  const [isAdmin, setIsAdmin] = useState(
-    () => getSessionUser()?.role === 'admin',
-  )
   useEffect(() => {
     const syncAuth = () => {
       const user = getSessionUser()
       setSessionUser(user)
-      setIsAdmin(user?.role === 'admin')
     }
     window.addEventListener('camping-auth-changed', syncAuth)
     window.addEventListener('storage', syncAuth)
@@ -134,11 +129,11 @@ function Header() {
     navigate('/')
   }
 
-  // Link "Quản trị" chỉ hiện với tài khoản admin; link "Đăng nhập" /
-  // "Đăng ký" chỉ hiện khi chưa đăng nhập (đã đăng nhập thì header hiện
-  // tên người dùng + nút "Đăng xuất" thay thế).
+  // Link "Đăng nhập" / "Đăng ký" chỉ hiện khi chưa đăng nhập (đã đăng
+  // nhập thì header hiện tên người dùng + nút "Đăng xuất" thay thế).
+  // Mục "Quản trị" đã bỏ khỏi header theo yêu cầu của Huy (đã có trong
+  // menu tài khoản) nên không còn lọc theo quyền admin ở đây.
   const visibleNavLinks = navLinks.filter((link) => {
-    if (link.to === '/admin') return isAdmin
     if (link.to === '/login' || link.to === '/register')
       return !sessionUser
     return true
