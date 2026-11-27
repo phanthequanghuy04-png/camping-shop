@@ -13,10 +13,13 @@ import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import OrdersPage from './pages/OrdersPage'
 import ProductDetailPage from './pages/ProductDetailPage'
 import RegisterPage from './pages/RegisterPage'
 import ShopPage from './pages/ShopPage'
+import WishlistPage from './pages/WishlistPage'
 import ThemeToggle from './components/ThemeToggle'
+import AccountMenu from './components/AccountMenu'
 import CartDrawer from './components/CartDrawer'
 import BackToTop from './components/BackToTop'
 import { useCart } from './context/CartContext'
@@ -184,46 +187,11 @@ function Header() {
             </span>
           </button>
 
-          {/* Đã đăng nhập: hiện tên người dùng + nút Đăng xuất thay cho
-              link Đăng nhập / Đăng ký trong menu. */}
+          {/* Đã đăng nhập: menu tài khoản (#408 Lucian) thay cho chip tên
+              + nút Đăng xuất: avatar chữ cái đầu, bấm mở menu Yêu thích /
+              Đơn hàng / Trợ giúp / Đăng xuất. */}
           {sessionUser && (
-            <>
-              <span
-                className="hidden max-w-[140px] items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-medium text-[#F5F0E1] sm:inline-flex"
-                title={sessionUser.email}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                  className="shrink-0"
-                >
-                  <circle
-                    cx="12"
-                    cy="8"
-                    r="4"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  />
-                  <path
-                    d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="truncate">{sessionUser.name}</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-full px-3 py-2 text-sm font-medium text-[#F5F0E1] transition duration-200 ease-out hover:bg-white/10 focus:outline-2 focus:outline-[#74C69D]"
-              >
-                Đăng xuất
-              </button>
-            </>
+            <AccountMenu user={sessionUser} onLogout={handleLogout} />
           )}
 
           {/* Burger menu mobile */}
@@ -382,6 +350,8 @@ function AppContent() {
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin" element={<AdminPage />} />
