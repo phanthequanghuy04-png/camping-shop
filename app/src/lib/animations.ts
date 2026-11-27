@@ -85,6 +85,7 @@ interface GsapLike {
 interface AosOptions {
   duration?: number;
   once?: boolean;
+  mirror?: boolean;
   offset?: number;
   easing?: string;
 }
@@ -217,9 +218,15 @@ export async function initAnimations(
       if (!stillCurrent()) return;
 
       const AOS = (aosModule.default ?? aosModule) as unknown as AosLike;
+      // Cuộn tới đâu hiện tới đó, cuộn lên cũng hiện lại như cũ:
+      // - once: false — hiệu ứng chạy lại mỗi lần phần tử vào khung nhìn,
+      //   không chỉ chạy 1 lần duy nhất lúc đầu.
+      // - mirror: true — phần tử mờ dần đi khi cuộn qua khỏi nó, để khi
+      //   cuộn ngược lại nó hiện dần lên lại từ đầu.
       AOS.init({
         duration: reducedMotion ? 0 : aosDuration,
-        once: true,
+        once: false,
+        mirror: true,
         offset: 80,
         easing: 'ease-out',
       });
@@ -240,7 +247,8 @@ export async function initAnimations(
 
 /**
  * Hiệu ứng hiện dần khi cuộn tới cho các phần tử khớp `selector`
- * (dùng GSAP + ScrollTrigger, chạy 1 lần rồi thôi).
+ * (dùng GSAP + ScrollTrigger, chạy lại mỗi lần cuộn tới — cuộn lên
+ * cũng hiện lại như cũ nhờ toggleActions 'play none none reverse').
  *
  * Ví dụ: `revealOnScroll('.reveal')`, `revealOnScroll('.product-card')`.
  *
@@ -287,7 +295,14 @@ export function revealOnScroll(
         duration,
         delay: index * stagger,
         ease: 'power3.out',
-        scrollTrigger: { trigger: el, start, once: true },
+        // Vào khung nhìn thì chạy, cuộn ra khỏi khung nhìn thì chạy ngược
+        // (ẩn đi) để lần cuộn tới sau lại hiện lên từ đầu — giống AOS
+        // với once: false + mirror: true ở trên.
+        scrollTrigger: {
+          trigger: el,
+          start,
+          toggleActions: 'play none none reverse',
+        },
       },
     );
     revealTweens.push(tween);
