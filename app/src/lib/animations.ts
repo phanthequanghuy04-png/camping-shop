@@ -219,15 +219,18 @@ export async function initAnimations(
       if (!stillCurrent()) return;
 
       const AOS = (aosModule.default ?? aosModule) as unknown as AosLike;
-      // Cuộn tới đâu hiện tới đó, cuộn lên cũng hiện lại như cũ:
-      // - once: false — hiệu ứng chạy lại mỗi lần phần tử vào khung nhìn,
-      //   không chỉ chạy 1 lần duy nhất lúc đầu.
-      // - mirror: true — phần tử mờ dần đi khi cuộn qua khỏi nó, để khi
-      //   cuộn ngược lại nó hiện dần lên lại từ đầu.
+      // Hiệu ứng chỉ chạy 1 lần duy nhất khi phần tử vào khung nhìn
+      // (sửa 2026-11-27, theo ý tưởng của Huy: tránh làm đi làm lại
+      // khi cuộn):
+      // - once: true — chạy xong thì thôi, cuộn ngược lên hay xuống
+      //   lại cũng không chạy lại, phần tử cứ hiện nguyên.
+      // - mirror: false — không mờ đi khi cuộn qua khỏi phần tử.
+      //   (Trước đây là once: false + mirror: true nên hiệu ứng chạy
+      //   lại mỗi lần vào khung nhìn; Huy chọn chỉ chạy 1 lần.)
       AOS.init({
         duration: reducedMotion ? 0 : aosDuration,
-        once: false,
-        mirror: true,
+        once: true,
+        mirror: false,
         offset: 80,
         easing: 'ease-out',
       });
@@ -248,8 +251,10 @@ export async function initAnimations(
 
 /**
  * Hiệu ứng hiện dần khi cuộn tới cho các phần tử khớp `selector`
- * (dùng GSAP + ScrollTrigger, chạy lại mỗi lần cuộn tới — cuộn lên
- * cũng hiện lại như cũ nhờ toggleActions 'play none none reverse').
+ * (dùng GSAP + ScrollTrigger, chỉ chạy 1 lần duy nhất khi vào khung
+ * nhìn — sửa 2026-11-27 theo ý tưởng của Huy, tránh làm đi làm lại
+ * khi cuộn; trước đây toggleActions 'play none none reverse' nên
+ * cuộn ra khỏi khung nhìn thì chạy ngược để lần sau hiện lại).
  *
  * Ví dụ: `revealOnScroll('.reveal')`, `revealOnScroll('.product-card')`.
  *
@@ -296,13 +301,13 @@ export function revealOnScroll(
         duration,
         delay: index * stagger,
         ease: 'power3.out',
-        // Vào khung nhìn thì chạy, cuộn ra khỏi khung nhìn thì chạy ngược
-        // (ẩn đi) để lần cuộn tới sau lại hiện lên từ đầu — giống AOS
-        // với once: false + mirror: true ở trên.
+        // Vào khung nhìn thì chạy 1 lần rồi thôi — cuộn ra hay cuộn
+        // lại cũng không chạy ngược, phần tử cứ hiện nguyên (giống
+        // AOS với once: true ở trên).
         scrollTrigger: {
           trigger: el,
           start,
-          toggleActions: 'play none none reverse',
+          toggleActions: 'play none none none',
         },
       },
     );
