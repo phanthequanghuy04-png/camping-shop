@@ -52,6 +52,7 @@ interface LenisLike {
   on: (event: 'scroll', callback: () => void) => void;
   stop: () => void;
   start: () => void;
+  scrollTo: (target: number, options?: { immediate?: boolean }) => void;
 }
 
 interface ScrollTriggerLike {
@@ -318,6 +319,27 @@ export function revealOnScroll(
 export function refreshAnimations(): void {
   aosInstance?.refresh();
   scrollTriggerInstance?.refresh();
+}
+
+/**
+ * Cuộn ngay về đầu trang khi đổi route (vd bấm vào 1 sản phẩm để mở
+ * trang chi tiết). React Router không tự cuộn lên đầu, nên không có
+ * hàm này trang mới sẽ giữ nguyên vị trí cuộn của trang cũ — bấm sản
+ * phẩm ở cuối danh sách thì trang chi tiết mở ra đã nằm tít dưới phần
+ * "Sản phẩm liên quan". Dùng Lenis.scrollTo khi có Lenis (cuộn mượt
+ * sẽ không giật), không thì window.scrollTo.
+ */
+export function scrollToTop(): void {
+  if (typeof window === 'undefined') return;
+  if (lenisInstance) {
+    try {
+      lenisInstance.scrollTo(0, { immediate: true });
+      return;
+    } catch {
+      // Rơi xuống window.scrollTo bên dưới.
+    }
+  }
+  window.scrollTo(0, 0);
 }
 
 /**
