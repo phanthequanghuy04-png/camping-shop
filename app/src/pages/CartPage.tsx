@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { formatVND, useCart } from '../context/CartContext'
+import { resolveImage } from '../data/products'
 
 export default function CartPage() {
   const { detailedItems, updateQty, removeFromCart, totalQty, totalPrice } =
@@ -42,7 +43,7 @@ export default function CartPage() {
           >
             {item.product?.image ? (
               <img
-                src={item.product.image}
+                src={resolveImage(item.product.image)}
                 alt={item.product.name}
                 className="h-24 w-24 shrink-0 rounded-lg object-cover"
               />
