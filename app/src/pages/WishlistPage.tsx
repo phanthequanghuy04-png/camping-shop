@@ -29,7 +29,7 @@ export default function WishlistPage() {
       <h1 className="text-2xl font-bold text-emerald-900 sm:text-3xl">
         Sản phẩm yêu thích
       </h1>
-      <p className="mt-2 text-gray-600">
+      <p className="mt-2 text-muted-foreground">
         {wished.length === 0
           ? 'Bạn chưa lưu sản phẩm nào.'
           : `${wished.length} sản phẩm đã lưu`}
