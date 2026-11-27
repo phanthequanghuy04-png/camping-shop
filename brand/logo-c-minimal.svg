@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" role="img" aria-label="Camping Shop — logo tối giản">
+  <title>Camping Shop</title>
+  <!-- Biểu tượng nét vẽ một màu: đường núi, lều, mặt trời, mặt đất. -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Mặt trời -->
+    <circle cx="86" cy="30" r="10" fill="#E76F51" stroke="none"/>
+    <!-- Đường núi -->
+    <path d="M8 84 L36 52 L56 74 L78 48 L112 84" stroke="#40916C" stroke-width="5"/>
+    <!-- Lều -->
+    <path d="M60 36 L18 94 H102 Z" stroke="#1B4332" stroke-width="5"/>
+    <!-- Cửa lều -->
+    <path d="M60 66 L47 94 H73 Z" stroke="#1B4332" stroke-width="4"/>
+    <!-- Mặt đất -->
+    <line x1="14" y1="104" x2="106" y2="104" stroke="#2D6A4F" stroke-width="5"/>
+  </g>
+  <!-- Chữ thương hiệu -->
+  <text x="140" y="62" font-family="'Be Vietnam Pro', Inter, sans-serif" font-size="36" font-weight="800" fill="#1B4332">Camping Shop</text>
+  <text x="141" y="90" font-family="'Be Vietnam Pro', Inter, sans-serif" font-size="12.5" font-weight="600" letter-spacing="3.5" fill="#2D6A4F">ĐỒ CẮM TRẠI NGOÀI TRỜI</text>
+</svg>

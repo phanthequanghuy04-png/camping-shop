@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Camping Shop — biểu tượng một màu trắng">
+  <title>Camping Shop</title>
+  <!-- Bản một màu (trắng) để dùng trên nền tối: mọi hình cùng một màu, cửa lều chỉ vẽ viền. -->
+  <g fill="#FFFFFF">
+    <circle cx="86" cy="30" r="11"/>
+    <polygon points="10,90 44,48 66,74 88,44 112,90"/>
+    <polygon points="60,40 16,94 104,94"/>
+    <g>
+      <polygon points="10,82 4,94 16,94"/>
+      <polygon points="110,82 104,94 116,94"/>
+    </g>
+    <rect x="8" y="96" width="104" height="5" rx="2.5"/>
+  </g>
+  <path d="M60 68 L48 94 H72 Z" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linejoin="round"/>
+</svg>

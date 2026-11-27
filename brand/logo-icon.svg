@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Camping Shop — biểu tượng">
+  <title>Camping Shop</title>
+  <circle cx="86" cy="30" r="11" fill="#E76F51"/>
+  <polygon points="10,90 44,48 66,74 88,44 112,90" fill="#40916C"/>
+  <polygon points="60,40 16,94 104,94" fill="#1B4332"/>
+  <polygon points="60,66 47,94 73,94" fill="#E76F51"/>
+  <line x1="60" y1="33" x2="60" y2="41" stroke="#1B4332" stroke-width="3" stroke-linecap="round"/>
+  <g fill="#2D6A4F">
+    <polygon points="10,82 4,94 16,94"/>
+    <polygon points="110,82 104,94 116,94"/>
+  </g>
+  <rect x="8" y="96" width="104" height="5" rx="2.5" fill="#2D6A4F"/>
+</svg>
