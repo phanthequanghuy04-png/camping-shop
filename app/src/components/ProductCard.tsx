@@ -69,6 +69,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             src={resolveImage(product.image)}
             alt={product.name}
             loading="lazy"
+            decoding="async"
             className="aspect-[4/3] w-full object-cover"
           />
         </Link>
