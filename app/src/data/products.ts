@@ -18,6 +18,20 @@ export type { Category, Product } from './types'
 
 const CREATED_AT = '2026-11-27T00:00:00+07:00'
 
+/**
+ * Đường dẫn ảnh dùng trong app là đường dẫn tuyệt đối từ gốc web
+ * (vd '/images/leu-trai-2-nguoi.jpg', khớp cột `image` trong camping.sql).
+ * Khi web chạy ở đường dẫn con (vd GitHub Pages '/camping-shop/'),
+ * phải thêm BASE_URL vào trước thì trình duyệt mới tải đúng file.
+ * Dùng hàm này ở mọi chỗ render <img> của sản phẩm.
+ */
+export function resolveImage(path: string | null | undefined): string {
+  if (!path) return ''
+  if (/^(https?:|data:|blob:)/i.test(path)) return path
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
+}
+
 export const CATEGORIES: Category[] = [
   { id: 1, name: 'Lều trại' },
   { id: 2, name: 'Túi ngủ' },
