@@ -21,11 +21,15 @@ import '@designcodeio/threeui/style.css'
  *   1. Cài package trong thư mục app:
  *        npm install @designcodeio/threeui   (phiên bản 1.2.0)
  *   2. Copy file runtime của cảnh 3D vào public/ (LandscapeScene nhúng file
- *      này qua <iframe src="/landscape.html" sandbox="allow-scripts">):
+ *      này qua <iframe src=".../landscape.html" sandbox="allow-scripts">):
  *        cp node_modules/@designcodeio/threeui/lib-dist/assets/landscape.html public/landscape.html
  *      File ~2,4 MB, tự chứa runtime Three.js r149, không cần copy thêm asset nào.
  *      Kiểm tra sau khi copy: mở http://localhost:PORT/landscape.html trực tiếp,
  *      phải thấy cảnh núi chạy được rồi mới kiểm tra hero.
+ *      ⚠️ sourceUrl MẶC ĐỊNH của LandscapeScene là "/landscape.html" (tuyệt đối
+ *      từ gốc tên miền) — chạy ở đường dẫn con (vd GitHub Pages /camping-shop/)
+ *      thì iframe sẽ 404. Component này luôn truyền sourceUrl theo BASE_URL
+ *      (xem dưới) để iframe tải đúng file.
  *   3. Nếu quên copy landscape.html, iframe sẽ trống nền — class `.hero` trong
  *      index.css đã có lớp lót (gradient tối + ảnh Unsplash) phía dưới iframe
  *      nên hero không lộ nền trắng.
@@ -73,7 +77,11 @@ export default function Hero3D() {
   return (
     <section className="hero" aria-label="Giới thiệu Camping Shop">
       {webglOK ? (
-        <LandscapeScene variant="sunset" className="hero__scene" />
+        <LandscapeScene
+          variant="sunset"
+          className="hero__scene"
+          sourceUrl={`${import.meta.env.BASE_URL}landscape.html`}
+        />
       ) : (
         <div
           className="hero__scene hero__scene--static"
