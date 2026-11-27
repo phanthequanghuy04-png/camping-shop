@@ -48,6 +48,14 @@ export interface CartContextValue {
   /** Tổng tiền (tính từ giá trong products.ts). */
   totalPrice: number
   /**
+   * Ngăn giỏ trượt (#240 Lucian): mở/đóng + id món vừa thêm (để nhấp nháy).
+   * Header mở ngăn khi bấm nút giỏ; ProductCard mở ngăn sau hiệu ứng bay.
+   */
+  isDrawerOpen: boolean
+  flashProductId: number | null
+  openDrawer: (flashProductId?: number) => void
+  closeDrawer: () => void
+  /**
    * true khi backend API đang trả lời (giỏ đã được đồng bộ lên server).
    * false = đang dùng localStorage thuần (API chưa chạy / fetch lỗi).
    */
@@ -84,6 +92,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [apiAvailable, setApiAvailable] = useState(false)
   // Cờ: chỉ đồng bộ lên server sau khi đã nạp giỏ server lần đầu.
   const [hydratedFromApi, setHydratedFromApi] = useState(false)
+
+  // Ngăn giỏ trượt (#240 Lucian): mở khi bấm nút giỏ ở header hoặc khi
+  // vừa thêm món (kèm id món mới để nhấp nháy); đóng thì xóa flash.
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [flashProductId, setFlashProductId] = useState<number | null>(null)
+  const openDrawer = useCallback((flashId?: number) => {
+    setFlashProductId(typeof flashId === 'number' ? flashId : null)
+    setIsDrawerOpen(true)
+  }, [])
+  const closeDrawer = useCallback(() => {
+    setIsDrawerOpen(false)
+    setFlashProductId(null)
+  }, [])
 
   // Lưu giỏ xuống localStorage mỗi khi giỏ thay đổi.
   useEffect(() => {
@@ -257,9 +278,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
       clearCart,
       totalQty: items.reduce((sum, item) => sum + item.quantity, 0),
       totalPrice: detailedItems.reduce((sum, item) => sum + item.subtotal, 0),
+      isDrawerOpen,
+      flashProductId,
+      openDrawer,
+      closeDrawer,
       apiAvailable,
     }
-  }, [items, addToCart, removeFromCart, updateQty, clearCart, apiAvailable])
+  }, [
+    items,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    clearCart,
+    isDrawerOpen,
+    flashProductId,
+    openDrawer,
+    closeDrawer,
+    apiAvailable,
+  ])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
