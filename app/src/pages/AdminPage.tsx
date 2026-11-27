@@ -567,11 +567,12 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs: một hàng cuộn ngang trên điện thoại (không xuống dòng),
+          vuốt để xem đủ 3 tab: Sản phẩm / Thêm sản phẩm / Đơn hàng. */}
       <div
         role="tablist"
         aria-label="Quản trị"
-        className="mt-8 flex flex-wrap gap-2 border-b border-gray-200 pb-0"
+        className="mt-8 flex flex-nowrap gap-2 overflow-x-auto border-b border-gray-200 pb-0"
       >
         {tabs.map((t) => (
           <button
@@ -583,7 +584,7 @@ export default function AdminPage() {
               setTab(t.id)
               setProductNotice('')
             }}
-            className={`rounded-t-lg px-4 py-2 text-sm font-medium ${
+            className={`shrink-0 rounded-t-lg px-4 py-2 text-sm font-medium whitespace-nowrap ${
               tab === t.id
                 ? 'border border-b-0 border-gray-200 bg-white text-emerald-800'
                 : 'text-gray-600 hover:text-emerald-700'
