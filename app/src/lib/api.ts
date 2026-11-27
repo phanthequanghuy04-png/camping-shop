@@ -17,10 +17,13 @@
  */
 import { PRODUCTS } from '../data/products'
 import { saveSession } from '../data/users'
-import type { CartItem, Category, Order, Product, User } from '../data/types'
+import type { CartItem, Category, Order, OrderStatus, Product, User } from '../data/types'
 
+// Dùng trim + || (không dùng ??): build với VITE_API_URL rỗng
+// (vd copy từ .env.example) phải fallback về localhost, không để
+// base thành chuỗi rỗng khiến mọi fetch thành đường dẫn tương đối.
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
+  import.meta.env.VITE_API_URL?.trim() || 'http://localhost:3001'
 
 export const API_TOKEN_KEY = 'camping-token'
 export const API_SESSION_ID_KEY = 'camping-session-id'
@@ -294,9 +297,14 @@ export async function syncCartApi(
   userId: number | null,
   items: CartItem[],
 ): Promise<ApiCartItem[]> {
+  // API nhận product_id (snake_case); CartItem dùng productId (camelCase).
+  const apiItems = items.map((item) => ({
+    product_id: item.productId,
+    quantity: item.quantity,
+  }))
   const body = userId
-    ? { user_id: userId, items }
-    : { session_id: getSessionId(), items }
+    ? { user_id: userId, items: apiItems }
+    : { session_id: getSessionId(), items: apiItems }
   return apiFetch<ApiCartItem[]>('/api/cart/sync', {
     method: 'POST',
     body: JSON.stringify(body),
@@ -312,8 +320,12 @@ export interface CreateOrderInput {
   customer_name: string
   phone: string
   address: string
-  /** Mã giảm giá (vd CAMP10) — server hiện chưa tính giảm giá, chỉ ghi nhận. */
+  /** Mã giảm giá (vd CAMP10) — server tự tính số tiền giảm. */
   coupon_code?: string
+  /** Cách thanh toán: 'cod' (mặc định) | 'bank_transfer'. */
+  payment_method?: 'cod' | 'bank_transfer'
+  /** Khu vực giao hàng: 'hanoi' | 'hcm' | 'other' (mặc định). */
+  shipping_region?: string
   items: CartItem[]
 }
 
@@ -325,16 +337,44 @@ export interface CreatedOrder extends Order {
 export async function createOrderApi(
   input: CreateOrderInput,
 ): Promise<CreatedOrder> {
+  const { items, ...rest } = input
   return apiFetch<CreatedOrder>('/api/orders', {
     method: 'POST',
     body: JSON.stringify({
-      ...input,
+      ...rest,
+      // API nhận product_id (snake_case); CartItem dùng productId.
+      items: items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      })),
       session_id: input.user_id ? undefined : getSessionId(),
     }),
   })
 }
 
+/** Đơn của tài khoản đang đăng nhập (GET /api/orders?user_id=). */
+export async function getMyOrdersApi(
+  userId: number,
+): Promise<CreatedOrder[]> {
+  return apiFetch<CreatedOrder[]>(`/api/orders?user_id=${userId}`)
+}
+
 /** Đơn hàng cho trang Admin — cần token của tài khoản role=admin. */
 export async function getAdminOrdersApi(): Promise<CreatedOrder[]> {
   return apiFetch<CreatedOrder[]>('/api/admin/orders')
+}
+
+/** Admin cập nhật đơn: đổi trạng thái / đánh dấu đã nhận tiền / nhập mã vận đơn. */
+export async function updateAdminOrderApi(
+  id: number,
+  patch: {
+    status?: OrderStatus
+    payment_status?: 'unpaid' | 'paid'
+    tracking_code?: string | null
+  },
+): Promise<CreatedOrder> {
+  return apiFetch<CreatedOrder>(`/api/admin/orders/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
 }
