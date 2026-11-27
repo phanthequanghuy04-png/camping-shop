@@ -15,14 +15,14 @@ import { getAdminOrdersApi } from '../lib/api'
  * localStorage / đơn mẫu như trước. Các thao tác sửa sản phẩm / đổi
  * trạng thái đơn vẫn lưu localStorage (chưa có endpoint admin tương ứng).
  *
- * Kiểm tra quyền đơn giản:
+ * Kiểm tra quyền — chỉ tài khoản role 'admin' mới được vào:
  * - Đọc localStorage key 'camping-session' (do trang Đăng nhập ghi).
  *   Session có thể là JSON { role: 'admin' } hoặc { user: { role } }.
- * - Nếu có session mà role !== 'admin' -> chặn, chỉ hiện thông báo
+ * - Chưa đăng nhập -> chặn, yêu cầu đăng nhập bằng tài khoản admin.
+ * - Đã đăng nhập nhưng role !== 'admin' -> chặn, chỉ hiện thông báo
  *   "Chỉ admin mới xem được trang này" + link tới /login.
- * - Nếu CHƯA có session -> vẫn cho xem ở CHẾ ĐỘ DEMO kèm cảnh báo
- *   (để demo/test khi trang Đăng nhập chưa xong). Khi đăng nhập thật
- *   được triển khai, chỉ cần bỏ nhánh demo này là xong.
+ * - Không có chế độ demo: khách vãng lai không bao giờ thấy nội dung
+ *   quản trị (sản phẩm, đơn hàng, doanh thu).
  */
 
 const SESSION_KEY = 'camping-session'
@@ -305,8 +305,31 @@ export default function AdminPage() {
     )
   }
 
+  // Chưa đăng nhập -> chặn, yêu cầu đăng nhập bằng tài khoản admin.
+  if (session === null) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Bạn cần đăng nhập để xem trang này
+        </h1>
+        <p className="mt-3 text-gray-600">
+          Trang quản trị chỉ dành cho tài khoản admin. Vui lòng đăng nhập
+          bằng tài khoản admin để tiếp tục.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link to="/login" className={primaryButtonClass}>
+            Đăng nhập
+          </Link>
+          <Link to="/" className={secondaryButtonClass}>
+            Về trang chủ
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   // Đã đăng nhập nhưng không phải admin -> chặn hẳn.
-  if (session !== null && session.role !== 'admin') {
+  if (session.role !== 'admin') {
     return (
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-gray-900">
@@ -328,8 +351,7 @@ export default function AdminPage() {
     )
   }
 
-  // Tới đây: role === 'admin' hoặc chưa có session (chế độ demo).
-  const isDemo = session === null
+  // Tới đây: role === 'admin'.
 
   function persistProducts(next: Product[]) {
     setAdminProducts(next)
@@ -460,23 +482,8 @@ export default function AdminPage() {
         Trang quản trị
       </h1>
       <p className="mt-2 text-sm text-gray-600">
-        {isDemo
-          ? 'Bạn đang xem ở chế độ demo (chưa đăng nhập).'
-          : `Đăng nhập với quyền admin${session?.name ? ` — ${session.name}` : ''}.`}
+        {`Đăng nhập với quyền admin${session?.name ? ` — ${session.name}` : ''}.`}
       </p>
-
-      {isDemo && (
-        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <strong>Chế độ demo:</strong> chưa phát hiện phiên đăng nhập
-          (localStorage key <code>camping-session</code>). Trang vẫn cho xem
-          để demo và kiểm thử; mọi thay đổi chỉ lưu trên trình duyệt này
-          (localStorage) và sẽ bị thay thế khi có API/backend thật. Vui lòng{' '}
-          <Link to="/login" className="font-medium underline">
-            đăng nhập bằng tài khoản admin
-          </Link>{' '}
-          để quản lý chính thức.
-        </div>
-      )}
 
       {/* Thống kê nhanh */}
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
