@@ -87,14 +87,13 @@ export default function HomePage() {
       <Hero3D />
 
       {/* Danh mục nổi bật — thẻ ảnh: ảnh đại diện + tên + số sản phẩm.
+          KHÔNG dùng animation khi cuộn cho phần này (theo yêu cầu): tiêu
+          đề và các thẻ luôn hiện sẵn, chỉ giữ hiệu ứng hover.
           Bấm vào lọc tới /shop?category=id */}
       <section className="mx-auto max-w-[1200px] px-4 pt-10 pb-12 sm:px-6 md:pt-14 md:pb-16">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2
-              data-aos="fade-up"
-              className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-[#1B4332]"
-            >
+            <h2 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-[#1B4332]">
               Danh mục nổi bật
             </h2>
             <p className="mt-2 text-[#5A6B5A]">
@@ -109,15 +108,13 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {categories.map((category, index) => {
+          {categories.map((category) => {
             const count = productCountByCategory.get(category.id) ?? 0
             const cover = CATEGORY_COVERS[category.id]
             return (
               <Link
                 key={category.id}
                 to={`/shop?category=${category.id}`}
-                data-aos="fade-up"
-                data-aos-delay={(index % 4) * 100}
                 className="group overflow-hidden rounded-[24px] border border-[#DDD5BD] bg-white shadow-[0_1px_3px_rgba(27,67,50,0.08)] transition duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(27,67,50,0.18)] focus:outline-2 focus:outline-offset-2 focus:outline-[#2D6A4F]"
               >
                 {cover && (
