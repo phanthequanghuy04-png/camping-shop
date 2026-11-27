@@ -44,6 +44,12 @@ jobs:
           # bundle JS lúc build (app/src/lib/api.ts đọc import.meta.env).
           # Phải thay VERCEL_API_URL bằng URL Vercel thật trước khi commit.
           VITE_API_URL: https://camping-shop-api.vercel.app
+          # Thông tin tài khoản nhận tiền thật của shop (Huy cung cấp 2026-11-27):
+          # MB Bank — dùng để hiện mã VietQR trên màn hình đặt hàng thành công.
+          VITE_BANK_CODE: MB
+          VITE_BANK_NAME: MB Bank
+          VITE_BANK_ACCOUNT: 0708065040
+          VITE_BANK_HOLDER: Phan Thế Quang Huy
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
