@@ -139,7 +139,7 @@ export default function ProductDetailPage() {
         </nav>
 
         <div className="mt-6 grid gap-8 md:grid-cols-2">
-          <div>
+          <div data-aos="fade-right">
             <img
               src={resolveImage(product.image)}
               alt={product.name}
@@ -150,7 +150,7 @@ export default function ProductDetailPage() {
             </p>
           </div>
 
-          <div>
+          <div data-aos="fade-left" data-aos-delay="100">
             {category && (
               <span className="inline-block rounded-lg bg-[#D8F3DC] px-2 py-0.5 text-xs font-medium text-[#1B4332]">
                 {category.name}
@@ -245,7 +245,7 @@ export default function ProductDetailPage() {
         </div>
 
         {related.length > 0 && (
-          <section className="mt-16">
+          <section className="mt-16" data-aos="fade-up">
             <h2 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-[#1B4332]">
               Sản phẩm liên quan
             </h2>
@@ -253,8 +253,8 @@ export default function ProductDetailPage() {
               Cùng danh mục {category ? `“${category.name}”` : ''} — có thể bạn cũng thích.
             </p>
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {related.map((p) => (
-                <ProductCard key={p.id} product={p} />
+              {related.map((p, i) => (
+                <ProductCard key={p.id} product={p} index={i} />
               ))}
             </div>
           </section>
