@@ -30,8 +30,22 @@ function minPrice(categoryId: number): number {
 }
 
 const TILES = [
-  { categoryId: 1, label: '01 / LỀU TRẠI', title: 'Lều 2–4 người', kind: 'green' },
-  { categoryId: 2, label: '02 / TÚI NGỦ', title: 'Túi ngủ', kind: 'cream' },
+  {
+    categoryId: 1,
+    label: '01 / LỀU TRẠI',
+    title: 'Lều 2–4 người',
+    kind: 'green',
+    // Ảnh lều 4 người — ô 1 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
+    image: '/images/leu-trai-4-nguoi.jpg',
+  },
+  {
+    categoryId: 2,
+    label: '02 / TÚI NGỦ',
+    title: 'Túi ngủ',
+    kind: 'cream',
+    // Ảnh túi ngủ 3 mùa — ô 2 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
+    image: '/images/tui-ngu-3-mua.jpg',
+  },
 ] as const
 
 export default function HeroKairn() {
@@ -115,7 +129,15 @@ export default function HeroKairn() {
                 }`}
                 style={{ animationDelay: `${0.5 + i * 0.15}s` }}
               >
-                <span className="text-[11px] font-extrabold tracking-[0.14em] opacity-80">
+                <img
+                  src={resolveImage(tile.image)}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-20 w-full rounded-xl object-cover sm:h-24"
+                />
+                <span className="mt-2 block text-[11px] font-extrabold tracking-[0.14em] opacity-80">
                   {tile.label}
                 </span>
                 <span className="mt-2 block font-[Be_Vietnam_Pro,Inter,sans-serif] text-xl leading-tight font-extrabold sm:text-2xl">
