@@ -196,31 +196,10 @@ export default function HeroKairn() {
           </div>
         </div>
 
-        {/* Hàng dưới: thẻ câu chuyện + CTA trên đường kẻ + social */}
+        {/* Hàng dưới: đường kẻ + social (thẻ câu chuyện "BỘ SƯU TẬP MÙA
+            HÈ" đã bỏ 2026-11-28 — trùng đích với nút "Xem combo" ở trên,
+            Huy yêu cầu loại bỏ phần thừa). */}
         <div className="mt-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <a
-            href="#combos"
-            className="kairn-in kairn-story flex max-w-[380px] items-center gap-4 rounded-2xl p-4 transition hover:-translate-y-0.5"
-            style={{ animationDelay: '1.15s' }}
-          >
-            <img
-              src={resolveImage('/images/leu-trai-4-nguoi.jpg')}
-              alt=""
-              aria-hidden="true"
-              loading="lazy"
-              decoding="async"
-              className="h-16 w-16 shrink-0 rounded-xl object-cover"
-            />
-            <span>
-              <span className="block text-[11px] font-extrabold tracking-[0.14em] text-[#F4A261]">
-                BỘ SƯU TẬP MÙA HÈ
-              </span>
-              <span className="mt-1 block text-sm leading-snug font-semibold">
-                Lều, bếp, đèn — đủ bộ cho chuyến đi cuối tuần. Xem combo →
-              </span>
-            </span>
-          </a>
-
           <div
             className="kairn-in relative hidden flex-1 items-center md:flex"
             style={{ animationDelay: '1.3s' }}

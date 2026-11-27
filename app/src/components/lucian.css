@@ -23,7 +23,7 @@
   --ux-accent-ink: #ffffff;
   --ux-mint: #2d6a4f;
   --ux-ok: #047857;
-  --ux-warn: #b45309;
+  --ux-warn: #92400e;
   --ux-danger: #b91c1c;
   --ux-glass: rgba(255, 255, 255, 0.58);
   --ux-glass-line: rgba(255, 255, 255, 0.85);
@@ -1058,6 +1058,20 @@
   box-shadow: 0 0 0 2px var(--ux-accent-soft);
   animation: u444-breathe 2s ease-in-out infinite;
 }
+/* Chế độ tối: bước hiện tại dùng số + vòng xanh nhạt trên nền tối (mặc
+   định --ux-accent #2D6A4F không đổi theo chế độ tối nên số "2" chìm
+   vào nền tối); bước đã xong dùng tick trắng trên nền xanh (mặc định
+   --ux-accent-ink ở chế độ tối là chữ tối, chìm vào nền xanh). */
+.dark .u444-s.is-cur .u444-dot {
+  color: #74c69d;
+  box-shadow: inset 0 0 0 2px #74c69d;
+}
+.dark .u444-s.is-cur .u444-dot::after {
+  box-shadow: 0 0 0 2px rgba(116, 198, 157, 0.5);
+}
+.dark .u444-s.is-done .u444-dot {
+  color: #fff;
+}
 @keyframes u444-breathe {
   50% { transform: scale(1.12); opacity: 0.5; }
 }
@@ -1287,6 +1301,13 @@
 }
 .u445.is-on .u445-old::after {
   transform: none;
+}
+/* Giá gạch ngang nằm trên thẻ trắng cố định ở cả 2 chế độ nên ở chế độ
+   tối phải giữ màu tối (mặc định --ux-ink/--ux-ink-3 đổi sang kem/xám
+   nhạt, chìm vào nền trắng). */
+.dark .u445-old,
+.dark .u445.is-on .u445-old {
+  color: #5a6b5a;
 }
 .u445-new {
   font-size: 22px;
@@ -2086,6 +2107,9 @@
 .u066-or{display:flex;align-items:center;gap:10px;margin:8px 0 14px;font-size:12px;font-weight:700;color:#6b7280;transition:opacity .3s}
 .u066-or::before,.u066-or::after{content:"";flex:1;height:1px;background:#e5e7eb}
 .u066.is-pick .u066-or{opacity:0;pointer-events:none}
+/* Dòng "hoặc" ở chế độ tối: màu xám #6b7280 chìm vào nền tối (3,11:1) —
+   đổi sang token chữ phụ, sáng hơn ở chế độ tối. */
+.dark .u066-or{color:var(--ux-ink-3)}
 .u066-back{width:100%;height:46px;border:0;border-radius:15px;background:none;box-shadow:inset 0 0 0 1.5px #d1d5db;color:#374151;font-size:14px;font-weight:700;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .3s,transform .4s var(--ux-spring)}
 .u066-back:focus-visible{outline:2px solid var(--ux-accent);outline-offset:2px}
 .u066.is-done .u066-back{opacity:1;transform:none;pointer-events:auto}
@@ -2212,6 +2236,11 @@
 .u242-cr::-webkit-scrollbar{display:none}
 .u242-ch{flex:none;height:40px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--ux-ink-3);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:color .2s}
 .u242-ch[aria-current="true"]{color:var(--ux-ink)}
+/* Thanh chip nền kem cố định ở cả 2 chế độ (nền trang /shop kem) nên chữ
+   chip chưa chọn phải giữ màu tối ở chế độ tối — mặc định --ux-ink-3 ở
+   chế độ tối là xám nhạt, chìm vào nền kem (bắt được khi kiểm tra
+   toàn web 2026-11-28). Không áp cho chip đang chọn (nằm trên pill tối). */
+.dark .u242-ch:not([aria-current="true"]){color:#5a6b5a}
 .u242-ch:focus-visible{outline:2px solid var(--ux-accent);outline-offset:-2px}
 .u242-ul{position:absolute;left:0;bottom:8px;height:40px;border-radius:999px;background:var(--ux-surface-2);box-shadow:inset 0 0 0 1px var(--ux-line);transition:transform .35s cubic-bezier(.3,1.2,.5,1),width .35s cubic-bezier(.3,1.2,.5,1);z-index:-1}
 .u242-cr>.u242-ch{position:relative;z-index:1}

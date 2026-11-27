@@ -64,7 +64,7 @@ const PROVIDERS: Provider[] = [
   {
     id: 'facebook',
     label: 'Facebook',
-    bg: '#1877f2',
+    bg: '#166fe0', // xanh Facebook đậm hơn #1877f2 một chút để chữ trắng đạt 4,7:1 (gốc 4,23:1)
     fg: '#ffffff',
     border: 'none',
     icon: (
