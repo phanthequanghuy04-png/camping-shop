@@ -168,19 +168,23 @@ function Header() {
           </button>
 
           <Link to="/" className="brand" aria-label="Camping Shop — Trang chủ">
-          {/* Icon lều SVG (design system: không dùng emoji làm icon) */}
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          {/* Logo thương hiệu mẫu C (nét vẽ tối giản): biểu tượng lều,
+              núi, mặt trời bản một màu trắng — dùng trên nền header xanh rừng. */}
+          <svg width="28" height="28" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+            <g fill="#FFFFFF">
+              <circle cx="86" cy="30" r="11" />
+              <polygon points="10,90 44,48 66,74 88,44 112,90" />
+              <polygon points="60,40 16,94 104,94" />
+              <polygon points="10,82 4,94 16,94" />
+              <polygon points="110,82 104,94 116,94" />
+              <rect x="8" y="96" width="104" height="5" rx="2.5" />
+            </g>
             <path
-              d="M12 3 2 20h20L12 3Z"
-              stroke="#74c69d"
-              strokeWidth="1.8"
+              d="M60 68 L48 94 H72 Z"
+              stroke="#FFFFFF"
+              strokeWidth="3.5"
               strokeLinejoin="round"
             />
-            <path
-              d="M12 12.5 8.5 20h7L12 12.5Z"
-              fill="#c05621"
-            />
-            <path d="M12 3v17.5" stroke="#74c69d" strokeWidth="1.4" />
           </svg>
           Camping Shop
         </Link>
