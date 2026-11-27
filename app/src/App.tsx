@@ -157,7 +157,10 @@ function Header() {
           Camping Shop
         </Link>
 
-        <div className="flex items-center gap-3">
+        {/* Cụm tác vụ bên phải header: đổi theme, giỏ hàng, avatar
+            tài khoản. Trên desktop (md+) dùng order-3 để nằm bên phải,
+            sau menu điều hướng (order-2). */}
+        <div className="flex items-center gap-3 md:order-3">
           {/* Chuyển sáng/tối (dark mode, lưu localStorage `camping-theme`) */}
           <ThemeToggle />
           {/* Nút giỏ hàng + badge số lượng thật từ CartContext.
@@ -212,9 +215,10 @@ function Header() {
           </button>
         </div>
 
-        {/* Menu desktop: ngang đầy đủ; mobile: hiện khi bấm burger */}
+        {/* Menu desktop: ngang đầy đủ, nằm giữa header (logo trái,
+            menu giữa, cụm tác vụ phải); mobile: hiện khi bấm burger */}
         <nav
-          className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 md:flex md:w-auto md:flex-row md:gap-6`}
+          className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 md:order-2 md:flex md:w-auto md:flex-row md:gap-6`}
           aria-label="Menu chính"
         >
           {visibleNavLinks.map((link) => (
