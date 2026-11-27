@@ -1,23 +1,36 @@
-import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   checkDemoLogin,
   checkRegisteredLogin,
   DEMO_PASSWORD,
   getSessionUser,
   saveSession,
-  clearSession,
 } from '../data/users'
-import { clearToken, loginApi } from '../lib/api'
+import { loginApi } from '../lib/api'
+import { showToast } from '../lib/toast'
 import type { User } from '../data/types'
 
 export default function LoginPage() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(() =>
-    getSessionUser(),
-  )
+
+  // Đã đăng nhập mà mở lại /login thì về trang chủ luôn — thông tin tài
+  // khoản và nút đăng xuất đã nằm trên header, không cần trang chào nữa.
+  useEffect(() => {
+    if (getSessionUser()) {
+      navigate('/', { replace: true })
+    }
+  }, [navigate])
+
+  // Đăng nhập xong: báo thành công rồi chuyển thẳng về trang chủ.
+  const handleLoginSuccess = (user: User) => {
+    setError('')
+    showToast(`Đăng nhập thành công! Xin chào, ${user.name}.`)
+    navigate('/')
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -30,8 +43,7 @@ export default function LoginPage() {
     // demo/local (users.ts) như trước.
     try {
       const { user } = await loginApi(trimmedEmail, password)
-      setError('')
-      setLoggedInUser(user)
+      handleLoginSuccess(user)
       return
     } catch {
       // API chưa chạy / lỗi: dùng đăng nhập local bên dưới.
@@ -45,62 +57,11 @@ export default function LoginPage() {
       return
     }
     saveSession(user)
-    setError('')
-    setLoggedInUser(user)
-  }
-
-  const handleLogout = () => {
-    clearSession()
-    clearToken()
-    setLoggedInUser(null)
-    setEmail('')
-    setPassword('')
+    handleLoginSuccess(user)
   }
 
   const inputClass =
     'w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100'
-
-  // Đã đăng nhập: hiện thông tin + link theo role (admin thấy link tới /admin).
-  if (loggedInUser) {
-    return (
-      <main className="mx-auto max-w-md px-4 py-12">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-4xl" aria-hidden="true">
-            👋
-          </p>
-          <h1 className="mt-3 text-2xl font-bold text-emerald-900">
-            Xin chào, {loggedInUser.name}!
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Bạn đã đăng nhập với email {loggedInUser.email}.
-          </p>
-          <div className="mt-6 flex flex-col gap-3">
-            {loggedInUser.role === 'admin' && (
-              <Link
-                to="/admin"
-                className="rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
-              >
-                Vào trang Quản trị
-              </Link>
-            )}
-            <Link
-              to="/shop"
-              className="rounded-lg border border-gray-300 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Tiếp tục mua sắm
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg px-5 py-2.5 font-medium text-red-600 hover:bg-red-50"
-            >
-              Đăng xuất
-            </button>
-          </div>
-        </div>
-      </main>
-    )
-  }
 
   return (
     <main className="mx-auto max-w-md px-4 py-12">
