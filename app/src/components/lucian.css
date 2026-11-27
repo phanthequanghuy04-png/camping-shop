@@ -1603,6 +1603,14 @@
   box-shadow: -1px -1px 0 0 var(--ux-line);
   transform: rotate(45deg);
 }
+/* Điện thoại: menu được đo vị trí rồi kẹp vào trong màn hình (xem
+   AccountMenu.tsx) nên mũi tên chỉ vào avatar không còn đúng chỗ —
+   ẩn mũi tên trên màn hẹp. */
+@media (max-width: 767px) {
+  .u408-m::before {
+    display: none;
+  }
+}
 .u408.is-open .u408-m {
   transform: none;
   opacity: 1;
