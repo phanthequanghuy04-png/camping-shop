@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LandscapeScene } from '@designcodeio/threeui/components/LandscapeScene'
 import '@designcodeio/threeui/style.css'
@@ -74,9 +74,32 @@ export default function Hero3D() {
     return isWebGLAvailable()
   })
 
+  // Cảnh 3D (~2,4 MB) chỉ tải SAU khi trang đã hiện xong, khỏi tranh
+  // tài nguyên với lần vẽ đầu — đặc biệt trên điện thoại (sửa 2026-11-27,
+  // theo ý tưởng của Huy: load sẵn thì hiện, không thì ẩn đi).
+  // Trước khi sẵn sàng thì hiện ảnh tĩnh (cùng URL với lớp lót của
+  // `.hero` nên hero không bị "nhảy" giao diện khi iframe vào).
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    type IdleCallback = (cb: () => void, opts?: { timeout: number }) => number
+    const ric = (
+      window as unknown as { requestIdleCallback?: IdleCallback }
+    ).requestIdleCallback
+    if (ric) {
+      const id = ric(() => setReady(true), { timeout: 2500 })
+      const cic = (
+        window as unknown as { cancelIdleCallback?: (id: number) => void }
+      ).cancelIdleCallback
+      return () => cic?.(id)
+    }
+    const timer = window.setTimeout(() => setReady(true), 900)
+    return () => window.clearTimeout(timer)
+  }, [])
+
   return (
     <section className="hero" aria-label="Giới thiệu Camping Shop">
-      {webglOK ? (
+      {webglOK && ready ? (
         <LandscapeScene
           variant="sunset"
           className="hero__scene"

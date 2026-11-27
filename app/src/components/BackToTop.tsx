@@ -32,6 +32,8 @@ const AUTO_REPLY =
 export default function BackToTop() {
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(false)
+  // Giá trị tiến trình đã ghi lần cuối — để chỉ setState khi đổi đủ 1%.
+  const progressRef = useRef(0)
   const [flying, setFlying] = useState(false)
   const [tempHide, setTempHide] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
@@ -52,7 +54,15 @@ export default function BackToTop() {
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight
-      setProgress(max > 0 ? window.scrollY / max : 0)
+      const next = max > 0 ? window.scrollY / max : 0
+      // Chỉ setState khi tiến trình đổi đủ 1%: vòng tiến trình là đường
+      // tròn mảnh nên bước 1% không nhìn thấy khác, nhưng khỏi render
+      // lại component theo từng pixel cuộn (sửa 2026-11-27, theo ý
+      // tưởng của Huy: tránh làm lại khi cuộn).
+      if (Math.abs(next - progressRef.current) >= 0.01) {
+        progressRef.current = next
+        setProgress(next)
+      }
       setVisible(window.scrollY > 400)
     }
     onScroll()
