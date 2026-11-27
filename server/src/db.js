@@ -92,8 +92,11 @@ const config = {
 let pool = null;
 let available = false;
 let lastError = null;
+// Promise của lần thử nối DB đang chạy (nếu có). Nhiều request cùng lúc
+// trên serverless chỉ tạo 1 lần thử; thử thất bại thì lần gọi sau thử lại.
+let initPromise = null;
 
-async function initDb(retries = 3) {
+async function runInit(retries) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       pool = mysql.createPool(config);
@@ -123,6 +126,20 @@ async function initDb(retries = 3) {
     }
   }
   return available;
+}
+
+/**
+ * Nối DB (memoize: nhiều request cùng lúc chỉ tạo 1 lần thử;
+ * thử thất bại thì lần gọi sau sẽ thử lại từ đầu).
+ */
+function initDb(retries = 3) {
+  if (!initPromise) {
+    initPromise = runInit(retries).then((ok) => {
+      if (!ok) initPromise = null;
+      return ok;
+    });
+  }
+  return initPromise;
 }
 
 function isAvailable() {
