@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CategoryIcon, { categoryTileBg } from '../components/CategoryIcons'
-import Hero3D from '../components/Hero3D'
+import HeroIllustrated from '../components/HeroIllustrated'
 import ProductCard from '../components/ProductCard'
 import { CATEGORIES, getActiveProducts } from '../data/products'
 import type { Category, Product } from '../data/types'
@@ -67,9 +67,10 @@ export default function HomePage() {
   )
 
   return (
-    <main className="bg-background text-foreground">
-      {/* Hero 3D — cảnh hoàng hôn ThreeUI, tự fallback ảnh tĩnh khi không có WebGL */}
-      <Hero3D />
+    <main className="home-clean text-foreground">
+      {/* Hero minh họa (thiết kế lại 2026-11-28): tranh SVG bầu trời,
+          rừng thông, lều vàng — thay cảnh 3D/ảnh lều cũ */}
+      <HeroIllustrated />
 
       {/* Danh mục nổi bật — thẻ icon 3D (CategoryIcons.tsx, SVG vẽ tay):
           icon nảy lên + nghiêng nhẹ khi trỏ chuột, mỗi icon có chuyển
@@ -80,7 +81,10 @@ export default function HomePage() {
       <section className="cv-cats mx-auto max-w-[1200px] px-4 pt-10 pb-12 sm:px-6 md:pt-14 md:pb-16">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-foreground">
+            <p className="home-eyebrow text-xs font-bold uppercase">
+              Khám phá danh mục
+            </p>
+            <h2 className="mt-2 font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-foreground">
               Danh mục nổi bật
             </h2>
             <p className="mt-2 text-muted-foreground">
@@ -151,9 +155,12 @@ export default function HomePage() {
                 trượt tiêu đề từ dưới lên nên giữa hiệu ứng nó chồng
                 lên dòng mô tả bên dưới trên điện thoại (sửa 2026-11-27).
                 Các thẻ sản phẩm bên dưới vẫn giữ fade-up như cũ. */}
+            <p className="home-eyebrow text-xs font-bold uppercase">
+              Được yêu thích nhất
+            </p>
             <h2
               data-aos="fade"
-              className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-foreground"
+              className="mt-2 font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-foreground"
             >
               Sản phẩm nổi bật
             </h2>
