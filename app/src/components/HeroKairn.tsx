@@ -34,7 +34,6 @@ const TILES = [
     categoryId: 1,
     label: '01 / LỀU TRẠI',
     title: 'Lều 2–4 người',
-    kind: 'green',
     // Ảnh lều 4 người — ô 1 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
     image: '/images/leu-trai-4-nguoi.jpg',
   },
@@ -42,7 +41,6 @@ const TILES = [
     categoryId: 2,
     label: '02 / TÚI NGỦ',
     title: 'Túi ngủ',
-    kind: 'cream',
     // Ảnh túi ngủ 3 mùa — ô 2 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
     image: '/images/tui-ngu-3-mua.jpg',
   },
@@ -99,12 +97,12 @@ export default function HeroKairn() {
               >
                 Mua sắm ngay
               </Link>
-              <Link
-                to="/shop"
+              <a
+                href="#danh-muc"
                 className="kairn-cta inline-flex min-h-12 items-center rounded-full bg-white/15 px-7 py-3 text-base font-bold text-white shadow-[inset_0_0_0_2px_rgba(255,255,255,0.85)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/25 focus:outline-2 focus:outline-offset-2 focus:outline-white"
               >
                 Xem bộ sưu tập
-              </Link>
+              </a>
             </div>
             <p
               className="kairn-in mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-white/85"
@@ -124,9 +122,9 @@ export default function HeroKairn() {
               <Link
                 key={tile.categoryId}
                 to={`/shop?category=${tile.categoryId}`}
-                className={`kairn-in kairn-tile ${
-                  tile.kind === 'green' ? 'kairn-tile-green' : 'kairn-tile-cream'
-                }`}
+                // Cả 2 ô đều nền kem như các ô còn lại (ô 1 trước đây là ô
+                // xanh duy nhất nên bị khác màu — Huy báo lỗi 2026-11-28).
+                className="kairn-in kairn-tile kairn-tile-cream"
                 style={{ animationDelay: `${0.5 + i * 0.15}s` }}
               >
                 <img
@@ -153,9 +151,11 @@ export default function HeroKairn() {
               </Link>
             ))}
 
-            {/* Vòng tròn kính: 8 danh mục */}
-            <Link
-              to="/shop"
+            {/* Vòng tròn kính: 8 danh mục — cuộn tới mục danh mục trên
+                trang chủ thay vì sang trang cửa hàng (giảm nút sang shop,
+                theo yêu cầu của Huy 2026-11-28). */}
+            <a
+              href="#danh-muc"
               className="kairn-in kairn-tile kairn-glass-circle"
               style={{ animationDelay: '0.8s' }}
               aria-label="Xem tất cả 8 danh mục"
@@ -169,7 +169,7 @@ export default function HeroKairn() {
               <span className="text-xs font-semibold opacity-85">
                 8 danh mục đồ cắm trại
               </span>
-            </Link>
+            </a>
 
             {/* Thẻ sản phẩm bán chạy nhất */}
             {TENT && (
@@ -236,16 +236,14 @@ export default function HeroKairn() {
             <span className="kairn-rule absolute inset-x-0 top-1/2 h-px bg-white/40" />
           </div>
 
+          {/* Nút cam "Khám phá cửa hàng" đã bỏ (trùng đích với "Mua sắm
+              ngay" — hero có quá nhiều nút sang cửa hàng, theo yêu cầu
+              của Huy 2026-11-28); hàng dưới còn thẻ câu chuyện + đường
+              kẻ + social. */}
           <div
             className="kairn-in flex items-center gap-3"
             style={{ animationDelay: '1.45s' }}
           >
-            <Link
-              to="/shop"
-              className="kairn-cta inline-flex min-h-12 shrink-0 items-center rounded-full bg-[#E76F51] px-7 py-3 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#D45A3A] focus:outline-2 focus:outline-offset-2 focus:outline-white"
-            >
-              Khám phá cửa hàng
-            </Link>
             <span className="ml-2 hidden items-center gap-2 lg:flex" aria-hidden="true">
               <span className="text-xs font-bold tracking-[0.18em] text-white/80">
                 THEO DÕI SHOP
