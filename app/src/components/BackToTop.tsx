@@ -44,11 +44,6 @@ export default function BackToTop() {
   const openBtnRef = useRef<HTMLButtonElement>(null)
   const msgsRef = useRef<HTMLDivElement>(null)
   const genRef = useRef(0)
-  // Giá trị tiến trình gần nhất đã render — chỉ setState khi đổi đủ
-  // 1%: setState theo từng pixel cuộn sẽ render lại nút theo từng
-  // khung hình, gây lag trên điện thoại (sửa 2026-11-27). Vòng tròn
-  // 44px nên bước 1% nhìn vẫn mượt.
-  const progressRef = useRef(0)
   const reduced =
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -57,11 +52,7 @@ export default function BackToTop() {
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight
-      const next = max > 0 ? window.scrollY / max : 0
-      if (Math.abs(next - progressRef.current) >= 0.01) {
-        progressRef.current = next
-        setProgress(next)
-      }
+      setProgress(max > 0 ? window.scrollY / max : 0)
       setVisible(window.scrollY > 400)
     }
     onScroll()
