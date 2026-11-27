@@ -312,6 +312,8 @@ export interface CreateOrderInput {
   customer_name: string
   phone: string
   address: string
+  /** Mã giảm giá (vd CAMP10) — server hiện chưa tính giảm giá, chỉ ghi nhận. */
+  coupon_code?: string
   items: CartItem[]
 }
 
