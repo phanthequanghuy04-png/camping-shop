@@ -1,0 +1,12 @@
+# Camping Shop — file không bao giờ commit lên git
+node_modules/
+dist/
+.env
+# DEPLOY.md chứa MẬT KHẨU DEMO dạng text — chỉ để ở máy local, không commit, không push lên GitHub.
+DEPLOY.md
+*.log
+
+_old-shopping/
+
+__pycache__/
+*.pyc
