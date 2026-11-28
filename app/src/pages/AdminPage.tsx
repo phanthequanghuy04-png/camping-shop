@@ -237,6 +237,10 @@ function formatDate(iso: string): string {
 const inputClass =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600'
 const labelClass = 'mb-1 block text-sm font-medium text-gray-700'
+
+/** Gõ không dấu vẫn tìm ra (vd "leu" khớp "Lều"). */
+const foldText = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 const primaryButtonClass =
   'btn-white rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50'
 const secondaryButtonClass =
@@ -391,6 +395,60 @@ export default function AdminPage() {
   const visibleProducts = adminProducts.filter((p) => p.status === 1)
   const outOfStockProducts = adminProducts.filter((p) => p.status === 2)
   const hiddenProducts = adminProducts.filter((p) => p.status === 0)
+  // Bộ lọc + sắp xếp bảng Sản phẩm (Huy 2026-11-28: sắp xếp và phân loại
+  // cho dễ nhìn, dễ quản lý). Chỉ đổi cách hiển thị, không đổi dữ liệu.
+  const [productSearch, setProductSearch] = useState('')
+  const [productFilterCategory, setProductFilterCategory] = useState<
+    number | 'all'
+  >('all')
+  const [productFilterStatus, setProductFilterStatus] = useState<
+    number | 'all'
+  >('all')
+  const [productSort, setProductSort] = useState<
+    | 'default'
+    | 'name-asc'
+    | 'name-desc'
+    | 'price-asc'
+    | 'price-desc'
+    | 'stock-asc'
+    | 'stock-desc'
+  >('default')
+  const filteredProducts = useMemo(() => {
+    const q = foldText(productSearch.trim())
+    const list = adminProducts.filter((p) => {
+      if (
+        productFilterCategory !== 'all' &&
+        p.id_category !== productFilterCategory
+      )
+        return false
+      if (productFilterStatus !== 'all' && p.status !== productFilterStatus)
+        return false
+      if (q && !foldText(p.name).includes(q)) return false
+      return true
+    })
+    switch (productSort) {
+      case 'name-asc':
+        return [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi'))
+      case 'name-desc':
+        return [...list].sort((a, b) => b.name.localeCompare(a.name, 'vi'))
+      case 'price-asc':
+        return [...list].sort((a, b) => a.price - b.price)
+      case 'price-desc':
+        return [...list].sort((a, b) => b.price - a.price)
+      case 'stock-asc':
+        return [...list].sort((a, b) => a.quantity - b.quantity)
+      case 'stock-desc':
+        return [...list].sort((a, b) => b.quantity - a.quantity)
+      default:
+        return list
+    }
+  }, [
+    adminProducts,
+    productSearch,
+    productFilterCategory,
+    productFilterStatus,
+    productSort,
+  ])
   // Sản phẩm đang sửa (hiện ảnh + tên trong form Sửa thẻ thủy tinh).
   const editingProduct = adminProducts.find((p) => p.id === editingId)
   const pendingOrders = orders.filter((o) => o.status === 'pending').length
@@ -1088,6 +1146,72 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* Thanh sắp xếp + phân loại bảng Sản phẩm */}
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <input
+              type="search"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Tìm theo tên sản phẩm… (gõ không dấu cũng được)"
+              aria-label="Tìm sản phẩm trong quản trị"
+              className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-600 focus:outline-none sm:min-w-[240px] sm:flex-1"
+            />
+            <select
+              value={productFilterCategory}
+              onChange={(e) =>
+                setProductFilterCategory(
+                  e.target.value === 'all' ? 'all' : Number(e.target.value),
+                )
+              }
+              aria-label="Lọc theo danh mục"
+              className="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-600 focus:outline-none"
+            >
+              <option value="all">Tất cả danh mục</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={productFilterStatus}
+              onChange={(e) =>
+                setProductFilterStatus(
+                  e.target.value === 'all' ? 'all' : Number(e.target.value),
+                )
+              }
+              aria-label="Lọc theo trạng thái"
+              className="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-600 focus:outline-none"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value={1}>Đang bán</option>
+              <option value={2}>Hết hàng</option>
+              <option value={0}>Đang ẩn</option>
+            </select>
+            <select
+              value={productSort}
+              onChange={(e) =>
+                setProductSort(
+                  e.target.value as typeof productSort,
+                )
+              }
+              aria-label="Sắp xếp sản phẩm"
+              className="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-600 focus:outline-none"
+            >
+              <option value="default">Sắp xếp: Mặc định</option>
+              <option value="name-asc">Tên: A → Z</option>
+              <option value="name-desc">Tên: Z → A</option>
+              <option value="price-asc">Giá: thấp → cao</option>
+              <option value="price-desc">Giá: cao → thấp</option>
+              <option value="stock-asc">Tồn kho: ít → nhiều</option>
+              <option value="stock-desc">Tồn kho: nhiều → ít</option>
+            </select>
+          </div>
+          <p className="mb-3 text-sm text-gray-600" aria-live="polite">
+            Hiển thị {filteredProducts.length} / {adminProducts.length} sản
+            phẩm
+          </p>
+
           {adminProducts.length === 0 ? (
             <p className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-sm text-gray-600">
               Chưa có sản phẩm nào. Dữ liệu 28 sản phẩm mẫu sẽ được nạp từ
@@ -1114,7 +1238,18 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {adminProducts.map((product) => (
+                  {filteredProducts.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-8 text-center text-gray-500"
+                      >
+                        Không có sản phẩm nào khớp bộ lọc. Thử đổi danh mục,
+                        trạng thái, từ khóa hoặc cách sắp xếp.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredProducts.map((product) => (
                     <tr
                       key={product.id}
                       className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
@@ -1182,7 +1317,8 @@ export default function AdminPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
