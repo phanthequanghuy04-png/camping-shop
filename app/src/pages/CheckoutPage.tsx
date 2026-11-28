@@ -222,7 +222,7 @@ export default function CheckoutPage() {
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               to="/shop"
-              className="rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
+              className="btn-white rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
             >
               Tiếp tục mua sắm
             </Link>
@@ -244,12 +244,12 @@ export default function CheckoutPage() {
         <h1 className="text-2xl font-bold text-emerald-900 sm:text-3xl">
           Giỏ hàng của bạn đang trống
         </h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-muted-foreground">
           Bạn cần thêm sản phẩm vào giỏ trước khi thanh toán.
         </p>
         <Link
           to="/shop"
-          className="mt-8 inline-block rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
+          className="btn-white mt-8 inline-block rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
         >
           Tiếp tục mua sắm
         </Link>
