@@ -210,9 +210,19 @@ export function getSessionUser(): User | null {
   }
 }
 
-/** Đăng xuất: xóa phiên đăng nhập. */
+/** Đăng xuất: xóa phiên đăng nhập + dọn giỏ/yêu thích của khách vãng lai
+ * (key chung 'camping-cart' / 'camping-wishlist') để sau khi đăng xuất
+ * không còn đồ của tài khoản cũ. Giỏ/yêu thích của từng tài khoản nằm
+ * ở key riêng ('camping-cart-<id>' / 'camping-wishlist-<id>') nên vẫn
+ * còn nguyên khi đăng nhập lại. */
 export function clearSession(): void {
-  localStorage.removeItem(SESSION_KEY)
+  try {
+    localStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem('camping-cart')
+    localStorage.removeItem('camping-wishlist')
+  } catch {
+    // localStorage bị chặn: phiên chỉ mất khi tải lại trang.
+  }
   notifyAuthChanged()
 }
 
