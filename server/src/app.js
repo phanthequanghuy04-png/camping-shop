@@ -60,6 +60,14 @@ app.use(cors());
 // 4,5 MB của Vercel serverless.
 app.use(express.json({ limit: '3mb' }));
 
+// API luôn trả dữ liệu mới nhất: /shop từng hiện giá/tồn kho cũ vài phút
+// sau khi sửa ở quản trị do trình duyệt/CDN cache phản hồi GET (không có
+// Cache-Control nên cache theo suy đoán). no-store tắt hẳn cache này.
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 // Serverless (Vercel): kết nối DB được khởi động nền khi module load;
 // request đầu tiên chờ tối đa 8s để biết DB có lên được không (tránh
 // trả fallback oan khi TiDB chỉ chậm vài giây). Hết 8s thì cứ trả lời
