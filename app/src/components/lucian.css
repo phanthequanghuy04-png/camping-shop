@@ -87,115 +87,152 @@
 }
 
 /* ==========================================================================
-   #212 — Header ẩn khi cuộn + thanh tiến trình đọc (Navigation)
-   Hành vi gốc: cuộn xuống thì header trượt lên khỏi màn hình (ẩn sau khi
-   cuộn xuống tích lũy > 8px, y >= 60); cuộn lên dù ít cũng hiện lại
-   (tích lũy lên < -6px); y > 20 thì header đặc lại (blur + bóng + thấp hơn);
-   về gần đầu trang thì trong suốt lại. Thanh tiến trình 2px dưới header.
-   Áp dụng lên .site-header có sẵn của shop (kèm yêu cầu làm lại header
-   mềm hơn, bo tròn, fade, hover): bo tròn đáy 24px, link dạng pill với
-   hiệu ứng hover mờ dần, brand hover nhẹ.
+   Header thủy tinh (Glass) — thay thanh xanh rừng đặc #212 (2026-11-28,
+   Huy chọn bản D trong trang xem trước).
+   Viên pill nổi trong mờ trượt lên trên ảnh hero: nền kem mờ + blur 16px
+   ở chế độ sáng, xanh rừng đậm trong mờ ở chế độ tối. Giữ nguyên hành vi
+   #212: ẩn khi cuộn xuống, hiện khi cuộn lên, đặc lại khi cuộn quá 20px,
+   thanh tiến trình đọc 2px.
+   - Vỏ .site-header trong suốt, chỉ định vị (sticky) + đệm trên 12px.
+   - Viên pill .glass-pill mang nền kính + viền + bóng + bo tròn đầy.
+   - Chữ/icon trong header ĐỔI MÀU theo chế độ (xanh đậm trên kính sáng,
+     kem trên kính tối) — luật .site-header a / .brand ở index.css vẫn
+     ép màu kem nên phải ghi đè bằng color: inherit ở đây (lucian.css
+     nạp sau index.css nên thắng cùng độ ưu tiên).
    ========================================================================== */
 .site-header {
-  /* Header mềm ngay từ đầu trang (không chỉ khi đã cuộn): bo tròn
-     đáy 24px, nền xanh rừng mờ + blur, bóng mềm — hoàn thiện yêu cầu
-     làm lại header mềm hơn / bo tròn / fade / hover của Huy (trước
-     đây chỉ hiện khi đã cuộn, đầu trang vẫn là thanh vuông đặc). */
-  border-radius: 0 0 24px 24px;
-  background-color: color-mix(
-    in srgb,
-    var(--color-primary-dark) 88%,
-    transparent
-  );
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  /* Đệm ngang 8px ở mobile để pill 1 hàng vừa 390px (logo + burger +
+     theme + giỏ + avatar ≈ 352px, chỉ vừa khi tổng đệm ≤ 32px);
+     từ lg trở lên đệm 12px như desktop. */
+  padding: 12px 8px 0;
+  /* Chữ/icon mặc định: xanh đậm trên kính sáng; .dark đổi sang kem. */
+  color: #1b4332;
+  transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 1024px) {
+  .site-header {
+    padding: 12px 12px 0;
+  }
+}
+.dark .site-header {
+  color: #f5f0e1;
+}
+/* Viên pill kính: bo tròn đầy, nền mờ + blur + bão hòa màu, viền sáng
+   mờ, bóng mềm. Chiều cao pill = padding dọc + nội dung 44px. */
+.glass-pill {
+  border-radius: 999px;
+  background: color-mix(in srgb, #faf6ec 78%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 20px -14px rgba(0, 0, 0, 0.5);
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 12px 32px -16px rgba(20, 51, 42, 0.35);
   transition:
-    transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
     background-color 0.3s,
     box-shadow 0.3s,
-    backdrop-filter 0.3s,
     border-radius 0.3s;
 }
-.site-header.is-solid {
-  /* Khi cuộn: nền đặc hơn một chút + bóng rõ hơn, còn lại giữ nguyên. */
-  background-color: color-mix(
-    in srgb,
-    var(--color-primary-dark) 94%,
-    transparent
-  );
+/* Menu mobile bung xuống trong pill: pill thành thẻ bo góc 28px để chứa
+   hàng menu (bo tròn đầy sẽ cắt chữ khi pill cao lên). */
+.glass-pill--open {
+  border-radius: 28px;
+}
+.dark .glass-pill {
+  background: color-mix(in srgb, var(--color-primary-dark) 72%, transparent);
+  border-color: rgba(255, 255, 255, 0.14);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08),
-    0 12px 28px -14px rgba(0, 0, 0, 0.55);
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 12px 32px -16px rgba(0, 0, 0, 0.6);
 }
-/* Lấp mảng nền sáng lộ ở 2 góc bo tròn đáy header: header bo đáy 24px +
-   nền mờ nên góc bo để lộ nền body (kem/trắng) — Huy báo lỗi 2026-11-28
-   (đã tái hiện bằng ảnh chụp góc header ở 390px: mảng kem ở góc cong).
-   Hai ô vuông 24px ở 2 góc đáy, nền gradient tròn: trong suốt ở phần
-   header đã phủ, xanh mờ ở đúng phần góc bo bị cắt — không đổi màu hay
-   độ mờ của header ở bất cứ trạng thái nào. */
-.site-header::before,
-.site-header::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  width: 24px;
-  height: 24px;
-  z-index: -1;
-  pointer-events: none;
+.site-header.is-solid .glass-pill {
+  /* Khi cuộn: kính đặc hơn một chút + bóng rõ hơn, còn lại giữ nguyên. */
+  background: color-mix(in srgb, #faf6ec 88%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 16px 36px -16px rgba(20, 51, 42, 0.45);
 }
-.site-header::before {
-  left: 0;
-  background: radial-gradient(
-    circle at 100% 0,
-    transparent 23.5px,
-    color-mix(in srgb, var(--color-primary-dark) 88%, transparent) 24px
-  );
-}
-.site-header::after {
-  right: 0;
-  background: radial-gradient(
-    circle at 0 0,
-    transparent 23.5px,
-    color-mix(in srgb, var(--color-primary-dark) 88%, transparent) 24px
-  );
+.dark .site-header.is-solid .glass-pill {
+  background: color-mix(in srgb, var(--color-primary-dark) 84%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 16px 36px -16px rgba(0, 0, 0, 0.65);
 }
 .site-header.is-hide {
   transform: translateY(-110%);
+}
+/* Màu chữ/icon trong header theo màu của .site-header (ghi đè luật
+   .site-header a / .brand màu kem ở index.css). */
+.site-header a {
+  color: inherit;
 }
 .site-header .nav-link {
   border-bottom: 0;
   border-radius: 999px;
   padding: 8px 14px;
+  color: inherit;
   transition:
     background-color 0.25s ease,
     color 0.25s ease,
     transform 0.25s ease;
 }
 .site-header .nav-link:hover {
+  background: rgba(27, 67, 50, 0.08);
+  color: #1b4332;
+}
+.site-header .nav-link--active {
+  background: rgba(27, 67, 50, 0.12);
+  color: #1b4332;
+}
+.dark .site-header .nav-link:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
-.site-header .nav-link--active {
+.dark .site-header .nav-link--active {
   background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
 }
 .site-header .brand {
+  color: inherit;
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
+}
+/* Điện thoại: logo nhỏ lại một chút để pill 1 hàng vừa 390px. */
+@media (max-width: 480px) {
+  .site-header .brand svg {
+    width: 24px;
+    height: 24px;
+  }
 }
 .site-header .brand:hover {
   opacity: 0.85;
   transform: translateY(-1px);
 }
-/* Thanh tiến trình đọc 2px ở đáy header (chỉ hiện khi đã cuộn). */
+/* Nút tác vụ trong pill (đổi theme, giỏ, tìm kiếm): hover mờ theo chế
+   độ — Tailwind hover:bg-white/10 trong ThemeToggle chỉ hợp kính tối. */
+.site-header .u219-tg:hover,
+.site-header .glass-icon-btn:hover {
+  background: rgba(27, 67, 50, 0.08);
+}
+.dark .site-header .u219-tg:hover,
+.dark .site-header .glass-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+/* Ô tìm kiếm trong pill (chỉ hiện từ xl): thấp 44px cho bằng các nút
+   khác, nền theo token (trắng ở sáng, tối ở tối). */
+.glass-search .u429-f {
+  height: 44px;
+  box-shadow: 0 0 0 1px var(--ux-line-2);
+}
+/* Thanh tiến trình đọc 2px bám đáy viên pill (chỉ hiện khi đã cuộn). */
 .header-progress {
   position: absolute;
-  left: 24px;
-  right: 24px;
+  left: 40px;
+  right: 40px;
   bottom: 0;
   height: 2px;
   border-radius: 2px;
