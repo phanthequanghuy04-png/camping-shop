@@ -94,7 +94,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const { addToCart, openDrawer } = useCart()
+  const { addToCart } = useCart()
   const navigate = useNavigate()
   const [added, setAdded] = useState(false)
   // #441 Lucian — tim yêu thích (lưu localStorage, giữ qua các lần vào web).
@@ -106,7 +106,8 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const category = product.id_category
     ? getCategoryById(product.id_category)
     : undefined
-  const outOfStock = product.quantity <= 0
+  // Hết hàng khi tồn kho = 0 hoặc admin đã chuyển trạng thái Hết hàng (2).
+  const outOfStock = product.quantity <= 0 || product.status === 2
 
   // Dọn timer morph khi unmount (bản gốc chỉ clearTimeout khi bấm lại).
   useEffect(() => () => window.clearTimeout(addTimer.current), [])
@@ -144,10 +145,9 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       reducedMotion ? 900 : 1400,
     )
     setLiveMessage('Đã thêm vào giỏ')
-    // #442 — ảnh bay vào giỏ, xong thì mở ngăn giỏ (#240) với món mới nhấp nháy.
-    flyToCart(resolveImage(product.image), imgRef.current, () =>
-      openDrawer(product.id),
-    )
+    // #442 — ảnh bay vào giỏ, badge nảy lên; KHÔNG mở ngăn giỏ nữa
+    // (Huy yêu cầu 2026-11-28: thêm vào giỏ thì đừng tự bật ngăn giỏ lên).
+    flyToCart(resolveImage(product.image), imgRef.current)
     showToast('Đã thêm vào giỏ')
   }
 
