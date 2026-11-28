@@ -2778,3 +2778,53 @@ body.has-sticky-sheet .u450-wrap{bottom:228px}
 .dark .u413-c3 { --c1: rgba(255, 170, 80, .15); --c2: #FFB26B; }
 .dark .u413-c4 { --c1: rgba(126, 232, 192, .14); --c2: #7EE8C0; }
 @media (prefers-reduced-motion: reduce) { .u413-pn, .u413-it, .u413-hl, .u413-tr svg { transition: none !important; } }
+/* Lucian UX/UI Prompt #449 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#449
+   Pagination (Menus & Tabs) — CSS cho thanh phân trang của shop.
+   Khi tích hợp: nối nội dung file này vào app/src/components/lucian.css.
+   DỰA VÀO (đã có sẵn trong lucian.css — KHÔNG lặp lại ở đây):
+   - Token --ux-* (màu, --ux-ease, --ux-spring) + base .ux.
+   - Luật .ux :focus-visible toàn cục (outline-offset 3px); luật .u449
+     button:focus-visible bên dưới hẹp hơn nên thắng cho nút trong thanh này.
+
+   ADAPTATIONS (so với bản gốc 449.txt):
+   1. Bỏ khung demo .u449 340x300 (chỉ để trưng bày trong demo của Lucian):
+      giữ .u449{position:relative} để vùng live region (.u449-live, absolute)
+      neo đúng vào component; trang dùng tự căn giữa thanh.
+   2. Thêm .u449-n.is-empty: ô trống giữ chỗ khi totalPages < 7 — ẩn nhưng
+      vẫn chiếm 32px để thanh luôn 7 ô, không đổi rộng.
+   3. Thêm khối prefers-reduced-motion: tắt transition trượt pill, animation
+      squash và animation lăn số (đổi trang tức thì).
+   Giữ nguyên mọi thông số gốc: ô 32px, cao 36px, bước trượt 34px, pill
+   spring .55s, squash .55s, lăn vào .4s / lăn ra .3s. */
+.u449{position:relative}
+.u449-nav{display:flex;align-items:center;gap:6px;padding:6px;border-radius:16px;background:var(--ux-surface);box-shadow:inset 0 0 0 1px var(--ux-line),0 10px 26px -18px var(--ux-shadow-strong)}
+.u449-ar{width:32px;height:36px;display:grid;place-items:center;border:0;border-radius:10px;background:none;color:var(--ux-ink-2);transition:background .2s,color .2s,opacity .25s,transform .35s var(--ux-spring)}
+.u449-ar:hover:not(:disabled){background:var(--ux-surface-2);color:var(--ux-ink)}
+.u449-ar:active:not(:disabled){transform:scale(.9)}
+.u449-ar:disabled{opacity:.3;cursor:default}
+.u449-ar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.u449 button:focus-visible{outline:2px solid var(--ux-accent);outline-offset:1px}
+.u449-sl{position:relative;display:grid;grid-template-columns:repeat(7,32px);gap:2px}
+.u449-pill{position:absolute;left:0;top:0;width:32px;height:36px;border-radius:10px;background:var(--ux-ink);transform:translateX(var(--x,0px));transition:transform .55s var(--ux-spring)}
+.u449-pill.is-sq{animation:u449-sq .55s var(--ux-ease)}
+@keyframes u449-sq{35%{scale:1.22 .9}}
+.u449-n{position:relative;width:32px;height:36px;padding:0;border:0;border-radius:10px;background:none;font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ux-ink-2);overflow:hidden;transition:color .3s,background .2s}
+.u449-n:hover:not(.is-dots):not([aria-current]){background:var(--ux-surface-2);color:var(--ux-ink)}
+.u449-n[aria-current]{color:var(--ux-surface)}
+.u449-n.is-dots{cursor:default;color:var(--ux-ink-3)}
+.u449-n.is-empty{visibility:hidden}
+.u449-n span{position:absolute;inset:0;display:grid;place-items:center}
+.u449-n span.is-in{animation:u449-in .4s var(--ux-spring)}
+.u449-n span.is-out{animation:u449-out .3s var(--ux-ease) forwards}
+.u449-n.is-back span.is-in{animation-name:u449-in-b}
+.u449-n.is-back span.is-out{animation-name:u449-out-b}
+@keyframes u449-in{from{transform:translateY(22px);opacity:0}}
+@keyframes u449-out{to{transform:translateY(-22px);opacity:0}}
+@keyframes u449-in-b{from{transform:translateY(-22px);opacity:0}}
+@keyframes u449-out-b{to{transform:translateY(22px);opacity:0}}
+.u449-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){
+  .u449-pill{transition:none}
+  .u449-pill.is-sq{animation:none}
+  .u449-n span.is-in,.u449-n span.is-out{animation:none}
+}
