@@ -223,6 +223,13 @@ export async function createProductApi(
 }
 
 export interface UpdateProductInput {
+  name?: string
+  description?: string | null
+  id_category?: number
+  /** URL ảnh hoặc '/images/...' — ghi đè ảnh cũ. */
+  image?: string
+  /** Data URL ảnh tải lên từ thiết bị — server đẩy lên kho GitHub. */
+  image_data?: string
   price?: number
   quantity?: number
   /** 0 = Ẩn, 1 = Đang bán, 2 = Hết hàng. */
@@ -234,15 +241,18 @@ export async function getAdminProductsApi(): Promise<Product[]> {
   return apiFetch<Product[]>('/api/admin/products')
 }
 
-/** Admin sửa giá / tồn kho / trạng thái sản phẩm trong database. */
+/** Admin sửa tên / mô tả / danh mục / ảnh / giá / tồn kho / trạng thái sản phẩm trong database. */
 export async function updateAdminProductApi(
   id: number,
   patch: UpdateProductInput,
-): Promise<Product> {
-  return apiFetch<Product>(`/api/admin/products/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(patch),
-  })
+): Promise<Product & { image_pending_deploy?: boolean }> {
+  return apiFetch<Product & { image_pending_deploy?: boolean }>(
+    `/api/admin/products/${id}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    },
+  )
 }
 
 /**
