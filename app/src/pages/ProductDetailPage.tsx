@@ -170,9 +170,6 @@ export default function ProductDetailPage() {
               alt={product.name}
               className="aspect-[4/3] w-full rounded-[24px] object-cover shadow-[0_8px_32px_rgba(27,67,50,0.12)]"
             />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Ảnh minh họa — ảnh mẫu Unsplash, sẽ thay bằng ảnh thật của sản phẩm.
-            </p>
           </div>
 
           <div data-aos="fade-left" data-aos-delay="100">
