@@ -43,7 +43,14 @@ export function resolveImage(path: string | null | undefined): string {
   if (!path) return NO_IMAGE_PLACEHOLDER
   if (/^(https?:|data:|blob:)/i.test(path)) return path
   const base = import.meta.env.BASE_URL.replace(/\/$/, '')
-  return `${base}${path.startsWith('/') ? path : `/${path}`}`
+  // DB lưu tên file trần (vd 'leu-trai-2-nguoi.webp') hoặc 'images/...':
+  // đều là file trong thư mục /images của web. Đường dẫn bắt đầu '/'
+  // thì giữ nguyên (vd '/images/leu-trai-2-nguoi.webp'). Trước đây tên
+  // trần bị map thành '/camping-shop/<tên file>' (thiếu /images/) nên
+  // ảnh nhỏ ở form Sửa quản trị bị vỡ (kiểm tra live 2026-11-28).
+  if (path.startsWith('/')) return `${base}${path}`
+  if (path.startsWith('images/')) return `${base}/${path}`
+  return `${base}/images/${path}`
 }
 
 export const CATEGORIES: Category[] = [
