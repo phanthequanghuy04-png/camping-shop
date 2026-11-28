@@ -17,6 +17,7 @@ import { getProduct, getProducts } from '../lib/api'
 import { useCart } from '../context/CartContext'
 import { flyToCart } from '../lib/flyToCart'
 import { showToast } from '../lib/toast'
+import { requireLogin } from '../lib/requireLogin'
 
 /**
  * Trang chi tiết sản phẩm.
@@ -114,6 +115,8 @@ export default function ProductDetailPage() {
   // truyền số lượng riêng từ sheet của nó.
   const handleAddToCart = (qty: number = quantity) => {
     if (outOfStock) return
+    // Thêm vào giỏ cần đăng nhập: khách vãng lai được chuyển sang /login.
+    if (!requireLogin(navigate, 'thêm vào giỏ hàng')) return
     dispatchAddToCart(product.id, qty)
     setAddedQty(qty)
     setAdded(true)
@@ -127,6 +130,8 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = (qty: number = quantity) => {
     if (outOfStock) return
+    // Mua ngay cần đăng nhập: khách vãng lai được chuyển sang /login.
+    if (!requireLogin(navigate, 'mua ngay')) return
     dispatchAddToCart(product.id, qty)
     navigate('/cart')
   }
