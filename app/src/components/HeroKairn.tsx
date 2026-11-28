@@ -58,13 +58,10 @@ export default function HeroKairn() {
             </p>
             <h1 className="mt-4 font-[Be_Vietnam_Pro,Inter,sans-serif] text-[42px] leading-[1.04] font-extrabold tracking-tight sm:text-6xl md:text-[64px]">
               <span className="kairn-ln">
-                <span style={{ animationDelay: '0.25s' }}>Ra ngoài trời,</span>
+                <span style={{ animationDelay: '0.25s' }}>Sống trọn</span>
               </span>
               <span className="kairn-ln">
-                <span style={{ animationDelay: '0.4s' }}>sống trọn từng</span>
-              </span>
-              <span className="kairn-ln">
-                <span style={{ animationDelay: '0.55s' }}>khoảnh khắc</span>
+                <span style={{ animationDelay: '0.4s' }}>từng khoảnh khắc.</span>
               </span>
             </h1>
             <p
