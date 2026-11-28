@@ -840,6 +840,15 @@ a { color: var(--color-primary-text); }
    thắng class text-white của Tailwind — ở chế độ sáng nó biến tiêu đề
    thành chữ tối màu trên ảnh (lỗi bắt được khi kiểm tra live 2026-11-28). */
 .kairn-hero h1 { color: #fff; }
+/* Header thủy tinh trượt lên trên ảnh hero (2026-11-28): hero kéo lên
+   dưới viên pill kính bằng margin âm đúng chiều cao header (đệm trên
+   12px + pill 68px mobile / 76px desktop) — ảnh lều hoàng hôn hiện ra
+   sau lớp kính mờ. Nội dung hero đã tăng padding trên (pt-28 / md:pt-32
+   trong HeroKairn.tsx) để tiêu đề không bị pill che. */
+.kairn-hero { margin-top: -80px; }
+@media (min-width: 1024px) {
+  .kairn-hero { margin-top: -88px; }
+}
 .kairn-tile-cream { background: #faf6ec; color: #1c2b1f; }
 .dark .kairn-tile-cream { background: var(--color-surface); color: var(--color-foreground); }
 .kairn-glass-circle {
