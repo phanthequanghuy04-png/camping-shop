@@ -286,16 +286,6 @@ export default function AdminPage() {
     }
   }, [editingId])
   const [productNotice, setProductNotice] = useState('')
-  const noticeRef = useRef<HTMLParagraphElement | null>(null)
-  /** Thông báo sau khi lưu/xóa/hiện lại: cuộn tới cho Huy thấy ngay —
-      trước đây thông báo nằm ở đầu tab, đang ở cuối danh sách thì không
-      thấy nên tưởng chưa lưu (kiểm tra live 2026-11-28: không thấy
-      thông báo sau 3 lần lưu dù API đã lưu đúng). */
-  useEffect(() => {
-    if (productNotice && noticeRef.current) {
-      scrollToElement(noticeRef.current, -80)
-    }
-  }, [productNotice])
 
   // Form thêm sản phẩm mới.
   const [newName, setNewName] = useState('')
@@ -877,12 +867,22 @@ export default function AdminPage() {
       {tab === 'products' && (
         <section className="mt-6">
           {productNotice && (
-            <p
-              ref={noticeRef}
-              className="mb-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800"
+            <div
+              role="status"
+              className="fixed top-20 left-1/2 z-[80] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-[0_12px_40px_rgba(27,67,50,0.25)]"
             >
-              {productNotice}
-            </p>
+              <div className="flex items-start gap-2">
+                <span className="flex-1">{productNotice}</span>
+                <button
+                  type="button"
+                  onClick={() => setProductNotice('')}
+                  aria-label="Đóng thông báo"
+                  className="shrink-0 rounded-full px-2 text-base leading-none font-bold text-emerald-700 hover:bg-emerald-100"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
           )}
 
           {editingId !== null && (
