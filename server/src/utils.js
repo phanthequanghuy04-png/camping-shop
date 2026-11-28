@@ -22,7 +22,9 @@ function matchesQuery(product, q) {
 }
 
 function applyProductFilters(list, { q, category, sort }) {
-  let out = list.filter((p) => p.status === 1);
+  // Cửa hàng hiện sản phẩm Đang bán (1) và Hết hàng (2) — khách vẫn thấy
+  // món hết hàng nhưng không mua được; chỉ Ẩn (0) là giấu khỏi cửa hàng.
+  let out = list.filter((p) => p.status === 1 || p.status === 2);
   if (category) {
     const categoryId = Number(category);
     if (Number.isInteger(categoryId)) {
