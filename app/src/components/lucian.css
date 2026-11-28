@@ -492,8 +492,8 @@
     0 1px 0 rgba(255, 255, 255, 0.5) inset,
     0 22px 44px -24px var(--ux-shadow-strong);
   transition:
-    transform 0.25s var(--ux-ease),
-    box-shadow 0.25s var(--ux-ease),
+    transform 0.35s var(--ux-spring),
+    box-shadow 0.35s var(--ux-ease),
     background-color 0.3s var(--ux-ease);
 }
 .dark .u441-c {
@@ -503,28 +503,32 @@
     0 1px 0 rgba(255, 255, 255, 0.08) inset,
     0 22px 44px -24px var(--ux-shadow-strong);
 }
-.u441-c:hover {
-  transform: translateY(-4px);
+/* AOS cũng đặt transform (translateZ(0)) trên thẻ khi hiện ra nên luật hover
+   cần đặc hiệu hơn AOS ([data-aos][data-aos].aos-animate) mới thắng được. */
+.u441-c:hover,
+.u441-c[data-aos].aos-animate:hover {
+  transform: translateY(-8px);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 12px 32px -12px var(--ux-shadow-strong);
+    0 20px 40px -16px var(--ux-shadow-strong);
 }
 .dark .u441-c:hover {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 12px 32px -12px var(--ux-shadow-strong);
+    0 20px 40px -16px var(--ux-shadow-strong);
 }
 
 /* ---------- Vùng ảnh (.u441-img) — ảnh thật, hiện TRỌN sản phẩm ----------
    aspect-ratio 4/3 thay height 150px cố định; ảnh object-fit: contain
-   (không bao giờ cắt). Nền trắng #ffffff ở CẢ 2 chế độ: ảnh studio nền
-   trắng hòa vào nền, không lộ viền letterbox. */
+   (không bao giờ cắt). Nền transparent: ảnh đã tách nền trong suốt nên
+   sản phẩm nổi trực tiếp trên thẻ kính; ảnh JPG fallback (nền trắng đục)
+   vẫn tự lấp đầy khung như cũ. */
 .u441-img {
   position: relative;
   aspect-ratio: 4 / 3;
   border-radius: 16px;
   overflow: hidden;
-  background: #ffffff;
+  background: transparent;
 }
 .u441-img > a {
   display: block;
@@ -536,6 +540,37 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  will-change: transform;
+  transition:
+    transform 0.55s var(--ux-spring),
+    filter 0.45s var(--ux-ease);
+}
+
+/* ---------- Ảnh nổi 3D: lúc cuộn tới + lúc trỏ chuột (2026-11-28) ----------
+   Cuộn tới: thẻ đã có data-aos="fade-up" nên AOS gắn .aos-init lúc khởi
+   tạo và .aos-animate khi thẻ vào khung nhìn — ảnh chìm xuống + thu nhỏ
+   rồi nảy lên (spring). Nếu AOS không chạy thì ảnh vẫn ở trạng thái
+   thường, không bị kẹt.
+   Trỏ chuột / focus: thẻ nổi lên -8px, ảnh nhô lên + phóng to + bóng đổ
+   ôm theo hình sản phẩm — như sản phẩm nổi khỏi thẻ (rõ nhất khi ảnh đã
+   tách nền trong suốt). */
+.u441-c[data-aos].aos-init .u441-img img {
+  transform: translateY(14px) scale(0.94);
+}
+.u441-c[data-aos].aos-animate .u441-img img {
+  transform: translateY(0) scale(1);
+}
+.u441-c.aos-animate:hover .u441-img img,
+.u441-c.aos-animate:focus-within .u441-img img {
+  transform: translateY(-6px) scale(1.08);
+  filter: drop-shadow(0 18px 14px rgba(27, 67, 50, 0.3));
+}
+@media (prefers-reduced-motion: reduce) {
+  .u441-c .u441-img img {
+    transform: none;
+    filter: none;
+    transition: none;
+  }
 }
 
 /* ---------- Thân thẻ (.u441-bd) ---------- */
@@ -901,7 +936,8 @@
   width: 46px;
   height: 52px;
   border-radius: 10px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #fff;
 }
 .u240-tx {
   flex: 1;
@@ -2304,7 +2340,7 @@
 .u429-o[aria-selected="true"]{color:var(--ux-ink)}
 .u429-ic{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--ux-surface-2);color:var(--ux-ink-2);overflow:hidden}
 .u429-ic svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.u429-ic img{width:100%;height:100%;object-fit:cover;display:block}
+.u429-ic img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
 .u429-ic.is-av{border-radius:50%;background:var(--ux-accent-soft);color:var(--ux-accent);font-size:11px;font-weight:700}
 .u429-t{flex:1;min-width:0;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .u429-t mark{background:none;color:var(--ux-ink);font-weight:700}
@@ -2433,7 +2469,7 @@
 .u221-rw{display:flex;align-items:center;gap:10px;height:46px;transition:opacity .2s}
 .u221.is-sheet .u221-rw{opacity:0;pointer-events:none}
 .u221-th{flex:none;width:44px;height:44px;border-radius:11px;background:linear-gradient(160deg,var(--ux-accent-soft),var(--ux-accent-2))}
-img.u221-th{object-fit:cover}
+img.u221-th{object-fit:contain;background:#fff}
 .u221-ri{flex:1;min-width:0}
 .u221-nm{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .u221-pr{display:block;font-size:13px;font-weight:800;color:var(--ux-ink)}
