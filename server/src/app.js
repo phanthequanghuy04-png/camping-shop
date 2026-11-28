@@ -450,13 +450,16 @@ app.delete('/api/cart/:product_id', async (req, res) => {
 
 // --- Đơn hàng ---------------------------------------------------------------
 
-app.post('/api/orders', async (req, res) => {
+// Đặt hàng cần đăng nhập: chỉ tài khoản đã đăng nhập mới được mua
+// (frontend cũng chặn khách vãng lai ở giỏ / thanh toán).
+app.post('/api/orders', requireAuth, async (req, res) => {
   const body = req.body || {};
   const customer_name = String(body.customer_name || '').trim();
   const phone = String(body.phone || '').replace(/[\s-]/g, '');
   const address = String(body.address || '').trim();
   const items = Array.isArray(body.items) ? body.items : [];
-  const user_id = Number(body.user_id ?? NaN);
+  // Lấy user_id từ token (đáng tin) thay vì body (khách tự khai).
+  const user_id = Number(req.user?.id ?? NaN);
   const session_id =
     typeof body.session_id === 'string' && body.session_id.trim()
       ? body.session_id.trim()
