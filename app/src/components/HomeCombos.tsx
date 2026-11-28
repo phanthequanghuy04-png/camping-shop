@@ -3,13 +3,12 @@
  *
  * 3 combo làm từ sản phẩm THẬT của shop, tổng tiền tính trực tiếp từ
  * PRODUCTS (không ghi cứng tổng). Nút "Thêm combo vào giỏ" thêm từng món
- * vào giỏ thật rồi mở ngăn giỏ (dùng đúng dispatchAddToCart + useCart
- * như ProductCard / ProductDetailPage).
+ * vào giỏ thật rồi chỉ hiện thông báo (không tự mở ngăn giỏ — Huy yêu
+ * cầu 2026-11-28).
  */
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { dispatchAddToCart } from './ProductCard'
-import { useCart } from '../context/CartContext'
 import { showToast } from '../lib/toast'
 import { requireLogin } from '../lib/requireLogin'
 import { formatPrice, getProductById, resolveImage } from '../data/products'
@@ -39,7 +38,6 @@ const COMBOS = [
 ] as const
 
 export default function HomeCombos() {
-  const { openDrawer } = useCart()
   const navigate = useNavigate()
   const [addedId, setAddedId] = useState<string | null>(null)
 
@@ -53,7 +51,6 @@ export default function HomeCombos() {
     items.forEach((p) => dispatchAddToCart(p.id, 1))
     setAddedId(combo.id)
     showToast(`Đã thêm ${combo.name} (${items.length} món) vào giỏ.`)
-    openDrawer(items[0].id)
     window.setTimeout(() => setAddedId((cur) => (cur === combo.id ? null : cur)), 1600)
   }
 
