@@ -23,9 +23,11 @@
  *   GET  /api/orders?user_id=
  *   GET  /api/admin/orders    (Bearer JWT, role admin)
  *   PATCH /api/admin/orders/:id  { status?, payment_status?, tracking_code? } (Bearer JWT, role admin)
+ *   GET  /api/admin/products  (Bearer JWT, role admin) — toàn bộ sản phẩm
+ *   (kể cả Ẩn / Hết hàng) cho bảng quản trị.
  *   POST /api/admin/products  { name, price, quantity?, id_category, description?, image? (URL), image_data? (data URL PNG/WebP/JPEG đã tách nền) } (Bearer JWT, role admin) — thêm sản phẩm mới vào DB; ảnh tải lên được đẩy lên kho GitHub (cần GITHUB_TOKEN) rồi lưu tên file vào DB.
- *   PATCH /api/admin/products/:id  { price?, quantity?, status? } (Bearer JWT, role admin) — sửa giá / tồn kho / hiện-ẩn sản phẩm trong DB.
- *   DELETE /api/admin/products/:id  (Bearer JWT, role admin) — ẩn sản phẩm khỏi cửa hàng (status = 0), không xóa hẳn; hiện lại bằng PATCH status = 1.
+ *   PATCH /api/admin/products/:id  { price?, quantity?, status? } (Bearer JWT, role admin) — sửa giá / tồn kho / trạng thái (0 = Ẩn, 1 = Đang bán, 2 = Hết hàng) trong DB.
+ *   DELETE /api/admin/products/:id  (Bearer JWT, role admin) — XÓA HẲN sản phẩm khỏi database (kèm các dòng giỏ hàng của nó); sản phẩm đã có trong đơn hàng thì từ chối xóa để giữ lịch sử đơn — khi đó hãy dùng PATCH status = 0 (Ẩn).
  *
  * Lưu ý bảo mật (chưa xong, xem README.md): JWT chỉ lưu ở localStorage,
  * chưa có refresh token / httpOnly cookie; hash mật khẩu mẫu trong
@@ -856,6 +858,31 @@ app.patch('/api/admin/orders/:id', requireAuth, requireAdmin, async (req, res) =
  *   thì lưu thẳng vào DB, không cần token GitHub.
  * Không có ảnh thì image = null.
  */
+/**
+ * Admin xem toàn bộ sản phẩm (kể cả Ẩn / Hết hàng) cho bảng quản trị.
+ * Khác với GET /api/products (chỉ trả Đang bán + Hết hàng): bảng quản trị
+ * cần thấy cả sản phẩm đã ẩn để hiện lại hoặc xóa hẳn.
+ */
+app.get('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    if (!db.isAvailable()) {
+      return res
+        .status(503)
+        .json({ error: 'Database chưa sẵn sàng, thử lại sau.' });
+    }
+    const rows = await db.query(
+      'SELECT id, name, image, price, quantity, status, id_category, description, rating, created_at FROM products ORDER BY id ASC',
+    );
+    for (const p of rows) {
+      p.price = Number(p.price);
+      p.rating = Number(p.rating);
+    }
+    return res.json({ data: rows, total: rows.length });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
   const body = req.body || {};
   const name = String(body.name || '').trim();
@@ -986,7 +1013,15 @@ app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res)
     patch.quantity = quantity;
   }
   if (body.status !== undefined) {
-    if (body.status !== 0 && body.status !== 1 && body.status !== '0' && body.status !== '1') {
+    // Trạng thái: 0 = Ẩn, 1 = Đang bán, 2 = Hết hàng.
+    if (
+      body.status !== 0 &&
+      body.status !== 1 &&
+      body.status !== 2 &&
+      body.status !== '0' &&
+      body.status !== '1' &&
+      body.status !== '2'
+    ) {
       return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
     }
     patch.status = Number(body.status);
@@ -1028,9 +1063,11 @@ app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res)
 });
 
 /**
- * Admin xóa sản phẩm: chỉ ẨN khỏi cửa hàng (status = 0), không xóa hẳn
- * khỏi database — hiện lại được bằng PATCH status = 1. Chỉ admin (JWT)
- * mới gọi được. Trả về sản phẩm sau khi ẩn.
+ * Admin XÓA HẲN sản phẩm khỏi database. Chỉ admin (JWT) mới gọi được.
+ * - Sản phẩm đã có trong đơn hàng (order_items) thì TỪ CHỐI xóa để giữ
+ *   lịch sử đơn — khi đó hãy ẩn bằng PATCH status = 0.
+ * - Các dòng giỏ hàng (cart_items) của sản phẩm bị xóa theo, tránh mồ côi.
+ * - Trả về { data: { id } } — frontend loại sản phẩm khỏi bảng.
  */
 app.delete('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
@@ -1043,21 +1080,22 @@ app.delete('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res
         .status(503)
         .json({ error: 'Database chưa sẵn sàng, thử lại sau.' });
     }
-    const result = await db.query(
-      'UPDATE products SET status = 0 WHERE id = ?',
+    const inOrders = await db.query(
+      'SELECT COUNT(*) AS n FROM order_items WHERE product_id = ?',
       [id],
     );
+    if (Number(inOrders[0]?.n ?? 0) > 0) {
+      return res.status(400).json({
+        error:
+          'Sản phẩm đã có trong đơn hàng, không thể xóa hẳn để giữ lịch sử đơn. Hãy dùng Ẩn / Ngừng bán để giấu khỏi cửa hàng.',
+      });
+    }
+    await db.query('DELETE FROM cart_items WHERE product_id = ?', [id]);
+    const result = await db.query('DELETE FROM products WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Không tìm thấy sản phẩm.' });
     }
-    const rows = await db.query(
-      'SELECT id, name, image, price, quantity, status, id_category, description, rating, created_at FROM products WHERE id = ?',
-      [id],
-    );
-    const product = rows[0];
-    product.price = Number(product.price);
-    product.rating = Number(product.rating);
-    return res.json({ data: product });
+    return res.json({ data: { id } });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
