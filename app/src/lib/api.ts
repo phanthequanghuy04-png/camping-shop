@@ -165,8 +165,15 @@ async function apiFetch<T>(
 
 const localImageById = new Map(PRODUCTS.map((p) => [p.id, p.image]))
 
-/** Thay ảnh tên-file từ DB bằng URL ảnh local (products.ts) theo id. */
+/** Ảnh: DB là nguồn thật (quản trị sửa ảnh thì DB đổi) nên ưu tiên ảnh
+    DB khi có; chỉ dùng ảnh local (products.ts) khi DB không có ảnh.
+    Trước đây hàm này luôn thay bằng ảnh local theo id nên ảnh sửa ở
+    quản trị không bao giờ hiện ra cửa hàng (kiểm tra live 2026-11-28:
+    dán link ảnh mới lưu vào DB rồi nhưng /shop vẫn hiện ảnh cũ). Tên
+    file trần từ DB ('leu-trai-2-nguoi.webp') vẫn hiện đúng nhờ
+    resolveImage() map về /images/. */
 export function withLocalImage(product: Product): Product {
+  if (product.image) return product
   const localImage = localImageById.get(product.id)
   return localImage ? { ...product, image: localImage } : product
 }
