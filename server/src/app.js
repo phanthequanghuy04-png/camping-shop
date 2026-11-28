@@ -26,7 +26,7 @@
  *   GET  /api/admin/products  (Bearer JWT, role admin) — toàn bộ sản phẩm
  *   (kể cả Ẩn / Hết hàng) cho bảng quản trị.
  *   POST /api/admin/products  { name, price, quantity?, id_category, description?, image? (URL), image_data? (data URL PNG/WebP/JPEG đã tách nền) } (Bearer JWT, role admin) — thêm sản phẩm mới vào DB; ảnh tải lên được đẩy lên kho GitHub (cần GITHUB_TOKEN) rồi lưu tên file vào DB.
- *   PATCH /api/admin/products/:id  { price?, quantity?, status? } (Bearer JWT, role admin) — sửa giá / tồn kho / trạng thái (0 = Ẩn, 1 = Đang bán, 2 = Hết hàng) trong DB.
+ *   PATCH /api/admin/products/:id  { name?, description?, id_category?, image? | image_data?, price?, quantity?, status? } (Bearer JWT, role admin) — sửa toàn bộ thông tin sản phẩm trong DB (tên, mô tả, danh mục, ảnh, giá, tồn kho, trạng thái 0 = Ẩn, 1 = Đang bán, 2 = Hết hàng).
  *   DELETE /api/admin/products/:id  (Bearer JWT, role admin) — XÓA HẲN sản phẩm khỏi database (kèm các dòng giỏ hàng của nó); sản phẩm đã có trong đơn hàng thì từ chối xóa để giữ lịch sử đơn — khi đó hãy dùng PATCH status = 0 (Ẩn).
  *
  * Lưu ý bảo mật (chưa xong, xem README.md): JWT chỉ lưu ở localStorage,
@@ -748,6 +748,55 @@ async function uploadImageToGitHub(fileName, base64) {
   }
 }
 
+/**
+ * Xử lý ảnh sản phẩm gửi lên — dùng chung cho POST thêm mới và PATCH sửa:
+ * - body.image_data: data URL PNG/WebP/JPEG -> đẩy lên kho GitHub, trả
+ *   '/images/<file>' + imagePendingDeploy = true (ảnh chỉ hiện sau khi
+ *   Pages deploy xong, ~1 phút).
+ * - body.image: URL hoặc '/images/...' (<= 250 ký tự) -> dùng nguyên.
+ * - Không gửi gì -> { image: null } (POST: sản phẩm không ảnh; PATCH:
+ *   giữ nguyên ảnh cũ — chỉ ghi đè khi có ảnh mới).
+ * Lỗi định dạng / quá lớn / chưa có token -> throw { status, message }
+ * để endpoint bắt bằng catch chung (trả đúng mã lỗi + thông báo).
+ */
+async function resolveProductImage(body, name) {
+  if (typeof body.image_data === 'string' && body.image_data.trim() !== '') {
+    const m = body.image_data
+      .trim()
+      .match(/^data:(image\/(png|webp|jpeg));base64,([A-Za-z0-9+/=]+)$/);
+    if (!m) {
+      const err = new Error(
+        'Ảnh tải lên không đúng định dạng (chỉ nhận PNG/WebP/JPEG dạng data URL).',
+      );
+      err.status = 400;
+      throw err;
+    }
+    const ext = m[2] === 'jpeg' ? 'jpg' : m[2];
+    const base64 = m[3];
+    const buf = Buffer.from(base64, 'base64');
+    if (buf.length === 0 || buf.length > MAX_UPLOAD_IMAGE_BYTES) {
+      const err = new Error(
+        `Ảnh quá lớn (tối đa ${MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB sau khi tải lên).`,
+      );
+      err.status = 400;
+      throw err;
+    }
+    const fileName = `${slugifyFileName(name)}-${Date.now()}.${ext}`;
+    await uploadImageToGitHub(fileName, base64);
+    return { image: `/images/${fileName}`, imagePendingDeploy: true };
+  }
+  if (typeof body.image === 'string' && body.image.trim() !== '') {
+    const url = body.image.trim();
+    if (url.length > 250) {
+      const err = new Error('Link ảnh quá dài (tối đa 250 ký tự).');
+      err.status = 400;
+      throw err;
+    }
+    return { image: url, imagePendingDeploy: false };
+  }
+  return { image: null, imagePendingDeploy: false };
+}
+
 app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
   try {
     let orders;
@@ -930,42 +979,10 @@ app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
     if (!cats[0]) {
       return res.status(400).json({ error: 'Danh mục không tồn tại.' });
     }
-    let image = null;
-    let imagePendingDeploy = false;
-    if (
-      typeof body.image_data === 'string' &&
-      body.image_data.trim() !== ''
-    ) {
-      const m = body.image_data
-        .trim()
-        .match(/^data:(image\/(png|webp|jpeg));base64,([A-Za-z0-9+/=]+)$/);
-      if (!m) {
-        return res.status(400).json({
-          error:
-            'Ảnh tải lên không đúng định dạng (chỉ nhận PNG/WebP/JPEG dạng data URL).',
-        });
-      }
-      const ext = m[2] === 'jpeg' ? 'jpg' : m[2];
-      const base64 = m[3];
-      const buf = Buffer.from(base64, 'base64');
-      if (buf.length === 0 || buf.length > MAX_UPLOAD_IMAGE_BYTES) {
-        return res.status(400).json({
-          error: `Ảnh quá lớn (tối đa ${MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB sau khi tải lên).`,
-        });
-      }
-      const fileName = `${slugifyFileName(name)}-${Date.now()}.${ext}`;
-      await uploadImageToGitHub(fileName, base64);
-      image = `/images/${fileName}`;
-      imagePendingDeploy = true;
-    } else if (typeof body.image === 'string' && body.image.trim() !== '') {
-      const url = body.image.trim();
-      if (url.length > 250) {
-        return res
-          .status(400)
-          .json({ error: 'Link ảnh quá dài (tối đa 250 ký tự).' });
-      }
-      image = url;
-    }
+    const { image, imagePendingDeploy } = await resolveProductImage(
+      body,
+      name,
+    );
     const result = await db.query(
       'INSERT INTO products (name, image, price, quantity, status, id_category, description, rating) VALUES (?, ?, ?, ?, 1, ?, ?, 4.5)',
       [name, image, price, quantity, categoryId, description],
@@ -985,9 +1002,11 @@ app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
 });
 
 /**
- * Admin sửa sản phẩm: đổi giá, tồn kho, trạng thái (hiện/ẩn). Chỉ admin
- * (JWT) mới gọi được. Chỉ cập nhật các trường gửi lên; giá trị khác giữ
- * nguyên. Trả về sản phẩm sau khi sửa.
+ * Admin sửa sản phẩm: đổi tên, mô tả, danh mục, ảnh, giá, tồn kho, trạng
+ * thái (hiện/ẩn/hết hàng). Chỉ admin (JWT) mới gọi được. Chỉ cập nhật
+ * các trường gửi lên; giá trị khác giữ nguyên. Ảnh mới gửi dạng
+ * image_data (data URL, đẩy lên kho GitHub như lúc thêm mới) hoặc image
+ * (URL / '/images/...'). Trả về sản phẩm sau khi sửa.
  */
 app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
@@ -996,6 +1015,39 @@ app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res)
   }
   const body = req.body || {};
   const patch = {};
+  const hasNewImage =
+    (typeof body.image_data === 'string' &&
+      body.image_data.trim() !== '') ||
+    (typeof body.image === 'string' && body.image.trim() !== '');
+  if (body.name !== undefined) {
+    const name = String(body.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ error: 'Vui lòng nhập tên sản phẩm.' });
+    }
+    if (name.length > 250) {
+      return res
+        .status(400)
+        .json({ error: 'Tên sản phẩm quá dài (tối đa 250 ký tự).' });
+    }
+    patch.name = name;
+  }
+  if (body.description !== undefined) {
+    const description =
+      body.description === null
+        ? null
+        : String(body.description).trim() || null;
+    if (description !== null && description.length > 5000) {
+      return res.status(400).json({ error: 'Mô tả quá dài.' });
+    }
+    patch.description = description;
+  }
+  if (body.id_category !== undefined) {
+    const categoryId = Number(body.id_category);
+    if (!Number.isInteger(categoryId) || categoryId <= 0) {
+      return res.status(400).json({ error: 'Danh mục không hợp lệ.' });
+    }
+    patch.id_category = categoryId;
+  }
   if (body.price !== undefined) {
     const price = Number(body.price);
     if (!Number.isFinite(price) || price < 0) {
@@ -1026,7 +1078,7 @@ app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res)
     }
     patch.status = Number(body.status);
   }
-  if (Object.keys(patch).length === 0) {
+  if (Object.keys(patch).length === 0 && !hasNewImage) {
     return res.status(400).json({ error: 'Không có gì để cập nhật.' });
   }
   try {
@@ -1034,6 +1086,32 @@ app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res)
       return res
         .status(503)
         .json({ error: 'Database chưa sẵn sàng, thử lại sau.' });
+    }
+    // Lấy tên hiện tại (để đặt tên file ảnh mới khi không đổi tên) và
+    // kiểm tra sản phẩm có tồn tại trước khi xử lý ảnh/danh mục.
+    const existing = await db.query(
+      'SELECT name FROM products WHERE id = ?',
+      [id],
+    );
+    if (!existing[0]) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm.' });
+    }
+    if (patch.id_category !== undefined) {
+      const cats = await db.query('SELECT id FROM categories WHERE id = ?', [
+        patch.id_category,
+      ]);
+      if (!cats[0]) {
+        return res.status(400).json({ error: 'Danh mục không tồn tại.' });
+      }
+    }
+    let imagePendingDeploy = false;
+    if (hasNewImage) {
+      const resolved = await resolveProductImage(
+        body,
+        patch.name ?? existing[0].name,
+      );
+      patch.image = resolved.image;
+      imagePendingDeploy = resolved.imagePendingDeploy;
     }
     const sets = [];
     const values = [];
@@ -1056,9 +1134,10 @@ app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res)
     const product = rows[0];
     product.price = Number(product.price);
     product.rating = Number(product.rating);
+    if (imagePendingDeploy) product.image_pending_deploy = true;
     return res.json({ data: product });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(err.status || 500).json({ error: err.message });
   }
 });
 
