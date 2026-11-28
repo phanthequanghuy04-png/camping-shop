@@ -23,6 +23,9 @@
  *   GET  /api/orders?user_id=
  *   GET  /api/admin/orders    (Bearer JWT, role admin)
  *   PATCH /api/admin/orders/:id  { status?, payment_status?, tracking_code? } (Bearer JWT, role admin)
+ *   POST /api/admin/products  { name, price, quantity?, id_category, description?, image? (URL), image_data? (data URL PNG/WebP/JPEG đã tách nền) } (Bearer JWT, role admin) — thêm sản phẩm mới vào DB; ảnh tải lên được đẩy lên kho GitHub (cần GITHUB_TOKEN) rồi lưu tên file vào DB.
+ *   PATCH /api/admin/products/:id  { price?, quantity?, status? } (Bearer JWT, role admin) — sửa giá / tồn kho / hiện-ẩn sản phẩm trong DB.
+ *   DELETE /api/admin/products/:id  (Bearer JWT, role admin) — ẩn sản phẩm khỏi cửa hàng (status = 0), không xóa hẳn; hiện lại bằng PATCH status = 1.
  *
  * Lưu ý bảo mật (chưa xong, xem README.md): JWT chỉ lưu ở localStorage,
  * chưa có refresh token / httpOnly cookie; hash mật khẩu mẫu trong
@@ -52,7 +55,10 @@ const store = new MemoryStore();
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+// JSON 3 MB (mặc định chỉ 100 KB): ảnh sản phẩm tải lên kèm dạng base64
+// (image_data) có thể tới ~2 MB nên cần nới giới hạn — vẫn trong mức
+// 4,5 MB của Vercel serverless.
+app.use(express.json({ limit: '3mb' }));
 
 // Serverless (Vercel): kết nối DB được khởi động nền khi module load;
 // request đầu tiên chờ tối đa 8s để biết DB có lên được không (tránh
@@ -667,6 +673,71 @@ app.get('/api/orders', async (req, res) => {
 
 // --- Admin -----------------------------------------------------------------
 
+// Ảnh tải lên từ thiết bị (đã tách nền sẵn): giới hạn 2 MB sau khi giải
+// mã base64 — ảnh sản phẩm WebP trong suốt thường chỉ 30–150 KB.
+const MAX_UPLOAD_IMAGE_BYTES = 2 * 1024 * 1024;
+const GITHUB_REPO =
+  process.env.GITHUB_REPO || 'phanthequanghuy04-png/camping-shop';
+
+/** Tên file an toàn từ tên sản phẩm: bỏ dấu, chỉ giữ a-z 0-9 và gạch nối. */
+function slugifyFileName(name) {
+  const slug = String(name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60);
+  return slug || 'san-pham';
+}
+
+/**
+ * Đẩy ảnh lên kho GitHub (app/public/images/) qua REST API để web tĩnh
+ * phục vụ được file. Cần GITHUB_TOKEN: fine-grained PAT, quyền Contents
+ * Read and write trên repo camping-shop (xem server/.env.example).
+ * File mới commit lên main sẽ kích hoạt workflow Pages deploy (~1 phút)
+ * rồi ảnh mới hiện — xem cờ image_pending_deploy ở endpoint dưới.
+ */
+async function uploadImageToGitHub(fileName, base64) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    const err = new Error(
+      'Chưa cấu hình GITHUB_TOKEN trên server nên không tải được ảnh lên kho. Hãy dán link ảnh có sẵn (ô "link ảnh") hoặc cấu hình token rồi thử lại.',
+    );
+    err.status = 503;
+    throw err;
+  }
+  const res = await fetch(
+    `https://api.github.com/repos/${GITHUB_REPO}/contents/app/public/images/${fileName}`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+        'User-Agent': 'camping-shop-api',
+      },
+      body: JSON.stringify({
+        message: `Them anh san pham: ${fileName}`,
+        content: base64,
+        branch: 'main',
+      }),
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    const err = new Error(
+      `Tải ảnh lên GitHub thất bại (HTTP ${res.status}). ${text.slice(0, 200)}`,
+    );
+    err.status = 502;
+    throw err;
+  }
+}
+
 app.get('/api/admin/orders', requireAuth, requireAdmin, async (req, res) => {
   try {
     let orders;
@@ -757,6 +828,228 @@ app.patch('/api/admin/orders/:id', requireAuth, requireAdmin, async (req, res) =
     return res.json({
       data: { ...updated, items: store.getOrderItems(id) },
     });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Admin thêm sản phẩm mới: lưu vào DB `products` để hiện ngay trên cửa
+ * hàng cho mọi khách (khác với form cũ chỉ lưu localStorage trên trình
+ * duyệt của admin). Chỉ admin (JWT) mới gọi được.
+ *
+ * Ảnh — 2 cách (ưu tiên image_data):
+ * - image_data: data URL ảnh tải lên từ thiết bị (PNG/WebP/JPEG, đã
+ *   tách nền sẵn; phía client đã cắt lề trong suốt thừa + nén WebP).
+ *   Server đẩy file lên kho GitHub rồi lưu `/images/<tên file>` vào DB.
+ *   Ảnh mới hiện sau ~1 phút (chờ Pages deploy) — trả kèm cờ
+ *   image_pending_deploy để client báo cho admin biết.
+ * - image: link URL ảnh có sẵn (https://…) hoặc đường dẫn /images/…
+ *   thì lưu thẳng vào DB, không cần token GitHub.
+ * Không có ảnh thì image = null.
+ */
+app.post('/api/admin/products', requireAuth, requireAdmin, async (req, res) => {
+  const body = req.body || {};
+  const name = String(body.name || '').trim();
+  const price = Number(body.price);
+  const quantity =
+    body.quantity === undefined || body.quantity === ''
+      ? 0
+      : Number(body.quantity);
+  const categoryId = Number(body.id_category);
+  const description =
+    body.description === undefined || body.description === null
+      ? null
+      : String(body.description).trim() || null;
+  if (!name) {
+    return res.status(400).json({ error: 'Vui lòng nhập tên sản phẩm.' });
+  }
+  if (name.length > 250) {
+    return res
+      .status(400)
+      .json({ error: 'Tên sản phẩm quá dài (tối đa 250 ký tự).' });
+  }
+  if (!Number.isFinite(price) || price <= 0) {
+    return res.status(400).json({ error: 'Giá phải là số lớn hơn 0.' });
+  }
+  if (!Number.isInteger(quantity) || quantity < 0) {
+    return res
+      .status(400)
+      .json({ error: 'Tồn kho phải là số nguyên và không được âm.' });
+  }
+  if (!Number.isInteger(categoryId) || categoryId <= 0) {
+    return res.status(400).json({ error: 'Danh mục không hợp lệ.' });
+  }
+  if (description !== null && description.length > 5000) {
+    return res.status(400).json({ error: 'Mô tả quá dài.' });
+  }
+  try {
+    if (!db.isAvailable()) {
+      return res
+        .status(503)
+        .json({ error: 'Database chưa sẵn sàng, thử lại sau.' });
+    }
+    const cats = await db.query('SELECT id FROM categories WHERE id = ?', [
+      categoryId,
+    ]);
+    if (!cats[0]) {
+      return res.status(400).json({ error: 'Danh mục không tồn tại.' });
+    }
+    let image = null;
+    let imagePendingDeploy = false;
+    if (
+      typeof body.image_data === 'string' &&
+      body.image_data.trim() !== ''
+    ) {
+      const m = body.image_data
+        .trim()
+        .match(/^data:(image\/(png|webp|jpeg));base64,([A-Za-z0-9+/=]+)$/);
+      if (!m) {
+        return res.status(400).json({
+          error:
+            'Ảnh tải lên không đúng định dạng (chỉ nhận PNG/WebP/JPEG dạng data URL).',
+        });
+      }
+      const ext = m[2] === 'jpeg' ? 'jpg' : m[2];
+      const base64 = m[3];
+      const buf = Buffer.from(base64, 'base64');
+      if (buf.length === 0 || buf.length > MAX_UPLOAD_IMAGE_BYTES) {
+        return res.status(400).json({
+          error: `Ảnh quá lớn (tối đa ${MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB sau khi tải lên).`,
+        });
+      }
+      const fileName = `${slugifyFileName(name)}-${Date.now()}.${ext}`;
+      await uploadImageToGitHub(fileName, base64);
+      image = `/images/${fileName}`;
+      imagePendingDeploy = true;
+    } else if (typeof body.image === 'string' && body.image.trim() !== '') {
+      const url = body.image.trim();
+      if (url.length > 250) {
+        return res
+          .status(400)
+          .json({ error: 'Link ảnh quá dài (tối đa 250 ký tự).' });
+      }
+      image = url;
+    }
+    const result = await db.query(
+      'INSERT INTO products (name, image, price, quantity, status, id_category, description, rating) VALUES (?, ?, ?, ?, 1, ?, ?, 4.5)',
+      [name, image, price, quantity, categoryId, description],
+    );
+    const rows = await db.query(
+      'SELECT id, name, image, price, quantity, status, id_category, description, rating, created_at FROM products WHERE id = ?',
+      [result.insertId],
+    );
+    const product = rows[0];
+    product.price = Number(product.price);
+    product.rating = Number(product.rating);
+    if (imagePendingDeploy) product.image_pending_deploy = true;
+    return res.status(201).json({ data: product });
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/**
+ * Admin sửa sản phẩm: đổi giá, tồn kho, trạng thái (hiện/ẩn). Chỉ admin
+ * (JWT) mới gọi được. Chỉ cập nhật các trường gửi lên; giá trị khác giữ
+ * nguyên. Trả về sản phẩm sau khi sửa.
+ */
+app.patch('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'id sản phẩm không hợp lệ.' });
+  }
+  const body = req.body || {};
+  const patch = {};
+  if (body.price !== undefined) {
+    const price = Number(body.price);
+    if (!Number.isFinite(price) || price < 0) {
+      return res.status(400).json({ error: 'Giá phải là số và không được âm.' });
+    }
+    patch.price = price;
+  }
+  if (body.quantity !== undefined) {
+    const quantity = Number(body.quantity);
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      return res
+        .status(400)
+        .json({ error: 'Tồn kho phải là số nguyên và không được âm.' });
+    }
+    patch.quantity = quantity;
+  }
+  if (body.status !== undefined) {
+    if (body.status !== 0 && body.status !== 1 && body.status !== '0' && body.status !== '1') {
+      return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
+    }
+    patch.status = Number(body.status);
+  }
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Không có gì để cập nhật.' });
+  }
+  try {
+    if (!db.isAvailable()) {
+      return res
+        .status(503)
+        .json({ error: 'Database chưa sẵn sàng, thử lại sau.' });
+    }
+    const sets = [];
+    const values = [];
+    for (const [key, value] of Object.entries(patch)) {
+      sets.push(`${key} = ?`);
+      values.push(value);
+    }
+    values.push(id);
+    const result = await db.query(
+      `UPDATE products SET ${sets.join(', ')} WHERE id = ?`,
+      values,
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm.' });
+    }
+    const rows = await db.query(
+      'SELECT id, name, image, price, quantity, status, id_category, description, rating, created_at FROM products WHERE id = ?',
+      [id],
+    );
+    const product = rows[0];
+    product.price = Number(product.price);
+    product.rating = Number(product.rating);
+    return res.json({ data: product });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Admin xóa sản phẩm: chỉ ẨN khỏi cửa hàng (status = 0), không xóa hẳn
+ * khỏi database — hiện lại được bằng PATCH status = 1. Chỉ admin (JWT)
+ * mới gọi được. Trả về sản phẩm sau khi ẩn.
+ */
+app.delete('/api/admin/products/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'id sản phẩm không hợp lệ.' });
+  }
+  try {
+    if (!db.isAvailable()) {
+      return res
+        .status(503)
+        .json({ error: 'Database chưa sẵn sàng, thử lại sau.' });
+    }
+    const result = await db.query(
+      'UPDATE products SET status = 0 WHERE id = ?',
+      [id],
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm.' });
+    }
+    const rows = await db.query(
+      'SELECT id, name, image, price, quantity, status, id_category, description, rating, created_at FROM products WHERE id = ?',
+      [id],
+    );
+    const product = rows[0];
+    product.price = Number(product.price);
+    product.rating = Number(product.rating);
+    return res.json({ data: product });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
