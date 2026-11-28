@@ -64,7 +64,9 @@ export default function ProductDetails({ product, categoryName }: ProductDetails
 
   return (
     <section
-      className={open ? 'ux u288 is-open' : 'ux u288'}
+      className={
+        open ? 'ux u288 u288-glass is-open' : 'ux u288 u288-glass'
+      }
       aria-labelledby={`${detailsId}-heading`}
     >
       <h2 ref={headingRef} id={`${detailsId}-heading`} className="u288-st">
