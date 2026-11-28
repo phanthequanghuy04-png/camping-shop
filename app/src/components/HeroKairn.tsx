@@ -14,6 +14,7 @@
  * - Thẻ câu chuyện dẫn tới mục combo (#combos) thay cho "GLACIER COLLECTION".
  * - Social chỉ là họa tiết trang trí (shop chưa có trang mạng xã hội).
  */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   formatPrice,
@@ -47,6 +48,12 @@ const TILES = [
 ] as const
 
 export default function HeroKairn() {
+  // Ảnh hero mờ dần vào khi tải xong (2026-11-28): trước đây ảnh 610KB
+  // về muộn thì hiện "bụp" một cái sau khi hiệu ứng vào trang đã chạy
+  // xong, còn nền section trong suốt nên chữ trắng khó đọc lúc chưa
+  // có ảnh. Nay nền xanh đậm (xem .kairn-hero trong index.css) giữ
+  // chữ đọc được, ảnh về thì mờ dần trong 0.7s.
+  const [imgLoaded, setImgLoaded] = useState(false)
   return (
     <section className="kairn-hero relative overflow-hidden text-white">
       {/* Ảnh nền: lều vàng lúc hoàng hôn, rừng thông, lửa trại */}
@@ -55,6 +62,12 @@ export default function HeroKairn() {
         alt=""
         aria-hidden="true"
         decoding="async"
+        fetchPriority="high"
+        onLoad={() => setImgLoaded(true)}
+        style={{
+          opacity: imgLoaded ? 1 : 0,
+          transition: 'opacity 0.7s ease',
+        }}
         className="absolute inset-0 h-full w-full object-cover object-[50%_30%]"
       />
       {/* Lớp phủ xanh rừng giữ chữ trắng đọc rõ trên ảnh sáng */}
@@ -65,7 +78,7 @@ export default function HeroKairn() {
           {/* Trái: tiêu đề + nút + thống kê */}
           <div>
             <p
-              className="kairn-in text-xs font-bold tracking-[0.22em] uppercase opacity-90 sm:text-sm"
+              className="kairn-in text-xs font-bold tracking-[0.14em] uppercase opacity-90 sm:text-sm sm:tracking-[0.22em]"
               style={{ animationDelay: '0.1s' }}
             >
               Đồ cắm trại — Chuẩn bị cho chuyến đi tiếp theo
