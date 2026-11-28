@@ -225,10 +225,16 @@ export async function createProductApi(
 export interface UpdateProductInput {
   price?: number
   quantity?: number
-  status?: 0 | 1
+  /** 0 = Ẩn, 1 = Đang bán, 2 = Hết hàng. */
+  status?: 0 | 1 | 2
 }
 
-/** Admin sửa giá / tồn kho / hiện-ẩn sản phẩm trong database. */
+/** Admin lấy toàn bộ sản phẩm (kể cả Ẩn / Hết hàng) cho bảng quản trị. */
+export async function getAdminProductsApi(): Promise<Product[]> {
+  return apiFetch<Product[]>('/api/admin/products')
+}
+
+/** Admin sửa giá / tồn kho / trạng thái sản phẩm trong database. */
 export async function updateAdminProductApi(
   id: number,
   patch: UpdateProductInput,
@@ -239,9 +245,14 @@ export async function updateAdminProductApi(
   })
 }
 
-/** Admin xóa sản phẩm: ẩn khỏi cửa hàng (status = 0), không xóa hẳn. */
-export async function deleteAdminProductApi(id: number): Promise<Product> {
-  return apiFetch<Product>(`/api/admin/products/${id}`, {
+/**
+ * Admin XÓA HẲN sản phẩm khỏi database. Sản phẩm đã có trong đơn hàng
+ * thì API từ chối (400) để giữ lịch sử đơn — khi đó hãy dùng Ẩn.
+ */
+export async function deleteAdminProductApi(
+  id: number,
+): Promise<{ id: number }> {
+  return apiFetch<{ id: number }>(`/api/admin/products/${id}`, {
     method: 'DELETE',
   })
 }
