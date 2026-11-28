@@ -22,10 +22,12 @@ import ThemeToggle from './components/ThemeToggle'
 import AccountMenu from './components/AccountMenu'
 import CartDrawer from './components/CartDrawer'
 import BackToTop from './components/BackToTop'
+import SearchAutocomplete from './components/SearchAutocomplete'
 import { useCart } from './context/CartContext'
 import { clearSession, getSessionUser } from './data/users'
-import type { User } from './data/types'
-import { clearToken } from './lib/api'
+import { CATEGORIES, getActiveProducts } from './data/products'
+import type { Product, User } from './data/types'
+import { clearToken, getProducts } from './lib/api'
 import { showToast } from './lib/toast'
 import {
   cleanupAnimations,
@@ -122,6 +124,28 @@ function Header() {
     }
   }, [])
 
+  // Ô tìm kiếm trong header thủy tinh (chỉ hiện từ xl; dưới xl là nút
+  // kính lúp sang /shop): gợi ý sản phẩm thật (#429), dữ liệu thử API
+  // trước, lỗi thì dùng products.ts local như ShopPage.
+  const [searchValue, setSearchValue] = useState('')
+  const [searchProducts, setSearchProducts] = useState<Product[]>(() =>
+    getActiveProducts(),
+  )
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const products = await getProducts()
+        if (!cancelled && products.length) setSearchProducts(products)
+      } catch {
+        // API chưa chạy: dùng dữ liệu local như trước.
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const handleLogout = () => {
     clearSession()
     clearToken()
@@ -141,37 +165,41 @@ function Header() {
 
   return (
     <header
-      className={`site-header${headerSolid ? ' is-solid' : ''}${headerHidden ? ' is-hide' : ''}`}
+      className={`site-header glass-header${headerSolid ? ' is-solid' : ''}${headerHidden ? ' is-hide' : ''}`}
     >
-      {/* Hàng header: mobile 1 hàng — [burger + logo] trái, [đổi theme,
-          giỏ hàng, avatar] phải (ml-auto); desktop giữ logo trái, menu
-          giữa (order-2), cụm tác vụ phải (order-3). Menu mobile bung
-          xuống thành hàng riêng (w-full) khi bấm burger. */}
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-2 px-3 py-3 sm:gap-4 sm:px-4 md:flex-nowrap md:justify-between md:px-6 md:py-4">
-        {/* Nhóm trái: nút mở menu (chỉ mobile) + logo */}
+      {/* Viên pill kính nổi: mobile 1 hàng — [burger + logo] trái, [đổi
+          theme, giỏ hàng, avatar] phải (ml-auto); desktop (lg+) giữ logo
+          trái, menu giữa (order-2), ô tìm kiếm + cụm tác vụ phải
+          (order-3). Menu mobile bung xuống trong pill khi bấm burger
+          (pill đổi bo góc 28px qua glass-pill--open). */}
+      <div
+        className={`glass-pill mx-auto flex max-w-[1200px] flex-wrap items-center gap-1 px-2 py-3 sm:gap-4 sm:px-4 lg:flex-nowrap lg:justify-between lg:px-6 lg:py-4${menuOpen ? ' glass-pill--open' : ''}`}
+      >
+        {/* Nhóm trái: nút mở menu (chỉ dưới lg) + logo */}
         <div className="flex min-w-0 items-center gap-2 md:order-1">
-          {/* Burger menu mobile — nằm bên trái, trước logo */}
+          {/* Burger menu — nằm bên trái, trước logo */}
           <button
             type="button"
-            className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-[12px] md:hidden"
+            className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-[12px] lg:hidden"
             aria-expanded={menuOpen}
             aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
             onClick={() => setMenuOpen((open) => !open)}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               {menuOpen ? (
-                <path d="M6 6l12 12M18 6 6 18" stroke="#f5f0e1" strokeWidth="2" strokeLinecap="round" />
+                <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               ) : (
-                <path d="M4 7h16M4 12h16M4 17h16" stroke="#f5f0e1" strokeWidth="2" strokeLinecap="round" />
+                <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               )}
             </svg>
           </button>
 
           <Link to="/" className="brand" aria-label="Camping Shop — Trang chủ">
           {/* Logo thương hiệu mẫu C (nét vẽ tối giản): biểu tượng lều,
-              núi, mặt trời bản một màu trắng — dùng trên nền header xanh rừng. */}
+              núi, mặt trời bản một màu — currentColor để đổi theo chế độ
+              (xanh đậm trên kính sáng, trắng trên kính tối). */}
           <svg width="28" height="28" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-            <g fill="#FFFFFF">
+            <g fill="currentColor">
               <circle cx="86" cy="30" r="11" />
               <polygon points="10,90 44,48 66,74 88,44 112,90" />
               <polygon points="60,40 16,94 104,94" />
@@ -181,7 +209,7 @@ function Header() {
             </g>
             <path
               d="M60 68 L48 94 H72 Z"
-              stroke="#FFFFFF"
+              stroke="currentColor"
               strokeWidth="3.5"
               strokeLinejoin="round"
             />
@@ -190,12 +218,25 @@ function Header() {
         </Link>
         </div>
 
-        {/* Cụm tác vụ bên phải header: đổi theme, giỏ hàng, avatar
-            tài khoản. ml-auto đẩy cụm sang phải trên mobile; trên
-            desktop (md+) dùng order-3 để nằm bên phải, sau menu điều
-            hướng (order-2), ml-0 để justify-between của header chia
-            đều 3 phần như cũ. */}
-        <div className="ml-auto flex items-center gap-1 sm:gap-3 md:order-3 md:ml-0">
+        {/* Cụm tác vụ bên phải header: tìm kiếm, đổi theme, giỏ hàng,
+            avatar tài khoản. ml-auto đẩy cụm sang phải trên mobile; trên
+            desktop (lg+) dùng order-3 để nằm bên phải, sau menu điều
+            hướng (order-2), ml-0 để justify-between của header chia đều
+            như cũ. */}
+        <div className="ml-auto flex items-center gap-1 sm:gap-3 lg:order-3 lg:ml-0">
+          {/* Nút tìm kiếm (sm → xl): sang /shop, ô tìm kiếm đầy đủ ở đó.
+              Từ xl trở lên ô tìm kiếm hiện thẳng trong pill nên ẩn nút. */}
+          <button
+            type="button"
+            onClick={() => navigate('/shop')}
+            className="glass-icon-btn hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-[12px] px-2 transition duration-200 ease-out focus:outline-2 focus:outline-[#74C69D] sm:inline-flex xl:hidden"
+            aria-label="Tìm kiếm sản phẩm"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+              <path d="m20 20-4.2-4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
           {/* Chuyển sáng/tối (dark mode, lưu localStorage `camping-theme`) */}
           <ThemeToggle />
           {/* Nút giỏ hàng + badge số lượng thật từ CartContext.
@@ -206,19 +247,19 @@ function Header() {
             type="button"
             id="header-cart-button"
             onClick={() => openDrawer()}
-            className="relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[12px] px-2 transition duration-200 ease-out hover:bg-white/10 focus:outline-2 focus:outline-[#74C69D]"
+            className="glass-icon-btn relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[12px] px-2 transition duration-200 ease-out hover:bg-white/10 focus:outline-2 focus:outline-[#74C69D]"
             aria-label={`Giỏ hàng, ${totalQty} sản phẩm`}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
                 d="M3 4h2.5l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 8H6"
-                stroke="#f5f0e1"
+                stroke="currentColor"
                 strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <circle cx="10" cy="21" r="1.4" fill="#f5f0e1" />
-              <circle cx="18" cy="21" r="1.4" fill="#f5f0e1" />
+              <circle cx="10" cy="21" r="1.4" fill="currentColor" />
+              <circle cx="18" cy="21" r="1.4" fill="currentColor" />
             </svg>
             <span className="cart-badge absolute -right-1 -top-1" aria-hidden="true">
               {totalQty}
@@ -236,7 +277,7 @@ function Header() {
         {/* Menu desktop: ngang đầy đủ, nằm giữa header (logo trái,
             menu giữa, cụm tác vụ phải); mobile: hiện khi bấm burger */}
         <nav
-          className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 md:order-2 md:flex md:w-auto md:flex-row md:items-center md:gap-6`}
+          className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 lg:order-2 lg:flex lg:w-auto lg:flex-row lg:items-center lg:gap-6`}
           aria-label="Menu chính"
         >
           {visibleNavLinks.map((link) => (
@@ -253,6 +294,22 @@ function Header() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Ô tìm kiếm trong pill (chỉ hiện từ xl): gợi ý sản phẩm thật
+            #429 — gõ là lọc, chọn thì mở trang chi tiết sản phẩm. */}
+        <div className="glass-search hidden min-w-0 max-w-[240px] flex-1 lg:order-2 xl:block">
+          <SearchAutocomplete
+            value={searchValue}
+            onChange={setSearchValue}
+            products={searchProducts}
+            categories={CATEGORIES}
+            onSelect={(product) => {
+              setSearchValue('')
+              setMenuOpen(false)
+              navigate(`/product/${product.id}`)
+            }}
+          />
+        </div>
       </div>
       {/* Thanh tiến trình đọc (#212): đầy dần theo % trang đã cuộn.
           Giá trị scaleX ban đầu 0, onScroll ghi đè qua progressRef. */}
@@ -335,7 +392,7 @@ function AppContent() {
           role="status"
           aria-live="polite"
           onClick={() => setToastVisible(false)}
-          className={`fixed left-1/2 top-20 z-[60] flex -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full bg-[#1B4332] px-5 py-3 text-sm font-medium whitespace-nowrap text-white shadow-[0_12px_32px_rgba(27,67,50,0.35)] transition-all duration-300 ease-out ${
+          className={`fixed left-1/2 top-24 z-[60] flex -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full bg-[#1B4332] px-5 py-3 text-sm font-medium whitespace-nowrap text-white shadow-[0_12px_32px_rgba(27,67,50,0.35)] transition-all duration-300 ease-out ${
             toastVisible
               ? 'translate-y-0 opacity-100'
               : '-translate-y-2 opacity-0'
