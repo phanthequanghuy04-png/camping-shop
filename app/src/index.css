@@ -450,6 +450,15 @@ a { color: var(--color-primary-text); }
     font-size: 1rem;
   }
 }
+/* Màn hình rất hẹp (dưới 360px, vd máy 320px): ẩn chữ "Camping Shop",
+   chỉ giữ biểu tượng lều — nếu không burger + logo + cụm tác vụ
+   (theme, giỏ, avatar) vượt quá chiều rộng và pill gập thành 2 hàng,
+   cao gấp đôi (lỗi bạn của Huy gặp trên máy nhỏ 2026-11-28). */
+@media (max-width: 359.5px) {
+  .site-header .brand-text {
+    display: none;
+  }
+}
 
 /* Các mục lớn dưới màn hình đầu (trang chủ): trình duyệt chỉ vẽ khi
    sắp cuộn tới (content-visibility), lúc mới tải thì bỏ qua — theo ý

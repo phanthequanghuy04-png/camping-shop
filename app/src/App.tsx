@@ -78,7 +78,12 @@ function Header() {
       const y = window.scrollY
       const d = y - last
       last = y
-      acc = (d > 0) === (acc > 0) ? acc + d : d
+      // Tích lũy hướng cuộn; BỎ QUA sự kiện d = 0 (scrollY không đổi —
+      // hay gặp khi cuộn quán tính chạm giới hạn trang hoặc Lenis đang
+      // ổn định vị trí) vì nó reset acc về 0 và làm header không ẩn
+      // được khi cuộn xuống. Hiện lại cần cuộn lên bền vững 20px (trước
+      // đây chỉ 6px nên rung nhẹ khi cuộn nhanh cũng làm header hiện).
+      if (d !== 0) acc = (d > 0) === (acc > 0) ? acc + d : d
       const nextSolid = y > 20
       if (nextSolid !== solid) {
         solid = nextSolid
@@ -90,7 +95,7 @@ function Header() {
       if (menuOpen) nextHidden = false
       else if (y < 60) nextHidden = false
       else if (acc > 8) nextHidden = true
-      else if (acc < -6) nextHidden = false
+      else if (acc < -20) nextHidden = false
       if (nextHidden !== hidden) {
         hidden = nextHidden
         setHeaderHidden(hidden)
@@ -231,7 +236,7 @@ function Header() {
               strokeLinejoin="round"
             />
           </svg>
-          Camping Shop
+          <span className="brand-text">Camping Shop</span>
         </Link>
         </div>
 
