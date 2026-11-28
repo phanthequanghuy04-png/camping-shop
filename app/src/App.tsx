@@ -176,7 +176,7 @@ function Header() {
         className={`glass-pill mx-auto flex max-w-[1200px] flex-wrap items-center gap-1 px-2 py-3 sm:gap-4 sm:px-4 lg:flex-nowrap lg:justify-between lg:px-6 lg:py-4${menuOpen ? ' glass-pill--open' : ''}`}
       >
         {/* Nhóm trái: nút mở menu (chỉ dưới lg) + logo */}
-        <div className="flex min-w-0 items-center gap-2 md:order-1">
+        <div className="flex min-w-0 items-center gap-2 lg:order-1">
           {/* Burger menu — nằm bên trái, trước logo */}
           <button
             type="button"
