@@ -1,11 +1,23 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   categories as baseCategories,
   products as baseProducts,
 } from '../data/products'
 import type { Order, OrderStatus, Product } from '../data/types'
-import { getAdminOrdersApi, updateAdminOrderApi } from '../lib/api'
+import {
+  ApiError,
+  createProductApi,
+  deleteAdminProductApi,
+  getAdminOrdersApi,
+  getProducts,
+  updateAdminOrderApi,
+  updateAdminProductApi,
+} from '../lib/api'
+import {
+  prepareProductImage,
+  type PreparedImage,
+} from '../lib/imageUpload'
 
 /**
  * Trang quản trị — Camping Shop.
@@ -15,8 +27,11 @@ import { getAdminOrdersApi, updateAdminOrderApi } from '../lib/api'
  * localStorage / đơn mẫu như trước. Đổi trạng thái đơn, đánh dấu đã
  * nhận tiền và nhập mã vận đơn gọi PATCH /api/admin/orders/:id khi
  * API chạy; API lỗi thì chỉ đổi trong phiên này (lưu localStorage).
- * Các thao tác sửa sản phẩm vẫn lưu localStorage (chưa có endpoint
- * admin tương ứng).
+ * Form "Thêm sản phẩm" gọi POST /api/admin/products (cần token admin)
+ * để lưu vào database và hiện ngay trên cửa hàng; ảnh tải lên từ thiết
+ * bị được đẩy lên kho GitHub qua API (cần GITHUB_TOKEN trên server).
+ * Các thao tác Sửa/Xóa sản phẩm trong tab "Sản phẩm" vẫn lưu
+ * localStorage (chưa có endpoint admin tương ứng).
  *
  * Kiểm tra quyền — chỉ tài khoản role 'admin' mới được vào:
  * - Đọc localStorage key 'camping-session' (do trang Đăng nhập ghi).
@@ -245,8 +260,17 @@ export default function AdminPage() {
   const [newQuantity, setNewQuantity] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [newImage, setNewImage] = useState('')
+  // Ảnh tải lên từ thiết bị (đã tách nền sẵn): xử lý xong ở client
+  // (cắt lề trong suốt + nén WebP) rồi mới gửi lên server.
+  const [newImageFile, setNewImageFile] = useState<PreparedImage | null>(
+    null,
+  )
+  const [imageProcessing, setImageProcessing] = useState(false)
+  const [imageError, setImageError] = useState('')
+  const imageInputRef = useRef<HTMLInputElement | null>(null)
   const [addNotice, setAddNotice] = useState('')
   const [addError, setAddError] = useState('')
+  const [addingProduct, setAddingProduct] = useState(false)
 
   // Đơn hàng: ưu tiên đơn Checkout đã lưu, nếu chưa có thì 2 đơn mẫu.
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -289,6 +313,34 @@ export default function AdminPage() {
     return () => {
       cancelled = true
     }
+  }, [session])
+
+  // Bảng sản phẩm cũng lấy số liệu THẬT từ API (database) khi admin đăng
+  // nhập — bản localStorage/baseProducts chỉ là bản dự phòng, dễ lệch
+  // với DB (vd tồn kho id 1: local 15, DB 12). Sản phẩm nào chỉ có
+  // trong bản local (thêm tay trước khi có API) thì giữ lại phía sau.
+  const adminProductsRef = useRef(adminProducts)
+  adminProductsRef.current = adminProducts
+  useEffect(() => {
+    if (session?.role !== 'admin') return
+    let cancelled = false
+    void (async () => {
+      try {
+        const list = await getProducts()
+        if (cancelled) return
+        const apiIds = new Set(list.map((p) => p.id))
+        const localOnly = adminProductsRef.current.filter(
+          (p) => !apiIds.has(p.id),
+        )
+        persistProducts([...list, ...localOnly])
+      } catch {
+        // API lỗi: giữ bản local như trước.
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session])
 
   const categoryName = useMemo(() => {
@@ -378,7 +430,10 @@ export default function AdminPage() {
     setProductNotice('')
   }
 
-  function saveEdit() {
+  /** Sửa giá / tồn kho / trạng thái: ghi VÀO DATABASE qua API để cửa
+      hàng cập nhật thật; API lỗi (mất mạng, sản phẩm chỉ có trong bản
+      local) thì chỉ đổi trong bản sao local như trước. */
+  async function saveEdit() {
     if (editingId === null) return
     const price = Number(editPrice)
     const quantity = Number(editQuantity)
@@ -390,37 +445,113 @@ export default function AdminPage() {
       setProductNotice('Tồn kho phải là số nguyên và không được âm.')
       return
     }
-    const next = adminProducts.map((p) =>
-      p.id === editingId
-        ? { ...p, price, quantity, status: Number(editStatus) }
-        : p,
-    )
-    persistProducts(next)
+    const id = editingId
+    const patch = {
+      price,
+      quantity,
+      status: Number(editStatus) as 0 | 1,
+    }
+    const applyLocal = () =>
+      persistProducts(
+        adminProducts.map((p) =>
+          p.id === id ? { ...p, ...patch } : p,
+        ),
+      )
     setEditingId(null)
-    setProductNotice('Đã lưu thay đổi sản phẩm.')
+    try {
+      const updated = await updateAdminProductApi(id, patch)
+      persistProducts(
+        adminProducts.map((p) => (p.id === id ? { ...p, ...updated } : p)),
+      )
+      setProductNotice('Đã lưu thay đổi sản phẩm (đã cập nhật trên cửa hàng).')
+    } catch {
+      applyLocal()
+      setProductNotice(
+        'Đã lưu thay đổi trong quản trị (chưa cập nhật lên cửa hàng — kiểm tra lại kết nối rồi thử lại).',
+      )
+    }
   }
 
-  function deleteProduct(product: Product) {
+  /** "Xóa" là ẨN sản phẩm khỏi cửa hàng (status = 0, không xóa hẳn khỏi
+      database) — ghi vào DB qua API để khách không còn thấy; hiện lại
+      được bằng nút "Hiện lại". */
+  async function deleteProduct(product: Product) {
     // "Xóa" ở đây là ẩn sản phẩm (status = 0), không xóa hẳn khỏi dữ liệu.
     if (!window.confirm(`Ẩn sản phẩm "${product.name}" khỏi cửa hàng?`)) return
-    persistProducts(
-      adminProducts.map((p) =>
-        p.id === product.id ? { ...p, status: 0 } : p,
-      ),
-    )
-    setProductNotice(`Đã ẩn sản phẩm "${product.name}".`)
+    try {
+      const updated = await deleteAdminProductApi(product.id)
+      persistProducts(
+        adminProducts.map((p) =>
+          p.id === product.id ? { ...p, ...updated } : p,
+        ),
+      )
+      setProductNotice(`Đã ẩn sản phẩm "${product.name}" khỏi cửa hàng.`)
+    } catch {
+      persistProducts(
+        adminProducts.map((p) =>
+          p.id === product.id ? { ...p, status: 0 } : p,
+        ),
+      )
+      setProductNotice(
+        `Đã ẩn sản phẩm "${product.name}" trong quản trị (chưa cập nhật lên cửa hàng — kiểm tra lại kết nối rồi thử lại).`,
+      )
+    }
   }
 
-  function restoreProduct(product: Product) {
-    persistProducts(
-      adminProducts.map((p) =>
-        p.id === product.id ? { ...p, status: 1 } : p,
-      ),
-    )
-    setProductNotice(`Đã hiện lại sản phẩm "${product.name}".`)
+  /** Hiện lại sản phẩm đã ẩn: ghi status = 1 vào database qua API. */
+  async function restoreProduct(product: Product) {
+    try {
+      const updated = await updateAdminProductApi(product.id, { status: 1 })
+      persistProducts(
+        adminProducts.map((p) =>
+          p.id === product.id ? { ...p, ...updated } : p,
+        ),
+      )
+      setProductNotice(`Đã hiện lại sản phẩm "${product.name}".`)
+    } catch {
+      persistProducts(
+        adminProducts.map((p) =>
+          p.id === product.id ? { ...p, status: 1 } : p,
+        ),
+      )
+      setProductNotice(
+        `Đã hiện lại sản phẩm "${product.name}" trong quản trị (chưa cập nhật lên cửa hàng — kiểm tra lại kết nối rồi thử lại).`,
+      )
+    }
   }
 
-  function submitNewProduct(event: React.FormEvent) {
+  /** Chọn ảnh từ thiết bị: cắt lề trong suốt thừa + nén WebP ngay trên
+      trình duyệt rồi mới lưu để gửi lên server (xem lib/imageUpload). */
+  async function handleImageFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setImageError('')
+    setImageProcessing(true)
+    try {
+      const prepared = await prepareProductImage(file)
+      setNewImageFile(prepared)
+      setNewImage('')
+    } catch (err) {
+      setNewImageFile(null)
+      setImageError(
+        err instanceof Error ? err.message : 'Không xử lý được ảnh này.',
+      )
+    } finally {
+      setImageProcessing(false)
+    }
+  }
+
+  function clearImageFile() {
+    setNewImageFile(null)
+    setImageError('')
+    if (imageInputRef.current) imageInputRef.current.value = ''
+  }
+
+  /** Thêm sản phẩm mới VÀO DATABASE qua API để hiện ngay trên cửa hàng
+      cho mọi khách (POST /api/admin/products). Ảnh tải lên (image_data)
+      được server đẩy lên kho GitHub rồi lưu tên file vào DB; ảnh mới
+      hiện sau ~1 phút (chờ Pages deploy). */
+  async function submitNewProduct(event: React.FormEvent) {
     event.preventDefault()
     setAddError('')
     setAddNotice('')
@@ -434,33 +565,49 @@ export default function AdminPage() {
       setAddError('Giá phải là số lớn hơn 0.')
       return
     }
-    if (newQuantity.trim() !== '' && (!Number.isInteger(quantity) || quantity < 0)) {
+    if (
+      newQuantity.trim() !== '' &&
+      (!Number.isInteger(quantity) || quantity < 0)
+    ) {
       setAddError('Tồn kho phải là số nguyên và không được âm.')
       return
     }
-    const nextId =
-      adminProducts.reduce((max, p) => Math.max(max, p.id), 0) + 1
-    const product: Product = {
-      id: nextId,
-      name: newName.trim(),
-      image: newImage.trim() === '' ? null : newImage.trim(),
-      price,
-      quantity: newQuantity.trim() === '' ? 0 : quantity,
-      status: 1,
-      id_category: Number(newCategoryId),
-      description:
-        newDescription.trim() === '' ? null : newDescription.trim(),
-      rating: 4.5,
-      created_at: new Date().toISOString(),
+    setAddingProduct(true)
+    try {
+      const created = await createProductApi({
+        name: newName.trim(),
+        price,
+        quantity: newQuantity.trim() === '' ? 0 : quantity,
+        id_category: Number(newCategoryId),
+        description:
+          newDescription.trim() === '' ? null : newDescription.trim(),
+        image: newImageFile ? null : newImage.trim() || null,
+        image_data: newImageFile ? newImageFile.dataUrl : null,
+      })
+      // Hiện ngay trong tab "Sản phẩm" của quản trị (bản sao local).
+      persistProducts([...adminProducts, created])
+      setAddNotice(
+        `Đã thêm sản phẩm "${created.name}" vào cửa hàng (mã #${created.id}).` +
+          (created.image_pending_deploy
+            ? ' Ảnh tải lên sẽ hiện sau khoảng 1 phút (đang chờ deploy).'
+            : ''),
+      )
+      setNewName('')
+      setNewCategoryId('1')
+      setNewPrice('')
+      setNewQuantity('')
+      setNewDescription('')
+      setNewImage('')
+      clearImageFile()
+    } catch (err) {
+      setAddError(
+        err instanceof ApiError
+          ? err.message
+          : 'Không thêm được sản phẩm (không kết nối được tới API).',
+      )
+    } finally {
+      setAddingProduct(false)
     }
-    persistProducts([...adminProducts, product])
-    setAddNotice(`Đã thêm sản phẩm "${product.name}" vào cửa hàng.`)
-    setNewName('')
-    setNewCategoryId('1')
-    setNewPrice('')
-    setNewQuantity('')
-    setNewDescription('')
-    setNewImage('')
   }
 
   /** Đổi trạng thái đơn qua API (fallback local khi API chưa chạy). */
@@ -685,9 +832,11 @@ export default function AdminPage() {
               <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-gray-700">
-                    <th className="px-4 py-3 font-semibold">Sản phẩm</th>
+                    <th className="sticky left-0 z-10 bg-gray-50 px-4 py-3 font-semibold">
+                      Sản phẩm
+                    </th>
                     <th className="px-4 py-3 font-semibold">Danh mục</th>
-                    <th className="px-4 py-3 text-right font-semibold">
+                    <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                       Giá (VND)
                     </th>
                     <th className="px-4 py-3 text-right font-semibold">
@@ -703,7 +852,7 @@ export default function AdminPage() {
                       key={product.id}
                       className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
                     >
-                      <td className="px-4 py-3">
+                      <td className="sticky left-0 bg-white px-4 py-3">
                         <span className="font-medium text-gray-900">
                           {product.name}
                         </span>
@@ -711,10 +860,10 @@ export default function AdminPage() {
                           #{product.id}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-700">
+                      <td className="whitespace-nowrap px-4 py-3 text-gray-700">
                         {categoryName(product.id_category)}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-gray-900">
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-gray-900">
                         {formatVnd(product.price)}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-700">
@@ -722,11 +871,13 @@ export default function AdminPage() {
                       </td>
                       <td className="px-4 py-3">
                         {product.status === 1 ? (
-                          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" />
                             Đang bán
                           </span>
                         ) : (
-                          <span className="rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700">
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500" />
                             Đang ẩn
                           </span>
                         )}
@@ -854,13 +1005,72 @@ export default function AdminPage() {
               />
             </div>
             <div className="md:col-span-2">
+              <span className={labelClass}>Ảnh sản phẩm</span>
+              <label
+                htmlFor="new-image-file"
+                className="mt-1 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-700 hover:border-emerald-600 hover:bg-emerald-50"
+              >
+                {imageProcessing
+                  ? 'Đang xử lý ảnh…'
+                  : newImageFile
+                    ? 'Bấm để chọn ảnh khác'
+                    : 'Bấm để tải ảnh lên từ thiết bị'}
+              </label>
+              <input
+                id="new-image-file"
+                ref={imageInputRef}
+                type="file"
+                accept="image/png,image/webp,image/jpeg"
+                onChange={handleImageFile}
+                className="hidden"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Nên dùng ảnh PNG/WebP đã tách nền sẵn — web tự cắt lề
+                trong suốt thừa và nén nhẹ trước khi tải lên. Tối đa 5 MB.
+              </p>
+              {imageError && (
+                <p className="mt-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-800">
+                  {imageError}
+                </p>
+              )}
+              {newImageFile && (
+                <div className="mt-3 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+                  <img
+                    src={newImageFile.dataUrl}
+                    alt="Ảnh sản phẩm đã chọn"
+                    className="h-24 w-24 shrink-0 rounded-md border border-gray-200 bg-white object-contain"
+                  />
+                  <div className="min-w-0 text-sm">
+                    <p className="break-all font-medium text-gray-900">
+                      {newImageFile.fileName}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {newImageFile.width}×{newImageFile.height} ·{' '}
+                      {(newImageFile.size / 1024).toFixed(0)} KB
+                      {newImageFile.trimmed
+                        ? ' · đã cắt lề trong suốt thừa'
+                        : ''}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={clearImageFile}
+                      className="mt-2 text-xs font-medium text-red-600 hover:underline"
+                    >
+                      Bỏ ảnh này
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="md:col-span-2">
               <label htmlFor="new-image" className={labelClass}>
-                Ảnh (URL)
+                Hoặc dán link ảnh có sẵn
               </label>
               <input
                 id="new-image"
                 type="url"
                 value={newImage}
+                disabled={newImageFile !== null}
                 onChange={(e) => setNewImage(e.target.value)}
                 placeholder="https://…/ten-anh.jpg (để trống nếu chưa có ảnh)"
                 className={inputClass}
@@ -880,15 +1090,19 @@ export default function AdminPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className={primaryButtonClass}>
-                Thêm sản phẩm
+              <button
+                type="submit"
+                disabled={addingProduct || imageProcessing}
+                className={primaryButtonClass}
+              >
+                {addingProduct ? 'Đang thêm…' : 'Thêm sản phẩm'}
               </button>
             </div>
           </form>
           <p className="mt-3 text-xs text-muted-foreground">
-            Sản phẩm mới được lưu vào localStorage key{' '}
-            <code>camping-admin-products</code> và xuất hiện ngay trong tab
-            “Sản phẩm”.
+            Sản phẩm mới được lưu vào database và hiện ngay trên cửa hàng
+            cho mọi khách. Ảnh tải lên sẽ hiện sau khoảng 1 phút (chờ
+            deploy).
           </p>
         </section>
       )}
