@@ -367,6 +367,25 @@ export function scrollToTop(): void {
 }
 
 /**
+ * Cuộn tới một phần tử (vd đầu lưới sản phẩm khi đổi trang phân trang),
+ * trừ thêm `offset` px (âm = chừa chỗ cho header). Dùng Lenis khi có,
+ * fallback window.scrollTo. Cuộn tức thì (immediate) như scrollToTop.
+ */
+export function scrollToElement(el: Element | null, offset = 0): void {
+  if (typeof window === 'undefined' || !el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY + offset;
+  if (lenisInstance) {
+    try {
+      lenisInstance.scrollTo(top, { immediate: true });
+      return;
+    } catch {
+      // Rơi xuống window.scrollTo bên dưới.
+    }
+  }
+  window.scrollTo(0, top);
+}
+
+/**
  * Dọn dẹp toàn bộ animation: hủy tween của `revealOnScroll`, dừng
  * vòng lặp Lenis / GSAP ticker, hủy instance Lenis.
  * Gọi trong hàm cleanup của `useEffect` trong `App.tsx`.
