@@ -845,6 +845,88 @@ a { color: var(--color-primary-text); }
    class text-white của Tailwind (cùng bẫy cascade với h1/h2/h3) nên phải
    viết luật riêng có độ ưu tiên cao hơn ở đây. */
 .kairn-hero a.kairn-cta { color: #fff; }
+/* Animation trỏ chuột cho 2 nút hero (Huy yêu cầu 2026-11-28):
+   - Nút chính "Mua sắm ngay": nhấc lên + bóng sâu + vệt sáng quét ngang
+     + mũi tên trượt ra; nút phụ "Xem combo": lớp trắng trượt vào từ
+     trái (fill wipe) và chữ chuyển sang xanh rừng.
+   - Chỉ nâng/đổi khi có chuột thật (hover:hover + pointer:fine): trên
+     điện thoại chạm là bấm ngay, không nhích nút giữa cú chạm. */
+.kairn-hero a.kairn-cta {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1),
+    box-shadow 0.35s ease,
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+.kairn-hero a.kairn-cta .kairn-arrow {
+  display: inline-block;
+  margin-left: 6px;
+  transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.kairn-hero a.kairn-cta-primary::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -80px;
+  width: 56px;
+  background: linear-gradient(
+    105deg,
+    transparent,
+    rgba(255, 255, 255, 0.28),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+.kairn-hero a.kairn-cta-ghost::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s cubic-bezier(0.3, 1.2, 0.5, 1);
+  pointer-events: none;
+}
+.kairn-hero a.kairn-cta-ghost > span {
+  position: relative;
+  z-index: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .kairn-hero a.kairn-cta-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(10, 40, 28, 0.45);
+  }
+  .kairn-hero a.kairn-cta-primary:hover::after {
+    left: calc(100% + 80px);
+  }
+  .kairn-hero a.kairn-cta-primary:hover .kairn-arrow {
+    transform: translateX(4px);
+  }
+  .kairn-hero a.kairn-cta-ghost:hover {
+    transform: translateY(-3px) scale(1.02);
+    color: #1b4332;
+    box-shadow: 0 16px 32px rgba(10, 40, 28, 0.35);
+  }
+  .kairn-hero a.kairn-cta-ghost:hover::before {
+    transform: scaleX(1);
+  }
+}
+.kairn-hero a.kairn-cta:active {
+  transform: translateY(0) scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kairn-hero a.kairn-cta,
+  .kairn-hero a.kairn-cta .kairn-arrow,
+  .kairn-hero a.kairn-cta-primary::after,
+  .kairn-hero a.kairn-cta-ghost::before {
+    transition: none;
+  }
+}
 /* Tiêu đề hero: chữ trắng ở CẢ 2 chế độ. Luật `h1` không lớp ở index.css
    thắng class text-white của Tailwind — ở chế độ sáng nó biến tiêu đề
    thành chữ tối màu trên ảnh (lỗi bắt được khi kiểm tra live 2026-11-28). */
