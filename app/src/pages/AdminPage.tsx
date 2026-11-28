@@ -10,10 +10,11 @@ import {
   createProductApi,
   deleteAdminProductApi,
   getAdminOrdersApi,
-  getProducts,
+  getAdminProductsApi,
   updateAdminOrderApi,
   updateAdminProductApi,
 } from '../lib/api'
+import { scrollToElement } from '../lib/animations'
 import {
   prepareProductImage,
   type PreparedImage,
@@ -30,8 +31,13 @@ import {
  * Form "Thêm sản phẩm" gọi POST /api/admin/products (cần token admin)
  * để lưu vào database và hiện ngay trên cửa hàng; ảnh tải lên từ thiết
  * bị được đẩy lên kho GitHub qua API (cần GITHUB_TOKEN trên server).
- * Các thao tác Sửa/Xóa sản phẩm trong tab "Sản phẩm" vẫn lưu
- * localStorage (chưa có endpoint admin tương ứng).
+ * Sửa / Xóa / chuyển trạng thái sản phẩm trong tab "Sản phẩm" cũng ghi
+ * vào database qua API (PATCH / DELETE /api/admin/products/:id); API lỗi
+ * thì mới đổi trong bản sao local (localStorage) kèm thông báo rõ.
+ * Trạng thái sản phẩm: 1 = Đang bán, 2 = Hết hàng (vẫn hiện trên cửa
+ * hàng nhưng khách không mua được), 0 = Ẩn (giấu khỏi cửa hàng).
+ * Nút Xóa xóa HẲN sản phẩm khỏi database (không khôi phục được); sản
+ * phẩm đã có trong đơn hàng thì API từ chối xóa để giữ lịch sử đơn.
  *
  * Kiểm tra quyền — chỉ tài khoản role 'admin' mới được vào:
  * - Đọc localStorage key 'camping-session' (do trang Đăng nhập ghi).
@@ -250,7 +256,18 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editPrice, setEditPrice] = useState('')
   const [editQuantity, setEditQuantity] = useState('')
-  const [editStatus, setEditStatus] = useState<'1' | '0'>('1')
+  const [editStatus, setEditStatus] = useState<'1' | '0' | '2'>('1')
+  // Hộp xác nhận xóa hẳn: sản phẩm đang chờ xác nhận (null = không mở).
+  const [confirmDelete, setConfirmDelete] = useState<Product | null>(null)
+  // Ref tới form Sửa: mở form là tự cuộn tới form (trước đây form mở ở
+  // đầu danh sách mà trang không cuộn theo, bấm Sửa ở cuối danh sách trên
+  // điện thoại tưởng như nút hỏng).
+  const editFormRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (editingId !== null) {
+      scrollToElement(editFormRef.current, -80)
+    }
+  }, [editingId])
   const [productNotice, setProductNotice] = useState('')
 
   // Form thêm sản phẩm mới.
@@ -315,10 +332,11 @@ export default function AdminPage() {
     }
   }, [session])
 
-  // Bảng sản phẩm cũng lấy số liệu THẬT từ API (database) khi admin đăng
-  // nhập — bản localStorage/baseProducts chỉ là bản dự phòng, dễ lệch
-  // với DB (vd tồn kho id 1: local 15, DB 12). Sản phẩm nào chỉ có
-  // trong bản local (thêm tay trước khi có API) thì giữ lại phía sau.
+  // Bảng sản phẩm cũng lấy số liệu THẬT từ API (GET /api/admin/products —
+  // toàn bộ sản phẩm kể cả Ẩn / Hết hàng) khi admin đăng nhập — bản
+  // localStorage/baseProducts chỉ là bản dự phòng, dễ lệch với DB
+  // (vd tồn kho id 1: local 15, DB 12). Sản phẩm nào chỉ có trong bản
+  // local (thêm tay trước khi có API) thì giữ lại phía sau.
   const adminProductsRef = useRef(adminProducts)
   adminProductsRef.current = adminProducts
   useEffect(() => {
@@ -326,7 +344,7 @@ export default function AdminPage() {
     let cancelled = false
     void (async () => {
       try {
-        const list = await getProducts()
+        const list = await getAdminProductsApi()
         if (cancelled) return
         const apiIds = new Set(list.map((p) => p.id))
         const localOnly = adminProductsRef.current.filter(
@@ -350,6 +368,7 @@ export default function AdminPage() {
   }, [categories])
 
   const visibleProducts = adminProducts.filter((p) => p.status === 1)
+  const outOfStockProducts = adminProducts.filter((p) => p.status === 2)
   const hiddenProducts = adminProducts.filter((p) => p.status === 0)
   const pendingOrders = orders.filter((o) => o.status === 'pending').length
   const revenue = orders
@@ -426,7 +445,9 @@ export default function AdminPage() {
     setEditingId(product.id)
     setEditPrice(String(product.price))
     setEditQuantity(String(product.quantity))
-    setEditStatus(product.status === 1 ? '1' : '0')
+    setEditStatus(
+      product.status === 2 ? '2' : product.status === 1 ? '1' : '0',
+    )
     setProductNotice('')
   }
 
@@ -449,7 +470,7 @@ export default function AdminPage() {
     const patch = {
       price,
       quantity,
-      status: Number(editStatus) as 0 | 1,
+      status: Number(editStatus) as 0 | 1 | 2,
     }
     const applyLocal = () =>
       persistProducts(
@@ -472,28 +493,61 @@ export default function AdminPage() {
     }
   }
 
-  /** "Xóa" là ẨN sản phẩm khỏi cửa hàng (status = 0, không xóa hẳn khỏi
-      database) — ghi vào DB qua API để khách không còn thấy; hiện lại
-      được bằng nút "Hiện lại". */
-  async function deleteProduct(product: Product) {
-    // "Xóa" ở đây là ẩn sản phẩm (status = 0), không xóa hẳn khỏi dữ liệu.
-    if (!window.confirm(`Ẩn sản phẩm "${product.name}" khỏi cửa hàng?`)) return
+  /**
+   * "Xóa" là XÓA HẲN sản phẩm khỏi database (không khôi phục được).
+   * Nút Xóa chỉ mở hộp xác nhận trong trang (không dùng window.confirm
+   * vì hộp native khó bấm trong trình duyệt tự động và dễ bấm nhầm);
+   * bấm "Xóa hẳn" trong hộp mới gọi API. API từ chối (400) khi sản phẩm
+   * đã có trong đơn hàng — khi đó giữ nguyên và báo rõ lý do.
+   */
+  async function confirmDeleteProduct() {
+    const product = confirmDelete
+    if (!product) return
+    setConfirmDelete(null)
     try {
-      const updated = await deleteAdminProductApi(product.id)
+      await deleteAdminProductApi(product.id)
+      persistProducts(adminProducts.filter((p) => p.id !== product.id))
+      setProductNotice(
+        `Đã xóa hẳn sản phẩm "${product.name}" khỏi database.`,
+      )
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Không kết nối được tới API — kiểm tra lại kết nối rồi thử lại.'
+      setProductNotice(`Không xóa được "${product.name}": ${message}`)
+    }
+  }
+
+  /**
+   * Chuyển nhanh trạng thái Đang bán <-> Hết hàng: ghi vào database qua
+   * API (PATCH status 1/2). Hết hàng = sản phẩm vẫn hiện trên cửa hàng
+   * nhưng khách không mua được; mở bán lại = về Đang bán.
+   */
+  async function toggleStockStatus(product: Product) {
+    const nextStatus = product.status === 2 ? 1 : 2
+    try {
+      const updated = await updateAdminProductApi(product.id, {
+        status: nextStatus,
+      })
       persistProducts(
         adminProducts.map((p) =>
           p.id === product.id ? { ...p, ...updated } : p,
         ),
       )
-      setProductNotice(`Đã ẩn sản phẩm "${product.name}" khỏi cửa hàng.`)
+      setProductNotice(
+        nextStatus === 2
+          ? `Đã chuyển "${product.name}" sang Hết hàng (vẫn hiện trên cửa hàng, khách không mua được).`
+          : `Đã mở bán lại "${product.name}".`,
+      )
     } catch {
       persistProducts(
         adminProducts.map((p) =>
-          p.id === product.id ? { ...p, status: 0 } : p,
+          p.id === product.id ? { ...p, status: nextStatus } : p,
         ),
       )
       setProductNotice(
-        `Đã ẩn sản phẩm "${product.name}" trong quản trị (chưa cập nhật lên cửa hàng — kiểm tra lại kết nối rồi thử lại).`,
+        `Đã chuyển trạng thái "${product.name}" trong quản trị (chưa cập nhật lên cửa hàng — kiểm tra lại kết nối rồi thử lại).`,
       )
     }
   }
@@ -687,11 +741,17 @@ export default function AdminPage() {
       </p>
 
       {/* Thống kê nhanh */}
-      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-xs text-gray-500">Sản phẩm đang bán</p>
           <p className="mt-1 text-2xl font-bold text-emerald-800">
             {visibleProducts.length}
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-xs text-gray-500">Sản phẩm hết hàng</p>
+          <p className="mt-1 text-2xl font-bold text-amber-700">
+            {outOfStockProducts.length}
           </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
@@ -753,7 +813,10 @@ export default function AdminPage() {
           )}
 
           {editingId !== null && (
-            <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <div
+              ref={editFormRef}
+              className="mb-6 scroll-mt-24 rounded-lg border border-emerald-200 bg-emerald-50 p-4"
+            >
               <h2 className="font-semibold text-gray-900">
                 Sửa sản phẩm #{editingId}
               </h2>
@@ -793,11 +856,12 @@ export default function AdminPage() {
                     id="edit-status"
                     value={editStatus}
                     onChange={(e) =>
-                      setEditStatus(e.target.value as '1' | '0')
+                      setEditStatus(e.target.value as '1' | '0' | '2')
                     }
                     className={inputClass}
                   >
                     <option value="1">Đang bán</option>
+                    <option value="2">Hết hàng</option>
                     <option value="0">Ẩn / Ngừng bán</option>
                   </select>
                 </div>
@@ -875,6 +939,11 @@ export default function AdminPage() {
                             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" />
                             Đang bán
                           </span>
+                        ) : product.status === 2 ? (
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600" />
+                            Hết hàng
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700">
                             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500" />
@@ -891,15 +960,7 @@ export default function AdminPage() {
                           >
                             Sửa
                           </button>
-                          {product.status === 1 ? (
-                            <button
-                              type="button"
-                              onClick={() => deleteProduct(product)}
-                              className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
-                            >
-                              Xóa
-                            </button>
-                          ) : (
+                          {product.status === 0 ? (
                             <button
                               type="button"
                               onClick={() => restoreProduct(product)}
@@ -907,7 +968,22 @@ export default function AdminPage() {
                             >
                               Hiện lại
                             </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void toggleStockStatus(product)}
+                              className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+                            >
+                              {product.status === 2 ? 'Mở bán' : 'Hết hàng'}
+                            </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete(product)}
+                            className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                          >
+                            Xóa
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -916,11 +992,56 @@ export default function AdminPage() {
               </table>
             </div>
           )}
+          {/* Hộp xác nhận xóa hẳn: lớp phủ cố định giữa màn hình để bấm
+              ở đâu trong bảng cũng thấy (không lặp lại lỗi form Sửa mở
+              ra ngoài khung hình). */}
+          {confirmDelete !== null && (
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-label={`Xác nhận xóa ${confirmDelete.name}`}
+              className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setConfirmDelete(null)}
+            >
+              <div
+                className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-base font-semibold text-gray-900">
+                  Xóa hẳn sản phẩm này?
+                </h3>
+                <p className="mt-2 text-sm text-gray-700">
+                  <span className="font-medium">{confirmDelete.name}</span>{' '}
+                  (#{confirmDelete.id}) sẽ bị xóa HẲN khỏi database, không
+                  khôi phục được. Nếu sản phẩm đã có trong đơn hàng thì hệ
+                  thống sẽ từ chối xóa để giữ lịch sử đơn.
+                </p>
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(null)}
+                    className={secondaryButtonClass}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void confirmDeleteProduct()}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                  >
+                    Xóa hẳn
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <p className="mt-3 text-xs text-muted-foreground">
-            Thay đổi được lưu vào localStorage key{' '}
-            <code>camping-admin-products</code> và sẽ hiển thị lại khi mở
-            trang. Nút “Xóa” chỉ ẩn sản phẩm (chuyển trạng thái thành Ẩn),
-            có thể hiện lại bằng nút “Hiện lại”.
+            Sửa / chuyển trạng thái / Xóa đều ghi thẳng vào database và hiện
+            ngay trên cửa hàng. Nút “Xóa” xóa HẲN sản phẩm khỏi database
+            (không khôi phục được); sản phẩm đã có trong đơn hàng thì không
+            xóa hẳn được, hãy dùng “Ẩn / Ngừng bán” trong form Sửa để giấu
+            khỏi cửa hàng rồi hiện lại bằng nút “Hiện lại”. “Hết hàng” vẫn
+            hiện sản phẩm trên cửa hàng nhưng khách không mua được.
           </p>
         </section>
       )}
