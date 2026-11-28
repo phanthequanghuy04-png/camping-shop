@@ -3,17 +3,19 @@ import type { Category, Product } from './types'
 export type { Category, Product } from './types'
 
 /**
- * Dữ liệu mẫu khớp đúng camping.sql (8 danh mục, 28 sản phẩm).
+ * Dữ liệu mẫu khớp đúng camping.sql (8 danh mục, 78 sản phẩm).
  * - id / name / price (VND) / quantity / status / id_category /
  *   description / rating: sao chép đúng từ câu INSERT trong camping.sql.
  * - created_at: trong SQL không ghi rõ nên dùng DEFAULT CURRENT_TIMESTAMP;
  *   ở đây ghi thống nhất '2026-11-27T00:00:00+07:00' (ngày import dữ liệu mẫu).
  * - image: ảnh riêng từng sản phẩm, file local trong `public/images/`,
  *   tên file khớp đúng cột `image` trong camping.sql
- *   (vd '/images/leu-trai-2-nguoi.jpg'). Ảnh nguồn Unsplash (miễn phí),
- *   tải về ngày 2026-11-27, mỗi sản phẩm 1 file riêng, không dùng chung.
- *   Một số ảnh là ảnh minh họa đúng bối cảnh (lều/trại/đèn...) thay vì
- *   ảnh chụp đúng mẫu sản phẩm — xem ghi chú trong báo cáo việc 4/8.
+ *   (vd '/images/leu-trai-2-nguoi.jpg'). Ảnh studio AI tạo từ ảnh tham
+ *   chiếu thật đúng mẫu sản phẩm (làm lại toàn bộ 28 ảnh cũ + 50 ảnh mới
+ *   ngày 2026-11-28): sản phẩm to, căn giữa, nền trắng ấm sáng, tương
+ *   phản mạnh với nền, không chữ/watermark. Ảnh tham chiếu lưu tại
+ *   `_staging/product-refs/`, ảnh cũ sao lưu tại
+ *   `_staging/product-images-backup-20261128/`.
  */
 
 const CREATED_AT = '2026-11-27T00:00:00+07:00'
@@ -83,6 +85,65 @@ export const PRODUCTS: Product[] = [
   { id: 26, name: 'Thảm cách nhiệt Naturehike', image: '/images/tham-cach-nhiet.jpg', price: 390000, quantity: 38, status: 1, id_category: 8, description: 'Thảm cách nhiệt trải lều êm lưng, chống ẩm từ mặt đất, cuộn gọn nhẹ.', rating: 4.5, created_at: CREATED_AT },
   { id: 27, name: 'Dao đa năng Victorinox', image: '/images/dao-da-nang.jpg', price: 890000, quantity: 21, status: 1, id_category: 8, description: 'Dao đa năng 12 chức năng, thép không gỉ, nhỏ gọn cho mọi chuyến đi rừng.', rating: 4.9, created_at: CREATED_AT },
   { id: 28, name: 'Bộ dụng cụ sơ cứu dã ngoại', image: '/images/bo-so-cuu.jpg', price: 250000, quantity: 45, status: 1, id_category: 8, description: 'Bộ sơ cứu dã ngoại đầy đủ băng gạc và thuốc cơ bản, túi chống nước.', rating: 4.3, created_at: CREATED_AT },
+  // Sản phẩm mới (id 29–78, thêm ngày 2026-11-28, ảnh studio AI)
+  // 1. Lều trại
+  { id: 29, name: 'Lều trại 3 người Naturehike Mongar 3', image: '/images/leu-trai-3-nguoi-mongar.jpg', price: 3890000, quantity: 12, status: 1, id_category: 1, description: 'Lều 3 người 2 lớp siêu nhẹ, chống mưa tốt, dựng nhanh cho chuyến trekking dài ngày.', rating: 4.7, created_at: CREATED_AT },
+  { id: 30, name: 'Lều trại 2 người Decathlon Quechua MH100', image: '/images/leu-trai-2-nguoi-mh100.jpg', price: 1990000, quantity: 18, status: 1, id_category: 1, description: 'Lều 2 người giá tốt, dựng trong 5 phút, thoáng khí, phù hợp cắm trại cuối tuần.', rating: 4.6, created_at: CREATED_AT },
+  { id: 31, name: 'Lều trại 4 người Naturehike Village 5.0', image: '/images/leu-trai-4-nguoi-village.jpg', price: 5490000, quantity: 8, status: 1, id_category: 1, description: 'Lều cabin 4 người rộng rãi có mái hiên trước, chống nắng mưa tốt cho gia đình.', rating: 4.7, created_at: CREATED_AT },
+  { id: 32, name: 'Lều cắm trại mái vòm Coleman Pop-Up', image: '/images/leu-trai-mai-vom-coleman.jpg', price: 2490000, quantity: 15, status: 1, id_category: 1, description: 'Lều pop-up mở ra là dùng ngay, gấp gọn nhanh, tiện cho chuyến đi ngắn ngày.', rating: 4.5, created_at: CREATED_AT },
+  { id: 33, name: 'Lều trại 1 người Naturehike Cloud Up 1', image: '/images/leu-trai-1-nguoi-cloud-up.jpg', price: 2390000, quantity: 14, status: 1, id_category: 1, description: 'Lều 1 người siêu nhẹ chỉ hơn 1kg, chống mưa tốt, lý tưởng cho trekking một mình.', rating: 4.8, created_at: CREATED_AT },
+  { id: 34, name: 'Tăng che nắng Naturehike 3x3m', image: '/images/tang-che-nang-3x3.jpg', price: 1190000, quantity: 20, status: 1, id_category: 1, description: 'Tăng che nắng 3x3m chống UV và chống mưa nhẹ, dựng nhanh làm mái hiên trại.', rating: 4.6, created_at: CREATED_AT },
+  { id: 35, name: 'Lều trại 6 người Coleman Montana 6', image: '/images/leu-trai-6-nguoi-montana.jpg', price: 6490000, quantity: 7, status: 1, id_category: 1, description: 'Lều 6 người 2 phòng rộng rãi, cửa sổ lưới thoáng, phù hợp đại gia đình.', rating: 4.6, created_at: CREATED_AT },
+  // 2. Túi ngủ
+  { id: 36, name: 'Túi ngủ Naturehike CW280', image: '/images/tui-ngu-cw280.jpg', price: 1490000, quantity: 16, status: 1, id_category: 2, description: 'Túi ngủ bông chịu lạnh tới -5 độ, ấm nhẹ, phù hợp cắm trại mùa đông vùng cao.', rating: 4.7, created_at: CREATED_AT },
+  { id: 37, name: 'Túi ngủ Decathlon Quechua MH500', image: '/images/tui-ngu-mh500.jpg', price: 990000, quantity: 22, status: 1, id_category: 2, description: 'Túi ngủ 2 trong 1 dùng được cả mùa hè lẫn mùa đông, ấm và thoáng.', rating: 4.6, created_at: CREATED_AT },
+  { id: 38, name: 'Túi ngủ mùa hè Naturehike LW280', image: '/images/tui-ngu-mua-he-lw280.jpg', price: 690000, quantity: 28, status: 1, id_category: 2, description: 'Túi ngủ mùa hè nhẹ và thoáng, gọn trong ba lô, dùng tốt cho đêm hè oi bức.', rating: 4.5, created_at: CREATED_AT },
+  { id: 39, name: 'Túi ngủ đôi Naturehike ULG800', image: '/images/tui-ngu-doi-ulg800.jpg', price: 2890000, quantity: 10, status: 1, id_category: 2, description: 'Túi ngủ đôi lông vũ ấm tới -8 độ, rộng rãi cho 2 người ôm nhau ngủ.', rating: 4.7, created_at: CREATED_AT },
+  { id: 40, name: 'Túi ngủ trẻ em Coleman', image: '/images/tui-ngu-tre-em.jpg', price: 590000, quantity: 25, status: 1, id_category: 2, description: 'Túi ngủ trẻ em êm ái, họa tiết vui nhộn, ấm vừa cho bé cắm trại cùng gia đình.', rating: 4.5, created_at: CREATED_AT },
+  { id: 41, name: 'Túi ngủ siêu nhẹ Sea to Summit Spark', image: '/images/tui-ngu-sea-to-summit-spark.jpg', price: 4900000, quantity: 8, status: 1, id_category: 2, description: 'Túi ngủ lông vũ siêu nhẹ chỉ 500g, nén nhỏ bằng chai nước, cho trekker chuyên nghiệp.', rating: 4.9, created_at: CREATED_AT },
+  { id: 42, name: 'Lót túi ngủ Naturehike', image: '/images/lot-tui-ngu.jpg', price: 350000, quantity: 35, status: 1, id_category: 2, description: 'Lót túi ngủ lụa mềm giữ ấm thêm, giặt dễ, tăng tuổi thọ cho túi ngủ chính.', rating: 4.4, created_at: CREATED_AT },
+  // 3. Bếp & dụng cụ nấu
+  { id: 43, name: 'Bếp ga dã ngoại Soto WindMaster', image: '/images/bep-ga-soto-windmaster.jpg', price: 1890000, quantity: 12, status: 1, id_category: 3, description: 'Bếp ga chống gió cực tốt, lửa mạnh ổn định, nấu nhanh ngay cả khi gió lớn.', rating: 4.8, created_at: CREATED_AT },
+  { id: 44, name: 'Bếp ga MSR PocketRocket Deluxe', image: '/images/bo-noi-msr-pocketrocket.jpg', price: 1290000, quantity: 15, status: 1, id_category: 3, description: 'Bếp ga siêu nhẹ kèm nồi nhỏ, gấp gọn bằng lòng bàn tay, nấu nhanh ngoài trời.', rating: 4.7, created_at: CREATED_AT },
+  { id: 45, name: 'Cốc titan Naturehike 450ml', image: '/images/coc-titan-450ml.jpg', price: 290000, quantity: 40, status: 1, id_category: 3, description: 'Cốc titan 450ml siêu nhẹ, bền, không gỉ, dùng uống nước hay nấu mì đều tiện.', rating: 4.6, created_at: CREATED_AT },
+  { id: 46, name: 'Bình giữ nhiệt Stanley Classic 1.9L', image: '/images/binh-giu-nhiet-1-9l.jpg', price: 1490000, quantity: 18, status: 1, id_category: 3, description: 'Bình giữ nhiệt 1.9 lít giữ nóng 28 giờ, giữ lạnh 36 giờ, bền bỉ huyền thoại.', rating: 4.8, created_at: CREATED_AT },
+  { id: 47, name: 'Bộ chén đĩa dã ngoại Naturehike', image: '/images/bo-chen-dia-da-ngoai.jpg', price: 450000, quantity: 24, status: 1, id_category: 3, description: 'Bộ chén đĩa titan 3 món nhẹ, xếp gọn, đủ dùng cho bữa ăn ngoài trời.', rating: 4.5, created_at: CREATED_AT },
+  { id: 48, name: 'Bếp cồn dã ngoại Trangia', image: '/images/bep-con-trangia.jpg', price: 890000, quantity: 14, status: 1, id_category: 3, description: 'Bếp cồn đồng thau bền bỉ, đốt êm, không khói, dùng cồn khô dễ tìm.', rating: 4.6, created_at: CREATED_AT },
+  { id: 49, name: 'Ấm đun nước dã ngoại Fire-Maple', image: '/images/am-dun-nuoc-fire-maple.jpg', price: 390000, quantity: 26, status: 1, id_category: 3, description: 'Ấm nhôm nhẹ đun nước nhanh, quai gấp gọn, tiện pha trà cà phê ngoài trại.', rating: 4.5, created_at: CREATED_AT },
+  // 4. Đèn & pin
+  { id: 50, name: 'Đèn lồng LED Goal Zero Lighthouse', image: '/images/den-long-goal-zero.jpg', price: 1290000, quantity: 14, status: 1, id_category: 4, description: 'Đèn lồng LED 600 lumen sạc USB, sáng ấm, pin dùng 200 giờ ở chế độ thấp.', rating: 4.8, created_at: CREATED_AT },
+  { id: 51, name: 'Đèn pin đội đầu Nitecore NU25', image: '/images/den-pin-doi-dau-nu25.jpg', price: 890000, quantity: 20, status: 1, id_category: 4, description: 'Đèn đội đầu 400 lumen siêu nhẹ 28g, sạc USB-C, có đèn đỏ bảo vệ mắt ban đêm.', rating: 4.7, created_at: CREATED_AT },
+  { id: 52, name: 'Đèn pin cầm tay Fenix PD36R', image: '/images/den-pin-fenix-pd36r.jpg', price: 1990000, quantity: 10, status: 1, id_category: 4, description: 'Đèn pin 1600 lumen sạc USB-C, chống nước, xa tới 283m, nhỏ gọn bỏ túi.', rating: 4.8, created_at: CREATED_AT },
+  { id: 53, name: 'Đèn dây LED trang trí Naturehike 5m', image: '/images/den-day-led-5m.jpg', price: 190000, quantity: 38, status: 1, id_category: 4, description: 'Dây đèn LED 5m trang trí lều ấm cúng, chống nước, pin sạc USB tiện lợi.', rating: 4.4, created_at: CREATED_AT },
+  { id: 54, name: 'Đèn pin đội đầu Black Diamond Spot', image: '/images/den-pin-doi-dau-black-diamond.jpg', price: 1490000, quantity: 12, status: 1, id_category: 4, description: 'Đèn đội đầu 400 lumen chống nước, nhớ chế độ sáng, rảnh tay đi rừng ban đêm.', rating: 4.7, created_at: CREATED_AT },
+  { id: 55, name: 'Đèn lồng sạc USB Coleman', image: '/images/den-long-sac-usb-coleman.jpg', price: 490000, quantity: 22, status: 1, id_category: 4, description: 'Đèn lồng sạc USB sáng dịu, pin dùng 20 giờ, có móc treo tiện lợi trong lều.', rating: 4.5, created_at: CREATED_AT },
+  // 5. Ba lô
+  { id: 56, name: 'Ba lô Osprey Talon 22L', image: '/images/ba-lo-osprey-talon-22l.jpg', price: 3490000, quantity: 9, status: 1, id_category: 5, description: 'Ba lô 22 lít ôm lưng tốt, lưng lưới thoáng, đủ đồ cho chuyến đi trong ngày.', rating: 4.8, created_at: CREATED_AT },
+  { id: 57, name: 'Ba lô Deuter Speed Lite 24L', image: '/images/ba-lo-deuter-speed-lite.jpg', price: 2890000, quantity: 11, status: 1, id_category: 5, description: 'Ba lô 24 lít nhẹ, ôm sát lưng, leo núi và đạp xe đều thoải mái.', rating: 4.7, created_at: CREATED_AT },
+  { id: 58, name: 'Ba lô dã ngoại Decathlon Quechua MH500 40L', image: '/images/ba-lo-quechua-mh500-40l.jpg', price: 1290000, quantity: 18, status: 1, id_category: 5, description: 'Ba lô 40 lít chống mưa, nhiều ngăn, giá tốt cho chuyến đi 2-3 ngày.', rating: 4.6, created_at: CREATED_AT },
+  { id: 59, name: 'Túi đeo hông Naturehike', image: '/images/tui-deo-hong.jpg', price: 390000, quantity: 30, status: 1, id_category: 5, description: 'Túi đeo hông đựng bình nước và điện thoại, rảnh tay khi đi bộ đường dài.', rating: 4.4, created_at: CREATED_AT },
+  { id: 60, name: 'Ba lô leo núi Gregory Zulu 55L', image: '/images/ba-lo-gregory-zulu-55l.jpg', price: 5900000, quantity: 7, status: 1, id_category: 5, description: 'Ba lô 55 lít lưng lưới thoáng khí, đeo êm cho chuyến đi dài ngày nhiều đồ.', rating: 4.8, created_at: CREATED_AT },
+  { id: 61, name: 'Ba lô chống nước Naturehike 25L', image: '/images/ba-lo-chong-nuoc-25l.jpg', price: 890000, quantity: 16, status: 1, id_category: 5, description: 'Ba lô chống nước 25 lít dạng túi khô, bảo vệ đồ khô ráo khi đi mưa hay chèo thuyền.', rating: 4.5, created_at: CREATED_AT },
+  // 6. Bàn ghế cắm trại
+  { id: 62, name: 'Ghế xếp Helinox Chair One', image: '/images/ghe-xep-helinox-chair-one.jpg', price: 2490000, quantity: 10, status: 1, id_category: 6, description: 'Ghế xếp Helinox nhẹ chỉ 900g, khung nhôm chắc, ngồi êm, gấp gọn bằng chai nước.', rating: 4.9, created_at: CREATED_AT },
+  { id: 63, name: 'Bàn gấp Naturehike nhôm', image: '/images/ban-gap-naturehike.jpg', price: 890000, quantity: 16, status: 1, id_category: 6, description: 'Bàn gấp nhôm nhẹ, mặt nan chắc chắn, xếp gọn mang theo dễ dàng.', rating: 4.6, created_at: CREATED_AT },
+  { id: 64, name: 'Ghế xếp có tựa đầu Coleman', image: '/images/ghe-xep-co-tua-dau-coleman.jpg', price: 990000, quantity: 14, status: 1, id_category: 6, description: 'Ghế xếp có tựa đầu và tay vịn êm, ngồi thư giãn cả buổi bên lửa trại.', rating: 4.6, created_at: CREATED_AT },
+  { id: 65, name: 'Võng dã ngoại Naturehike', image: '/images/vong-da-ngoai.jpg', price: 590000, quantity: 20, status: 1, id_category: 6, description: 'Võng vải dù bền, chịu tải 150kg, mắc nhanh giữa 2 cây, ngủ trưa cực đã.', rating: 4.5, created_at: CREATED_AT },
+  { id: 66, name: 'Bàn ghế xếp gọn 4 người Naturehike', image: '/images/ban-ghe-xep-4-nguoi.jpg', price: 1890000, quantity: 9, status: 1, id_category: 6, description: 'Bộ bàn gấp kèm 4 ghế đẩu, xếp gọn thành một kiện, đủ chỗ cho cả nhóm.', rating: 4.6, created_at: CREATED_AT },
+  { id: 67, name: 'Ghế đẩu gấp gọn', image: '/images/ghe-dau-gap-gon.jpg', price: 290000, quantity: 32, status: 1, id_category: 6, description: 'Ghế đẩu gấp gọn nhẹ, ngồi vững, tiện mang theo câu cá hay ngồi bếp.', rating: 4.3, created_at: CREATED_AT },
+  // 7. Quần áo & giày
+  { id: 68, name: 'Áo mưa dã ngoại Decathlon Quechua', image: '/images/ao-mua-da-ngoai.jpg', price: 690000, quantity: 22, status: 1, id_category: 7, description: 'Áo mưa chống nước 5000mm, nhẹ, gấp gọn vào túi riêng, đi mưa rừng vẫn khô.', rating: 4.5, created_at: CREATED_AT },
+  { id: 69, name: 'Giày leo núi Merrell Moab 3', image: '/images/giay-leo-nui-merrell-moab.jpg', price: 3490000, quantity: 10, status: 1, id_category: 7, description: 'Giày leo núi đế Vibram bám tốt, chống nước, êm chân trên địa hình đá dốc.', rating: 4.8, created_at: CREATED_AT },
+  { id: 70, name: 'Áo khoác gió Naturehike', image: '/images/ao-khoac-gio.jpg', price: 890000, quantity: 18, status: 1, id_category: 7, description: 'Áo khoác gió nhẹ chống nước nhẹ, có mũ, mặc ngoài chống gió lạnh buổi sáng.', rating: 4.6, created_at: CREATED_AT },
+  { id: 71, name: 'Quần trekking chống nước Columbia', image: '/images/quan-trekking-columbia.jpg', price: 1290000, quantity: 14, status: 1, id_category: 7, description: 'Quần trekking chống nước, co giãn tốt, khô nhanh, leo núi thoải mái cả ngày.', rating: 4.6, created_at: CREATED_AT },
+  { id: 72, name: 'Mũ chống nắng dã ngoại', image: '/images/mu-chong-nang.jpg', price: 250000, quantity: 40, status: 1, id_category: 7, description: 'Mũ rộng vành chống nắng, có tấm che gáy và dây quai cằm, đội mát cả ngày.', rating: 4.4, created_at: CREATED_AT },
+  { id: 73, name: 'Găng tay leo núi The North Face', image: '/images/gang-tay-leo-nui.jpg', price: 590000, quantity: 20, status: 1, id_category: 7, description: 'Găng tay da bền, chống lạnh và chống trầy, bám tốt khi cầm gậy hay dây.', rating: 4.6, created_at: CREATED_AT },
+  // 8. Phụ kiện
+  { id: 74, name: 'Thảm trải lều Therm-a-Rest', image: '/images/tham-trai-leu-therm-a-rest.jpg', price: 1890000, quantity: 12, status: 1, id_category: 8, description: 'Thảm tự phồng êm ái, cách nhiệt tốt, ngủ ngon như ở nhà ngay giữa rừng.', rating: 4.8, created_at: CREATED_AT },
+  { id: 75, name: 'Gậy trekking Naturehike (cặp)', image: '/images/gay-trekking.jpg', price: 690000, quantity: 22, status: 1, id_category: 8, description: 'Cặp gậy trekking nhôm nhẹ, khóa gài chắc, giảm tải cho đầu gối khi leo dốc.', rating: 4.6, created_at: CREATED_AT },
+  { id: 76, name: 'Bật lửa chống gió Zippo', image: '/images/bat-lua-chong-gio.jpg', price: 490000, quantity: 28, status: 1, id_category: 8, description: 'Bật lửa Zippo chống gió kinh điển, vỏ kim loại bền, dùng bền cả chục năm.', rating: 4.7, created_at: CREATED_AT },
+  { id: 77, name: 'Túi đựng nước dã ngoại 3L', image: '/images/tui-dung-nuoc-3l.jpg', price: 390000, quantity: 30, status: 1, id_category: 8, description: 'Túi đựng nước 3 lít có ống uống tiện lợi, gắn vừa ba lô, uống nước không cần dừng.', rating: 4.5, created_at: CREATED_AT },
+  { id: 78, name: 'La bàn dã ngoại', image: '/images/la-ban-da-ngoai.jpg', price: 290000, quantity: 35, status: 1, id_category: 8, description: 'La bàn kim dạ quang chính xác, vỏ chống sốc, xác định hướng nhanh khi đi rừng.', rating: 4.4, created_at: CREATED_AT },
 ]
 
 /** Bí danh giữ tương thích với code cũ dùng tên thường. */
