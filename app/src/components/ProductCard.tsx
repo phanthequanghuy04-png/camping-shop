@@ -66,13 +66,14 @@
        (#240) và toast như thẻ hiện tại.
 */
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { Product } from '../data/types'
 import { formatPrice, getCategoryById, resolveImage } from '../data/products'
 import { useCart } from '../context/CartContext'
 import { isWishlisted, toggleWishlist } from '../lib/wishlist'
 import { flyToCart } from '../lib/flyToCart'
 import { showToast } from '../lib/toast'
+import { requireLogin } from '../lib/requireLogin'
 
 /**
  * Thêm vào giỏ (giữ export này cho ProductDetailPage):
@@ -93,6 +94,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addToCart, openDrawer } = useCart()
+  const navigate = useNavigate()
   const [added, setAdded] = useState(false)
   // #441 Lucian — tim yêu thích (lưu localStorage, giữ qua các lần vào web).
   const [wished, setWished] = useState(() => isWishlisted(product.id))
@@ -109,6 +111,8 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   useEffect(() => () => window.clearTimeout(addTimer.current), [])
 
   const handleWishlist = () => {
+    // Yêu thích cần đăng nhập: khách vãng lai được chuyển sang /login.
+    if (!requireLogin(navigate, 'lưu vào yêu thích')) return
     const next = toggleWishlist(product.id)
     setWished(next)
     if (next) setBurstKey((k) => k + 1)
@@ -118,6 +122,8 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   const handleAddToCart = () => {
     if (outOfStock) return
+    // Thêm vào giỏ cần đăng nhập: khách vãng lai được chuyển sang /login.
+    if (!requireLogin(navigate, 'thêm vào giỏ hàng')) return
     addToCart(product.id, 1)
     // #441 — nút morph thành tick "Đã thêm" nền xanh mint; bản gốc:
     // 1400ms sau trở lại, 900ms khi bật prefers-reduced-motion.
