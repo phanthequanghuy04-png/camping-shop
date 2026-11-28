@@ -141,6 +141,46 @@
 .glass-pill--open {
   border-radius: 28px;
 }
+/* Menu mobile mở/đóng MƯỢT (2026-11-28): trước đây nav đổi display
+   none↔flex nên chiều cao pill NHẢY tức thì lên full và các link hiện
+   ra đột ngột, chỉ có bo góc là morph. Nay nav là grid 0fr→1fr nên
+   chiều cao pill nở dần trong 0.38s, link vào lần lượt (stagger qua
+   biến --i), đóng thì thu lại dần. Chỉ áp dụng dưới lg — desktop
+   (lg:flex hàng ngang) không đổi. */
+@media (max-width: 1023.5px) {
+  .site-header .u-nav {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .glass-pill--open .u-nav {
+    grid-template-rows: 1fr;
+  }
+  .site-header .u-nav-inner {
+    overflow: hidden;
+    min-height: 0;
+    visibility: hidden;
+    transition: visibility 0s 0.38s;
+  }
+  .glass-pill--open .u-nav-inner {
+    visibility: visible;
+    transition: visibility 0s 0s;
+  }
+  .glass-pill--open .u-nav .nav-link {
+    animation: u-nav-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(0.06s + var(--i, 0) * 0.045s);
+  }
+}
+@keyframes u-nav-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .dark .glass-pill {
   background: color-mix(in srgb, var(--color-primary-dark) 72%, transparent);
   border-color: rgba(255, 255, 255, 0.14);
