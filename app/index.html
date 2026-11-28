@@ -5,6 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Camping Shop — Đồ cắm trại</title>
+    <!-- Preload ảnh hero (610KB): ảnh do React render nên không có
+         preload sẽ chỉ bắt đầu tải sau khi bundle JS chạy; preload để
+         ảnh tải song song ngay từ đầu. Đường dẫn tương đối để khớp
+         base /camping-shop/ khi deploy lên GitHub Pages. -->
+    <link rel="preload" as="image" href="images/hero-camp.jpg" />
     <script>
       // Khôi phục đường dẫn gốc sau khi 404.html chuyển hướng (?/admin).
       // Chạy trước khi React khởi động để Router nhận đúng đường dẫn.
