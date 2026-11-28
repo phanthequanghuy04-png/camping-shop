@@ -178,7 +178,7 @@ INSERT INTO products (id, name, image, price, quantity, status, id_category, des
   (12, 'Bình giữ nhiệt Stanley 1L', 'binh-giu-nhiet.webp', 990000, 35, 1, 3, 'Bình giữ nhiệt 1 lít giữ nóng 24 giờ, giữ lạnh 24 giờ, bền và chắc chắn.', 4.8),
   -- 4. Đèn & pin
   (13, 'Đèn lồng LED cắm trại Naturehike', 'den-long-led.webp', 350000, 40, 1, 4, 'Đèn lồng LED sáng dịu, pin dùng 30 giờ, có móc treo tiện lợi trong lều.', 4.6),
-  (14, 'Đèn pin đội đầu Petzl Actik', 'den-pin-doi-dau.jpg', 1150000, 20, 1, 4, 'Đèn đội đầu sáng 450 lumen, chống nước, rảnh tay khi đi rừng ban đêm.', 4.8),
+  (14, 'Đèn pin đội đầu Petzl Actik', 'den-pin-doi-dau.webp', 1150000, 20, 1, 4, 'Đèn đội đầu sáng 450 lumen, chống nước, rảnh tay khi đi rừng ban đêm.', 4.8),
   (15, 'Đèn dây trang trí lều 10m', 'den-day-trang-tri.webp', 290000, 32, 1, 4, 'Dây đèn LED 10m trang trí lều ấm cúng, chống nước, dùng pin sạc USB.', 4.4),
   (16, 'Đèn pin siêu sáng Nitecore', 'den-pin-sieu-sang.webp', 890000, 15, 1, 4, 'Đèn pin cầm tay siêu sáng 1000 lumen, pin sạc, nhỏ gọn bỏ túi áo.', 4.7),
   -- 5. Ba lô
@@ -187,7 +187,7 @@ INSERT INTO products (id, name, image, price, quantity, status, id_category, des
   (19, 'Ba lô dã ngoại Naturehike 55L', 'ba-lo-da-ngoai-55l.webp', 1450000, 16, 1, 5, 'Ba lô dã ngoại 55 lít chống nước nhẹ, nhiều ngăn, giá tốt cho người mới.', 4.5),
   -- 6. Bàn ghế cắm trại
   (20, 'Ghế xếp dã ngoại Naturehike', 'ghe-xep-da-ngoai.webp', 590000, 24, 1, 6, 'Ghế xếp khung nhôm nhẹ, chịu tải 120kg, gấp gọn mang theo dễ dàng.', 4.6),
-  (21, 'Bàn gấp nhôm dã ngoại Coleman', 'ban-gap-nhom.jpg', 1190000, 12, 1, 6, 'Bàn gấp nhôm chắc chắn, mặt bàn rộng, xếp gọn như vali khi di chuyển.', 4.7),
+  (21, 'Bàn gấp nhôm dã ngoại Coleman', 'ban-gap-nhom.webp', 1190000, 12, 1, 6, 'Bàn gấp nhôm chắc chắn, mặt bàn rộng, xếp gọn như vali khi di chuyển.', 4.7),
   (22, 'Ghế võng xếp gọn', 'ghe-vong-xep-gon.webp', 750000, 18, 1, 6, 'Ghế võng xếp gọn thư giãn bên lửa trại, vải bền, khung thép chắc chắn.', 4.2),
   -- 7. Quần áo & giày
   (23, 'Áo khoác chống nước The North Face', 'ao-khoac-chong-nuoc.webp', 2890000, 14, 1, 7, 'Áo khoác chống nước, chống gió, thoáng khí, mặc được cả đi mưa rừng.', 4.7),
@@ -195,7 +195,7 @@ INSERT INTO products (id, name, image, price, quantity, status, id_category, des
   (25, 'Áo giữ nhiệt Columbia', 'ao-giu-nhiet.webp', 690000, 26, 1, 7, 'Áo giữ nhiệt mặc lót bên trong, ấm nhẹ, thấm mồ hôi tốt khi vận động.', 4.5),
   -- 8. Phụ kiện
   (26, 'Thảm cách nhiệt Naturehike', 'tham-cach-nhiet.webp', 390000, 38, 1, 8, 'Thảm cách nhiệt trải lều êm lưng, chống ẩm từ mặt đất, cuộn gọn nhẹ.', 4.5),
-  (27, 'Dao đa năng Victorinox', 'dao-da-nang.jpg', 890000, 21, 1, 8, 'Dao đa năng 12 chức năng, thép không gỉ, nhỏ gọn cho mọi chuyến đi rừng.', 4.9),
+  (27, 'Dao đa năng Victorinox', 'dao-da-nang.webp', 890000, 21, 1, 8, 'Dao đa năng 12 chức năng, thép không gỉ, nhỏ gọn cho mọi chuyến đi rừng.', 4.9),
   (28, 'Bộ dụng cụ sơ cứu dã ngoại', 'bo-so-cuu.webp', 250000, 45, 1, 8, 'Bộ sơ cứu dã ngoại đầy đủ băng gạc và thuốc cơ bản, túi chống nước.', 4.3);
 
 -- 50 sản phẩm mới (id 29–78), ảnh studio AI từ ảnh tham chiếu thật (2026-11-28)
@@ -226,9 +226,9 @@ INSERT INTO products (id, name, image, price, quantity, status, id_category, des
   (49, 'Ấm đun nước dã ngoại Fire-Maple', 'am-dun-nuoc-fire-maple.webp', 390000, 26, 1, 3, 'Ấm nhôm nhẹ đun nước nhanh, quai gấp gọn, tiện pha trà cà phê ngoài trại.', 4.5),
   -- 4. Đèn & pin
   (50, 'Đèn lồng LED Goal Zero Lighthouse', 'den-long-goal-zero.webp', 1290000, 14, 1, 4, 'Đèn lồng LED 600 lumen sạc USB, sáng ấm, pin dùng 200 giờ ở chế độ thấp.', 4.8),
-  (51, 'Đèn pin đội đầu Nitecore NU25', 'den-pin-doi-dau-nu25.jpg', 890000, 20, 1, 4, 'Đèn đội đầu 400 lumen siêu nhẹ 28g, sạc USB-C, có đèn đỏ bảo vệ mắt ban đêm.', 4.7),
+  (51, 'Đèn pin đội đầu Nitecore NU25', 'den-pin-doi-dau-nu25.webp', 890000, 20, 1, 4, 'Đèn đội đầu 400 lumen siêu nhẹ 28g, sạc USB-C, có đèn đỏ bảo vệ mắt ban đêm.', 4.7),
   (52, 'Đèn pin cầm tay Fenix PD36R', 'den-pin-fenix-pd36r.webp', 1990000, 10, 1, 4, 'Đèn pin 1600 lumen sạc USB-C, chống nước, xa tới 283m, nhỏ gọn bỏ túi.', 4.8),
-  (53, 'Đèn dây LED trang trí Naturehike 5m', 'den-day-led-5m.jpg', 190000, 38, 1, 4, 'Dây đèn LED 5m trang trí lều ấm cúng, chống nước, pin sạc USB tiện lợi.', 4.4),
+  (53, 'Đèn dây LED trang trí Naturehike 5m', 'den-day-led-5m.webp', 190000, 38, 1, 4, 'Dây đèn LED 5m trang trí lều ấm cúng, chống nước, pin sạc USB tiện lợi.', 4.4),
   (54, 'Đèn pin đội đầu Black Diamond Spot', 'den-pin-doi-dau-black-diamond.webp', 1490000, 12, 1, 4, 'Đèn đội đầu 400 lumen chống nước, nhớ chế độ sáng, rảnh tay đi rừng ban đêm.', 4.7),
   (55, 'Đèn lồng sạc USB Coleman', 'den-long-sac-usb-coleman.webp', 490000, 22, 1, 4, 'Đèn lồng sạc USB sáng dịu, pin dùng 20 giờ, có móc treo tiện lợi trong lều.', 4.5),
   -- 5. Ba lô
