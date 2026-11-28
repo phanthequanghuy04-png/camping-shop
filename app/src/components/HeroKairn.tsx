@@ -36,14 +36,14 @@ const TILES = [
     label: '01 / LỀU TRẠI',
     title: 'Lều 2–4 người',
     // Ảnh lều 4 người — ô 1 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
-    image: '/images/leu-trai-4-nguoi.jpg',
+    image: '/images/leu-trai-4-nguoi.webp',
   },
   {
     categoryId: 2,
     label: '02 / TÚI NGỦ',
     title: 'Túi ngủ',
     // Ảnh túi ngủ 3 mùa — ô 2 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
-    image: '/images/tui-ngu-3-mua.jpg',
+    image: '/images/tui-ngu-3-mua.webp',
   },
 ] as const
 
@@ -139,7 +139,7 @@ export default function HeroKairn() {
                   aria-hidden="true"
                   loading="lazy"
                   decoding="async"
-                  className="h-20 w-full rounded-xl object-cover sm:h-24"
+                  className="h-20 w-full rounded-xl bg-white object-contain sm:h-24"
                 />
                 <span className="mt-2 block text-[11px] font-extrabold tracking-[0.14em] opacity-80">
                   {tile.label}
@@ -190,7 +190,7 @@ export default function HeroKairn() {
                   aria-hidden="true"
                   loading="lazy"
                   decoding="async"
-                  className="h-20 w-full rounded-xl object-cover sm:h-24"
+                  className="h-20 w-full rounded-xl bg-white object-contain sm:h-24"
                 />
                 <span className="mt-2 block text-[11px] font-extrabold tracking-[0.14em] opacity-80">
                   BÁN CHẠY NHẤT · ★ {TENT.rating.toFixed(1)}
