@@ -16,6 +16,7 @@ import type { Product } from '../data/types'
 import { getProduct, getProducts } from '../lib/api'
 import { useCart } from '../context/CartContext'
 import { flyToCart } from '../lib/flyToCart'
+import { setScrollLocked } from '../lib/animations'
 import { showToast } from '../lib/toast'
 import { requireLogin } from '../lib/requireLogin'
 
@@ -43,6 +44,23 @@ export default function ProductDetailPage() {
     undefined,
   )
   const [apiRelated, setApiRelated] = useState<Product[] | null>(null)
+  // Xem ảnh lớn (lightbox): bấm vào ảnh lớn để xem toàn màn hình.
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const lightboxCloseRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    setScrollLocked(true)
+    lightboxCloseRef.current?.focus()
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      setScrollLocked(false)
+    }
+  }, [lightboxOpen])
 
   useEffect(() => {
     if (!id) return
@@ -164,12 +182,28 @@ export default function ProductDetailPage() {
 
         <div className="mt-6 grid gap-8 md:grid-cols-2">
           <div data-aos="fade-right">
-            <img
-              ref={imgRef}
-              src={resolveImage(product.image)}
-              alt={product.name}
-              className="aspect-[4/3] w-full rounded-[24px] object-cover shadow-[0_8px_32px_rgba(27,67,50,0.12)]"
-            />
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              aria-label={`Xem ảnh lớn: ${product.name}`}
+              className="relative block w-full cursor-zoom-in focus:outline-2 focus:outline-ring"
+            >
+              <img
+                ref={imgRef}
+                src={resolveImage(product.image)}
+                alt={product.name}
+                className="aspect-[4/3] w-full rounded-[24px] object-contain shadow-[0_8px_32px_rgba(27,67,50,0.12)]"
+              />
+              <span
+                aria-hidden="true"
+                className="absolute right-3 bottom-3 grid h-10 w-10 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-5 w-5">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M21 21l-4.3-4.3M11 8v6M8 11h6" />
+                </svg>
+              </span>
+            </button>
           </div>
 
           <div data-aos="fade-left" data-aos-delay="100">
@@ -297,6 +331,36 @@ export default function ProductDetailPage() {
         onAddToCart={(q) => handleAddToCart(q)}
         onBuyNow={(q) => handleBuyNow(q)}
       />
+
+      {/* Xem ảnh lớn: bấm ảnh lớn để mở toàn màn hình, bấm nền / × / Esc để đóng */}
+      {lightboxOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Ảnh lớn: ${product.name}`}
+          className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            ref={lightboxCloseRef}
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Đóng ảnh lớn"
+            className="absolute top-4 right-4 grid h-11 w-11 cursor-pointer place-items-center rounded-full bg-white/15 text-2xl leading-none text-white transition hover:bg-white/25 focus:outline-2 focus:outline-white"
+          >
+            ×
+          </button>
+          <img
+            src={resolveImage(product.image)}
+            alt={product.name}
+            className="max-h-[82svh] w-auto max-w-full rounded-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <p className="mt-4 max-w-full truncate text-sm font-medium text-white/85">
+            {product.name}
+          </p>
+        </div>
+      )}
     </main>
   )
 }
