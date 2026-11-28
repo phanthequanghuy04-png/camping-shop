@@ -7,10 +7,11 @@
  * như ProductCard / ProductDetailPage).
  */
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { dispatchAddToCart } from './ProductCard'
 import { useCart } from '../context/CartContext'
 import { showToast } from '../lib/toast'
+import { requireLogin } from '../lib/requireLogin'
 import { formatPrice, getProductById, resolveImage } from '../data/products'
 
 const COMBOS = [
@@ -39,9 +40,12 @@ const COMBOS = [
 
 export default function HomeCombos() {
   const { openDrawer } = useCart()
+  const navigate = useNavigate()
   const [addedId, setAddedId] = useState<string | null>(null)
 
   function addCombo(combo: (typeof COMBOS)[number]) {
+    // Thêm combo vào giỏ cần đăng nhập: khách vãng lai sang /login.
+    if (!requireLogin(navigate, 'thêm combo vào giỏ hàng')) return
     const items = combo.ids
       .map((id) => getProductById(id))
       .filter((p): p is NonNullable<typeof p> => Boolean(p))
