@@ -308,6 +308,10 @@ export default function AdminPage() {
 
   // Admin đã đăng nhập: kéo đơn hàng thật từ API (kèm chi tiết items).
   // API lỗi (chưa chạy / token hết hạn) -> giữ đơn localStorage/mẫu.
+  // API trả về thì GHI ĐÈ luôn bản lưu localStorage: bản cũ còn đơn test
+  // #30010 (255.000₫) đã xóa khỏi database nên lần mở sau hiện 9 đơn /
+  // 26.965.000₫ rồi mới nhảy về 8 đơn thật — ghi đè xong thì lần sau hiện
+  // đúng số ngay từ đầu, không nhấp nháy nữa. (Huy duyệt 2026-11-28.)
   const [apiOrdersLoaded, setApiOrdersLoaded] = useState(false)
   useEffect(() => {
     if (session?.role !== 'admin') return
@@ -316,11 +320,11 @@ export default function AdminPage() {
       try {
         const apiOrders = await getAdminOrdersApi()
         if (cancelled) return
-        setOrders(
-          apiOrders.map(
-            ({ items: _items, ...order }) => order as Order,
-          ),
+        const fresh = apiOrders.map(
+          ({ items: _items, ...order }) => order as Order,
         )
+        setOrders(fresh)
+        persistOrders(fresh)
         setUsingSampleOrders(false)
         setApiOrdersLoaded(true)
       } catch {
