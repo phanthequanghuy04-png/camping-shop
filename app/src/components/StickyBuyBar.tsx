@@ -46,7 +46,8 @@ export default function StickyBuyBar({
   onAddToCart,
   onBuyNow,
 }: StickyBuyBarProps) {
-  const outOfStock = product.quantity <= 0
+  // Hết hàng khi tồn kho = 0 hoặc admin đã chuyển trạng thái Hết hàng (2).
+  const outOfStock = product.quantity <= 0 || product.status === 2
   const maxQty = Math.max(1, product.quantity)
 
   const [gone, setGone] = useState(false) // #buy-box đã cuộn khỏi màn hình
