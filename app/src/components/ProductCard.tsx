@@ -62,7 +62,7 @@
    14. Focus-visible cho tim + Add lấy từ bản gốc (scope .u441 → .u441-c,
        vì không còn khung demo .u441); tim + Add vẫn là <button> có
        aria-label / aria-pressed như thẻ hiện tại.
-   15. Giữ nguyên data-aos fade-up + data-aos-delay theo index, event
+   15. Thẻ hiện bằng data-aos fade (chỉ mờ dần, KHÔNG trượt lên — fade-up trượt 100px làm bấm nhầm sang trang chi tiết khi bấm ngay lúc thẻ đang hiện ra, đã đo được 2026-11-28) + data-aos-delay theo index, event
        'add-to-cart' (dispatchAddToCart), flyToCart (#442) + mở ngăn giỏ
        (#240) và toast như thẻ hiện tại.
 */
@@ -111,7 +111,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   // Dọn timer morph khi unmount (bản gốc chỉ clearTimeout khi bấm lại).
   useEffect(() => () => window.clearTimeout(addTimer.current), [])
 
-  const handleWishlist = () => {
+  const handleWishlist = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Chặn bấm lan lên thẻ cha: bấm tim chỉ đổi yêu thích, không bao giờ
+    // nhảy sang trang chi tiết.
+    e.stopPropagation()
     // Yêu thích cần đăng nhập: khách vãng lai được chuyển sang /login.
     if (!requireLogin(navigate, 'lưu vào yêu thích')) return
     const next = toggleWishlist(product.id)
@@ -121,7 +124,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     showToast(next ? 'Đã lưu vào yêu thích' : 'Đã bỏ khỏi yêu thích')
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Chặn bấm lan lên thẻ cha: bấm Thêm chỉ thêm vào giỏ, không bao giờ
+    // nhảy sang trang chi tiết.
+    e.stopPropagation()
     if (outOfStock) return
     // Thêm vào giỏ cần đăng nhập: khách vãng lai được chuyển sang /login.
     if (!requireLogin(navigate, 'thêm vào giỏ hàng')) return
@@ -147,7 +153,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   return (
     <article
-      data-aos="fade-up"
+      data-aos="fade"
       data-aos-delay={(index % 4) * 100}
       className="u441-c"
     >
