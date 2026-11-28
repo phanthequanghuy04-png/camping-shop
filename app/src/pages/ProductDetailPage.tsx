@@ -14,7 +14,6 @@ import {
 } from '../data/products'
 import type { Product } from '../data/types'
 import { getProduct, getProducts } from '../lib/api'
-import { useCart } from '../context/CartContext'
 import { flyToCart } from '../lib/flyToCart'
 import { setScrollLocked } from '../lib/animations'
 import { showToast } from '../lib/toast'
@@ -32,7 +31,6 @@ import { requireLogin } from '../lib/requireLogin'
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { openDrawer } = useCart()
   const imgRef = useRef<HTMLImageElement>(null)
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
@@ -119,7 +117,8 @@ export default function ProductDetailPage() {
   const category = product.id_category
     ? getCategoryById(product.id_category)
     : undefined
-  const outOfStock = product.quantity <= 0
+  // Hết hàng khi tồn kho = 0 hoặc admin đã chuyển trạng thái Hết hàng (2).
+  const outOfStock = product.quantity <= 0 || product.status === 2
   const maxQuantity = Math.max(1, product.quantity)
   const related =
     apiRelated ??
@@ -139,10 +138,9 @@ export default function ProductDetailPage() {
     setAddedQty(qty)
     setAdded(true)
     window.setTimeout(() => setAdded(false), 1400)
-    // #442 — ảnh bay vào giỏ, xong thì mở ngăn giỏ (#240).
-    flyToCart(resolveImage(product.image), imgRef.current, () =>
-      openDrawer(product.id),
-    )
+    // #442 — ảnh bay vào giỏ, badge nảy lên; KHÔNG mở ngăn giỏ nữa
+    // (Huy yêu cầu 2026-11-28: thêm vào giỏ thì đừng tự bật ngăn giỏ lên).
+    flyToCart(resolveImage(product.image), imgRef.current)
     showToast('Đã thêm vào giỏ')
   }
 
