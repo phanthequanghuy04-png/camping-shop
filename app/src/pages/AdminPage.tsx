@@ -286,6 +286,16 @@ export default function AdminPage() {
     }
   }, [editingId])
   const [productNotice, setProductNotice] = useState('')
+  const noticeRef = useRef<HTMLParagraphElement | null>(null)
+  /** Thông báo sau khi lưu/xóa/hiện lại: cuộn tới cho Huy thấy ngay —
+      trước đây thông báo nằm ở đầu tab, đang ở cuối danh sách thì không
+      thấy nên tưởng chưa lưu (kiểm tra live 2026-11-28: không thấy
+      thông báo sau 3 lần lưu dù API đã lưu đúng). */
+  useEffect(() => {
+    if (productNotice && noticeRef.current) {
+      scrollToElement(noticeRef.current, -80)
+    }
+  }, [productNotice])
 
   // Form thêm sản phẩm mới.
   const [newName, setNewName] = useState('')
@@ -802,31 +812,31 @@ export default function AdminPage() {
 
       {/* Thống kê nhanh */}
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="admin-glass admin-stat rounded-lg p-4">
           <p className="text-xs text-gray-500">Sản phẩm đang bán</p>
           <p className="mt-1 text-2xl font-bold text-emerald-800">
             {visibleProducts.length}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="admin-glass admin-stat rounded-lg p-4">
           <p className="text-xs text-gray-500">Sản phẩm hết hàng</p>
           <p className="mt-1 text-2xl font-bold text-amber-700">
             {outOfStockProducts.length}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="admin-glass admin-stat rounded-lg p-4">
           <p className="text-xs text-gray-500">Sản phẩm đang ẩn</p>
           <p className="mt-1 text-2xl font-bold text-gray-800">
             {hiddenProducts.length}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="admin-glass admin-stat rounded-lg p-4">
           <p className="text-xs text-gray-500">Đơn chờ xử lý</p>
           <p className="mt-1 text-2xl font-bold text-amber-700">
             {pendingOrders}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="admin-glass admin-stat rounded-lg p-4">
           <p className="text-xs text-gray-500">Tổng tiền đơn hàng</p>
           <p className="mt-1 text-xl font-bold text-emerald-800">
             {formatVnd(revenue)}
@@ -867,7 +877,10 @@ export default function AdminPage() {
       {tab === 'products' && (
         <section className="mt-6">
           {productNotice && (
-            <p className="mb-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+            <p
+              ref={noticeRef}
+              className="mb-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800"
+            >
               {productNotice}
             </p>
           )}
@@ -1046,11 +1059,11 @@ export default function AdminPage() {
                   </label>
                   <input
                     id="edit-image"
-                    type="url"
+                    type="text"
                     value={editImage}
                     disabled={editImageFile !== null}
                     onChange={(e) => setEditImage(e.target.value)}
-                    placeholder="https://…/ten-anh.jpg (để trống nếu giữ ảnh cũ)"
+                    placeholder="https://…/ten-anh.jpg hoặc /images/ten-anh.webp (để trống nếu giữ ảnh cũ)"
                     className={inputClass}
                   />
                 </div>
@@ -1246,7 +1259,7 @@ export default function AdminPage() {
           )}
           <form
             onSubmit={submitNewProduct}
-            className="mt-4 grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-2"
+            className="admin-glass mt-4 grid grid-cols-1 gap-4 rounded-lg p-4 md:grid-cols-2"
           >
             <div>
               <label htmlFor="new-name" className={labelClass}>
@@ -1371,7 +1384,7 @@ export default function AdminPage() {
               </label>
               <input
                 id="new-image"
-                type="url"
+                type="text"
                 value={newImage}
                 disabled={newImageFile !== null}
                 onChange={(e) => setNewImage(e.target.value)}
