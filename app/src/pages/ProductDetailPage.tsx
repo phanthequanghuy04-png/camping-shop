@@ -180,8 +180,9 @@ export default function ProductDetailPage() {
           <span className="font-medium text-foreground">{product.name}</span>
         </nav>
 
+        {/* Hai cột dùng data-aos="fade" (chỉ mờ dần): fade-right/fade-left trượt 100px ngang làm bấm nhầm nút Thêm/Mua ngay khi khối đang hiện ra — đã đo được 2026-11-28. */}
         <div className="mt-6 grid gap-8 md:grid-cols-2">
-          <div data-aos="fade-right">
+          <div data-aos="fade">
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
@@ -206,7 +207,7 @@ export default function ProductDetailPage() {
             </button>
           </div>
 
-          <div data-aos="fade-left" data-aos-delay="100">
+          <div data-aos="fade" data-aos-delay="100">
             {category && (
               <span className="inline-block rounded-lg bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary-text">
                 {category.name}
@@ -309,7 +310,7 @@ export default function ProductDetailPage() {
         </div>
 
         {related.length > 0 && (
-          <section className="mt-16" data-aos="fade-up">
+          <section className="mt-16" data-aos="fade">
             <h2 className="font-[Be_Vietnam_Pro,Inter,sans-serif] text-2xl font-bold text-foreground">
               Sản phẩm liên quan
             </h2>
