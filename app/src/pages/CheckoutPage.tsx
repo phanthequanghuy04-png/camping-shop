@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { formatVND, useCart } from '../context/CartContext'
 import { getSessionUser } from '../data/users'
+import { showToast } from '../lib/toast'
 import type { Order, OrderItem, OrderStatus } from '../data/types'
 import { createOrderApi } from '../lib/api'
 import CheckoutSteps from '../components/CheckoutSteps'
@@ -48,6 +49,15 @@ export default function CheckoutPage() {
   const { detailedItems, totalQty, totalPrice, clearCart } = useCart()
   const sessionUser = getSessionUser()
   const navigate = useNavigate()
+
+  // Thanh toán cần đăng nhập: khách vãng lai được chuyển sang /login,
+  // đăng nhập xong quay lại /checkout (giỏ cũ vẫn còn trong localStorage).
+  useEffect(() => {
+    if (!getSessionUser()) {
+      showToast('Bạn cần đăng nhập để thanh toán.')
+      navigate('/login', { state: { from: '/checkout' } })
+    }
+  }, [navigate])
 
   // #445 Lucian — mã giảm giá: CAMP10 giảm 10% (tối đa 200.000₫).
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
