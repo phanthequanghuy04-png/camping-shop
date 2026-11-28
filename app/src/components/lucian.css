@@ -436,14 +436,23 @@
       liệu giá gốc), .u441-pr + keyframes u441-bump + ::after (bình giữ
       nhiệt SVG — thay bằng ảnh thật), khung demo .u441 (340×300).
    2. .u441-c rộng 100% thay vì 260px cố định (thẻ là item fluid trong
-      lưới sản phẩm); nền sáng var(--ux-surface), tối var(--ux-surface-2)
-      theo đúng cặp light-dark() của bản gốc. Thêm display:flex column để
-      nút Add dính đáy khi các thẻ trong hàng cao không đều (hành vi của
-      thẻ hiện tại); hover nâng -4px + bóng mạnh hơn (thẻ hiện tại có,
-      bản gốc không).
-   3. .u441-img giữ đúng height 150px + bo 16px + gradient radial gốc
-      (bản khai token thuần, tự đổi theo .dark qua ánh xạ --ux-*); bỏ
-      display:grid/place-items:center (chỉ để căn bình SVG gốc).
+      lưới sản phẩm); NỀN KÍNH (2026-11-28, theo yêu cầu chủ shop): sáng
+      color-mix kem 55% + blur(14px) saturate(1.3) + viền trắng mờ,
+      tối color-mix xanh rừng đậm 55% + viền trắng 14% (theo đúng mẫu
+      .glass-pill của header). Thêm display:flex column để nút Add dính
+      đáy khi các thẻ trong hàng cao không đều (hành vi của thẻ hiện
+      tại); hover nâng -4px + bóng mạnh hơn (thẻ hiện tại có, bản gốc
+      không). Chữ trên kính dùng token sẵn có (--ux-ink / --color-
+      primary-text / --ux-ink-2/3) nên vẫn đạt tương phản ≥ 4.5:1 ở cả
+      2 chế độ (đo lại ở đợt kiểm tra 2026-11-28).
+   3. .u441-img: BỎ height 150px + gradient radial gốc, dùng
+      aspect-ratio: 4 / 3; ảnh thật object-fit: contain (thay vì cover)
+      để TOÀN BỘ sản phẩm luôn hiện đủ — ảnh studio AI hình vuông
+      1600×1600 trước đây bị cover cắt mất đầu/cuối trong khung 150px
+      (bình Stanley mất nắp, bếp Fire-Maple mất đáy bình, ba lô Osprey
+      mất hai bên). Nền vùng ảnh trắng #ffffff ở CẢ 2 chế độ để ảnh hòa
+      vào nền, không lộ viền letterbox; bỏ display:grid/place-items:
+      center (chỉ để căn bình SVG gốc).
    4. .u441-row giữ đúng flex/space-between/margin-top 12px của bản gốc;
       margin-top:auto + padding-top:12px để hàng dính đáy (xem 2) mà vẫn
       giữ khoảng 12px. flex-wrap:wrap là lưới an toàn (lưới shop
@@ -464,7 +473,10 @@
       (đã port trong file TSX); file này không thêm luật nào ngoài gốc.
 */
 
-/* ---------- Khung thẻ (.u441-c) ---------- */
+/* ---------- Khung thẻ (.u441-c) — THỦY TINH (2026-11-28) ----------
+   Theo mẫu .glass-pill của header: nền mờ 55% + blur(14px) saturate(1.3)
+   + viền trắng mờ + bóng mềm; hover nâng -4px. Sáng: kem; tối: xanh rừng
+   đậm. Viền 1px thay cho vòng box-shadow 0 0 0 1px cũ. */
 .u441-c {
   position: relative;
   display: flex;
@@ -472,36 +484,47 @@
   width: 100%;
   padding: 8px 8px 12px;
   border-radius: 22px;
-  background: var(--ux-surface);
+  background: color-mix(in srgb, var(--color-background) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   box-shadow:
-    0 0 0 1px var(--ux-line-2),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
     0 22px 44px -24px var(--ux-shadow-strong);
   transition:
     transform 0.25s var(--ux-ease),
-    box-shadow 0.25s var(--ux-ease);
+    box-shadow 0.25s var(--ux-ease),
+    background-color 0.3s var(--ux-ease);
 }
 .dark .u441-c {
-  background: var(--ux-surface-2);
+  background: color-mix(in srgb, var(--color-primary-dark) 55%, transparent);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 22px 44px -24px var(--ux-shadow-strong);
 }
 .u441-c:hover {
   transform: translateY(-4px);
   box-shadow:
-    0 0 0 1px var(--ux-line-2),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 12px 32px -12px var(--ux-shadow-strong);
+}
+.dark .u441-c:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
     0 12px 32px -12px var(--ux-shadow-strong);
 }
 
-/* ---------- Vùng ảnh (.u441-img) — ảnh thật thay bình SVG ---------- */
+/* ---------- Vùng ảnh (.u441-img) — ảnh thật, hiện TRỌN sản phẩm ----------
+   aspect-ratio 4/3 thay height 150px cố định; ảnh object-fit: contain
+   (không bao giờ cắt). Nền trắng #ffffff ở CẢ 2 chế độ: ảnh studio nền
+   trắng hòa vào nền, không lộ viền letterbox. */
 .u441-img {
   position: relative;
-  height: 150px;
+  aspect-ratio: 4 / 3;
   border-radius: 16px;
   overflow: hidden;
-  background: radial-gradient(
-    120% 90% at 50% 25%,
-    var(--ux-surface),
-    var(--ux-surface-2) 55%,
-    var(--ux-surface-3)
-  );
+  background: #ffffff;
 }
 .u441-img > a {
   display: block;
@@ -512,7 +535,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 /* ---------- Thân thẻ (.u441-bd) ---------- */
