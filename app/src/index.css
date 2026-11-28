@@ -844,8 +844,10 @@ a { color: var(--color-primary-text); }
    dưới viên pill kính bằng margin âm đúng chiều cao header (đệm trên
    12px + pill 68px mobile / 76px desktop) — ảnh lều hoàng hôn hiện ra
    sau lớp kính mờ. Nội dung hero đã tăng padding trên (pt-28 / md:pt-32
-   trong HeroKairn.tsx) để tiêu đề không bị pill che. */
-.kairn-hero { margin-top: -80px; }
+   trong HeroKairn.tsx) để tiêu đề không bị pill che. Nền xanh rừng đậm
+   để trước khi ảnh hero tải xong, chữ trắng vẫn đọc rõ (trước đây nền
+   trong suốt nên chữ trắng chìm trên nền kem). */
+.kairn-hero { margin-top: -80px; background-color: #14332a; }
 @media (min-width: 1024px) {
   .kairn-hero { margin-top: -88px; }
 }
