@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   categories as baseCategories,
   products as baseProducts,
+  resolveImage,
 } from '../data/products'
 import type { Order, OrderStatus, Product } from '../data/types'
 import {
@@ -13,6 +14,7 @@ import {
   getAdminProductsApi,
   updateAdminOrderApi,
   updateAdminProductApi,
+  type UpdateProductInput,
 } from '../lib/api'
 import { scrollToElement } from '../lib/animations'
 import {
@@ -31,11 +33,14 @@ import {
  * Form "Thêm sản phẩm" gọi POST /api/admin/products (cần token admin)
  * để lưu vào database và hiện ngay trên cửa hàng; ảnh tải lên từ thiết
  * bị được đẩy lên kho GitHub qua API (cần GITHUB_TOKEN trên server).
- * Sửa / Xóa / chuyển trạng thái sản phẩm trong tab "Sản phẩm" cũng ghi
- * vào database qua API (PATCH / DELETE /api/admin/products/:id); API lỗi
- * thì mới đổi trong bản sao local (localStorage) kèm thông báo rõ.
- * Trạng thái sản phẩm: 1 = Đang bán, 2 = Hết hàng (vẫn hiện trên cửa
- * hàng nhưng khách không mua được), 0 = Ẩn (giấu khỏi cửa hàng).
+ * Form "Sửa sản phẩm" là thẻ thủy tinh, sửa TOÀN BỘ thông tin (tên,
+ * danh mục, mô tả, ảnh, giá, tồn kho, trạng thái) qua PATCH
+ * /api/admin/products/:id; API lỗi thì mới đổi trong bản sao local
+ * (localStorage) kèm thông báo rõ. Trạng thái sản phẩm: 1 = Đang bán,
+ * 2 = Hết hàng (vẫn hiện trên cửa hàng nhưng khách không mua được),
+ * 0 = Ẩn (giấu khỏi cửa hàng) — đổi trong ô Trạng thái của form Sửa
+ * (không còn nút Hết hàng/Mở bán nhanh từng dòng, Huy yêu cầu bỏ
+ * 2026-11-28 vì ô Trạng thái đã có đủ).
  * Nút Xóa xóa HẲN sản phẩm khỏi database (không khôi phục được); sản
  * phẩm đã có trong đơn hàng thì API từ chối xóa để giữ lịch sử đơn.
  *
@@ -254,9 +259,21 @@ export default function AdminPage() {
   })
 
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editCategoryId, setEditCategoryId] = useState('1')
+  const [editDescription, setEditDescription] = useState('')
   const [editPrice, setEditPrice] = useState('')
   const [editQuantity, setEditQuantity] = useState('')
   const [editStatus, setEditStatus] = useState<'1' | '0' | '2'>('1')
+  // Ảnh mới cho form Sửa: tải file từ thiết bị (xử lý như form Thêm) hoặc
+  // dán link ảnh; để trống cả hai thì giữ nguyên ảnh cũ.
+  const [editImage, setEditImage] = useState('')
+  const [editImageFile, setEditImageFile] = useState<PreparedImage | null>(
+    null,
+  )
+  const [editImageProcessing, setEditImageProcessing] = useState(false)
+  const [editImageError, setEditImageError] = useState('')
+  const editImageInputRef = useRef<HTMLInputElement | null>(null)
   // Hộp xác nhận xóa hẳn: sản phẩm đang chờ xác nhận (null = không mở).
   const [confirmDelete, setConfirmDelete] = useState<Product | null>(null)
   // Ref tới form Sửa: mở form là tự cuộn tới form (trước đây form mở ở
@@ -374,6 +391,8 @@ export default function AdminPage() {
   const visibleProducts = adminProducts.filter((p) => p.status === 1)
   const outOfStockProducts = adminProducts.filter((p) => p.status === 2)
   const hiddenProducts = adminProducts.filter((p) => p.status === 0)
+  // Sản phẩm đang sửa (hiện ảnh + tên trong form Sửa thẻ thủy tinh).
+  const editingProduct = adminProducts.find((p) => p.id === editingId)
   const pendingOrders = orders.filter((o) => o.status === 'pending').length
   const revenue = orders
     .filter((o) => o.status !== 'cancelled')
@@ -447,21 +466,64 @@ export default function AdminPage() {
 
   function startEdit(product: Product) {
     setEditingId(product.id)
+    setEditName(product.name)
+    setEditCategoryId(String(product.id_category))
+    setEditDescription(product.description ?? '')
     setEditPrice(String(product.price))
     setEditQuantity(String(product.quantity))
     setEditStatus(
       product.status === 2 ? '2' : product.status === 1 ? '1' : '0',
     )
+    setEditImage('')
+    setEditImageFile(null)
+    setEditImageError('')
     setProductNotice('')
   }
 
-  /** Sửa giá / tồn kho / trạng thái: ghi VÀO DATABASE qua API để cửa
-      hàng cập nhật thật; API lỗi (mất mạng, sản phẩm chỉ có trong bản
-      local) thì chỉ đổi trong bản sao local như trước. */
+  /** Chọn ảnh mới cho form Sửa: xử lý giống form Thêm (cắt lề trong
+      suốt thừa + nén WebP ngay trên trình duyệt). */
+  async function handleEditImageFile(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setEditImageError('')
+    setEditImageProcessing(true)
+    try {
+      const prepared = await prepareProductImage(file)
+      setEditImageFile(prepared)
+      setEditImage('')
+    } catch (err) {
+      setEditImageFile(null)
+      setEditImageError(
+        err instanceof Error ? err.message : 'Không xử lý được ảnh này.',
+      )
+    } finally {
+      setEditImageProcessing(false)
+    }
+  }
+
+  function clearEditImageFile() {
+    setEditImageFile(null)
+    setEditImageError('')
+    if (editImageInputRef.current) editImageInputRef.current.value = ''
+  }
+
+  /** Sửa TOÀN BỘ thông tin sản phẩm (tên, danh mục, mô tả, ảnh, giá,
+      tồn kho, trạng thái): ghi VÀO DATABASE qua API để cửa hàng cập
+      nhật thật; API lỗi (mất mạng, sản phẩm chỉ có trong bản local)
+      thì chỉ đổi trong bản sao local như trước. Ảnh mới: tải file thì
+      gửi image_data (server đẩy lên kho GitHub), dán link thì gửi
+      image; để trống cả hai thì giữ nguyên ảnh cũ. */
   async function saveEdit() {
     if (editingId === null) return
+    const name = editName.trim()
     const price = Number(editPrice)
     const quantity = Number(editQuantity)
+    if (name === '') {
+      setProductNotice('Vui lòng nhập tên sản phẩm.')
+      return
+    }
     if (!Number.isFinite(price) || price < 0) {
       setProductNotice('Giá phải là số và không được âm.')
       return
@@ -471,15 +533,37 @@ export default function AdminPage() {
       return
     }
     const id = editingId
-    const patch = {
+    const patch: UpdateProductInput = {
+      name,
+      description:
+        editDescription.trim() === '' ? null : editDescription.trim(),
+      id_category: Number(editCategoryId),
+      price,
+      quantity,
+      status: Number(editStatus) as 0 | 1 | 2,
+      image: editImageFile
+        ? undefined
+        : editImage.trim() === ''
+          ? undefined
+          : editImage.trim(),
+      image_data: editImageFile ? editImageFile.dataUrl : undefined,
+    }
+    // Bản sao local: chỉ gộp trường đúng hình Product (image_data không
+    // phải trường Product; ảnh file mới thì xem trước bằng data URL).
+    const localPatch: Partial<Product> = {
+      name,
+      description: patch.description ?? null,
+      id_category: Number(editCategoryId),
       price,
       quantity,
       status: Number(editStatus) as 0 | 1 | 2,
     }
+    if (editImageFile) localPatch.image = editImageFile.dataUrl
+    else if (editImage.trim() !== '') localPatch.image = editImage.trim()
     const applyLocal = () =>
       persistProducts(
         adminProducts.map((p) =>
-          p.id === id ? { ...p, ...patch } : p,
+          p.id === id ? { ...p, ...localPatch } : p,
         ),
       )
     setEditingId(null)
@@ -488,7 +572,12 @@ export default function AdminPage() {
       persistProducts(
         adminProducts.map((p) => (p.id === id ? { ...p, ...updated } : p)),
       )
-      setProductNotice('Đã lưu thay đổi sản phẩm (đã cập nhật trên cửa hàng).')
+      setProductNotice(
+        'Đã lưu thay đổi sản phẩm (đã cập nhật trên cửa hàng).' +
+          (updated.image_pending_deploy
+            ? ' Ảnh mới sẽ hiện sau khoảng 1 phút (đang chờ deploy).'
+            : ''),
+      )
     } catch {
       applyLocal()
       setProductNotice(
@@ -520,39 +609,6 @@ export default function AdminPage() {
           ? err.message
           : 'Không kết nối được tới API — kiểm tra lại kết nối rồi thử lại.'
       setProductNotice(`Không xóa được "${product.name}": ${message}`)
-    }
-  }
-
-  /**
-   * Chuyển nhanh trạng thái Đang bán <-> Hết hàng: ghi vào database qua
-   * API (PATCH status 1/2). Hết hàng = sản phẩm vẫn hiện trên cửa hàng
-   * nhưng khách không mua được; mở bán lại = về Đang bán.
-   */
-  async function toggleStockStatus(product: Product) {
-    const nextStatus = product.status === 2 ? 1 : 2
-    try {
-      const updated = await updateAdminProductApi(product.id, {
-        status: nextStatus,
-      })
-      persistProducts(
-        adminProducts.map((p) =>
-          p.id === product.id ? { ...p, ...updated } : p,
-        ),
-      )
-      setProductNotice(
-        nextStatus === 2
-          ? `Đã chuyển "${product.name}" sang Hết hàng (vẫn hiện trên cửa hàng, khách không mua được).`
-          : `Đã mở bán lại "${product.name}".`,
-      )
-    } catch {
-      persistProducts(
-        adminProducts.map((p) =>
-          p.id === product.id ? { ...p, status: nextStatus } : p,
-        ),
-      )
-      setProductNotice(
-        `Đã chuyển trạng thái "${product.name}" trong quản trị (chưa cập nhật lên cửa hàng — kiểm tra lại kết nối rồi thử lại).`,
-      )
     }
   }
 
@@ -819,12 +875,57 @@ export default function AdminPage() {
           {editingId !== null && (
             <div
               ref={editFormRef}
-              className="mb-6 scroll-mt-24 rounded-lg border border-emerald-200 bg-emerald-50 p-4"
+              className="mb-6 scroll-mt-24 rounded-[22px] border border-[rgba(27,67,50,0.14)] bg-[color-mix(in_srgb,#ffffff_72%,transparent)] p-4 shadow-[0_12px_40px_rgba(27,67,50,0.12)] backdrop-blur-[14px] md:p-5"
             >
-              <h2 className="font-semibold text-gray-900">
-                Sửa sản phẩm #{editingId}
-              </h2>
-              <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="flex items-center gap-3">
+                {editingProduct && (
+                  <img
+                    src={resolveImage(editingProduct.image)}
+                    alt=""
+                    className="h-16 w-16 shrink-0 rounded-xl border border-gray-200 bg-white object-contain"
+                  />
+                )}
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-gray-900">
+                    Sửa sản phẩm #{editingId}
+                  </h2>
+                  {editingProduct && (
+                    <p className="truncate text-sm text-gray-500">
+                      {editingProduct.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="md:col-span-2">
+                  <label htmlFor="edit-name" className={labelClass}>
+                    Tên sản phẩm
+                  </label>
+                  <input
+                    id="edit-name"
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-category" className={labelClass}>
+                    Danh mục
+                  </label>
+                  <select
+                    id="edit-category"
+                    value={editCategoryId}
+                    onChange={(e) => setEditCategoryId(e.target.value)}
+                    className={inputClass}
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label htmlFor="edit-price" className={labelClass}>
                     Giá (VND)
@@ -869,11 +970,96 @@ export default function AdminPage() {
                     <option value="0">Ẩn / Ngừng bán</option>
                   </select>
                 </div>
+                <div className="md:col-span-3">
+                  <label htmlFor="edit-description" className={labelClass}>
+                    Mô tả
+                  </label>
+                  <textarea
+                    id="edit-description"
+                    rows={3}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Mô tả ngắn về sản phẩm…"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <span className={labelClass}>Ảnh sản phẩm</span>
+                  <label
+                    htmlFor="edit-image-file"
+                    className="mt-1 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white/60 px-4 py-4 text-center text-sm text-gray-700 hover:border-emerald-600 hover:bg-emerald-50"
+                  >
+                    {editImageProcessing
+                      ? 'Đang xử lý ảnh…'
+                      : editImageFile
+                        ? 'Bấm để chọn ảnh khác'
+                        : 'Bấm để tải ảnh mới lên từ thiết bị'}
+                  </label>
+                  <input
+                    id="edit-image-file"
+                    ref={editImageInputRef}
+                    type="file"
+                    accept="image/png,image/webp,image/jpeg"
+                    onChange={handleEditImageFile}
+                    className="hidden"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Nên dùng ảnh PNG/WebP đã tách nền sẵn — web tự cắt lề
+                    trong suốt thừa và nén nhẹ trước khi tải lên. Tối đa 5
+                    MB. Để trống cả hai ô ảnh thì giữ nguyên ảnh cũ.
+                  </p>
+                  {editImageError && (
+                    <p className="mt-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-800">
+                      {editImageError}
+                    </p>
+                  )}
+                  {editImageFile && (
+                    <div className="mt-3 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3">
+                      <img
+                        src={editImageFile.dataUrl}
+                        alt="Ảnh mới đã chọn"
+                        className="h-24 w-24 shrink-0 rounded-md border border-gray-200 bg-white object-contain"
+                      />
+                      <div className="min-w-0 text-sm">
+                        <p className="break-all font-medium text-gray-900">
+                          {editImageFile.fileName}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {editImageFile.width}×{editImageFile.height} ·{' '}
+                          {(editImageFile.size / 1024).toFixed(0)} KB
+                          {editImageFile.trimmed
+                            ? ' · đã cắt lề trong suốt thừa'
+                            : ''}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={clearEditImageFile}
+                          className="mt-2 text-xs font-medium text-red-600 hover:underline"
+                        >
+                          Bỏ ảnh này
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <label htmlFor="edit-image" className={labelClass}>
+                    Hoặc dán link ảnh mới
+                  </label>
+                  <input
+                    id="edit-image"
+                    type="url"
+                    value={editImage}
+                    disabled={editImageFile !== null}
+                    onChange={(e) => setEditImage(e.target.value)}
+                    placeholder="https://…/ten-anh.jpg (để trống nếu giữ ảnh cũ)"
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={saveEdit}
+                  disabled={editImageProcessing}
                   className={primaryButtonClass}
                 >
                   Lưu thay đổi
@@ -964,21 +1150,13 @@ export default function AdminPage() {
                           >
                             Sửa
                           </button>
-                          {product.status === 0 ? (
+                          {product.status === 0 && (
                             <button
                               type="button"
                               onClick={() => restoreProduct(product)}
                               className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                             >
                               Hiện lại
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => void toggleStockStatus(product)}
-                              className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
-                            >
-                              {product.status === 2 ? 'Mở bán' : 'Hết hàng'}
                             </button>
                           )}
                           <button
