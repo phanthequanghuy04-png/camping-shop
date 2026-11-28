@@ -100,7 +100,7 @@ export default function HomeCombos() {
                         aria-hidden="true"
                         loading="lazy"
                         decoding="async"
-                        className="h-11 w-11 shrink-0 rounded-lg object-cover"
+                        className="h-11 w-11 shrink-0 rounded-lg bg-white object-contain"
                       />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-foreground">
