@@ -8,44 +8,17 @@
  * Thích ứng cho shop cắm trại:
  * - Ảnh nền: ảnh lều vàng lúc hoàng hôn do shop tự tạo (hero-camp.jpg),
  *   thay cho ảnh tuyết + kính trượt tuyết của bản gốc.
- * - Cụm tile 2×2: 2 danh mục (Lều trại, Túi ngủ) + vòng tròn "01 / 08"
- *   (8 danh mục) + thẻ sản phẩm bán chạy nhất (Lều 2 người, 4.8★).
+ * - Cụm tile 2×2 cũ (2 danh mục + vòng tròn 8 danh mục + thẻ bán chạy
+ *   nhất) đã thay bằng Plan switch #423 (Lucian) theo yêu cầu của Huy
+ *   2026-11-28: công tắc Mua lẻ / Mua combo, giá lăn odometer.
  * - Copy tiếng Việt, giá VND, màu xanh rừng/kem/cam lửa trại của shop.
  * - Thẻ câu chuyện dẫn tới mục combo (#combos) thay cho "GLACIER COLLECTION".
  * - Social chỉ là họa tiết trang trí (shop chưa có trang mạng xã hội).
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  formatPrice,
-  getProductById,
-  getProductsByCategory,
-  resolveImage,
-} from '../data/products'
-
-const TENT = getProductById(1) // Lều 2 người, bán chạy nhất (4.8★)
-
-function minPrice(categoryId: number): number {
-  const items = getProductsByCategory(categoryId)
-  return items.length ? Math.min(...items.map((p) => p.price)) : 0
-}
-
-const TILES = [
-  {
-    categoryId: 1,
-    label: '01 / LỀU TRẠI',
-    title: 'Lều 2–4 người',
-    // Ảnh lều 4 người — ô 1 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
-    image: '/images/leu-trai-4-nguoi.webp',
-  },
-  {
-    categoryId: 2,
-    label: '02 / TÚI NGỦ',
-    title: 'Túi ngủ',
-    // Ảnh túi ngủ 3 mùa — ô 2 trước đây không có ảnh (Huy báo lỗi 2026-11-28).
-    image: '/images/tui-ngu-3-mua.webp',
-  },
-] as const
+import { resolveImage } from '../data/products'
+import PlanSwitch from './PlanSwitch'
 
 export default function HeroKairn() {
   // Ảnh hero mờ dần vào khi tải xong (2026-11-28): trước đây ảnh 610KB
@@ -122,90 +95,14 @@ export default function HeroKairn() {
             </div>
           </div>
 
-          {/* Phải: cụm tile 2×2 */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {TILES.map((tile, i) => (
-              <Link
-                key={tile.categoryId}
-                to={`/shop?category=${tile.categoryId}`}
-                // Cả 2 ô đều nền kem như các ô còn lại (ô 1 trước đây là ô
-                // xanh duy nhất nên bị khác màu — Huy báo lỗi 2026-11-28).
-                className="kairn-in kairn-tile kairn-tile-cream"
-                style={{ animationDelay: `${0.5 + i * 0.15}s` }}
-              >
-                <img
-                  src={resolveImage(tile.image)}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  className="h-20 w-full rounded-xl bg-white object-contain sm:h-24"
-                />
-                <span className="mt-2 block text-[11px] font-extrabold tracking-[0.14em] opacity-80">
-                  {tile.label}
-                </span>
-                <span className="mt-2 block font-[Be_Vietnam_Pro,Inter,sans-serif] text-xl leading-tight font-extrabold sm:text-2xl">
-                  {tile.title}
-                </span>
-                <span className="mt-2 block text-sm font-semibold opacity-85">
-                  {getProductsByCategory(tile.categoryId).length} sản phẩm · từ{' '}
-                  {formatPrice(minPrice(tile.categoryId))}
-                </span>
-                <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold">
-                  Xem ngay <span aria-hidden="true">→</span>
-                </span>
-              </Link>
-            ))}
-
-            {/* Vòng tròn kính: 8 danh mục — sang cửa hàng (mục danh mục
-                trên trang chủ đã bỏ, thay bằng menu thả #413 trên
-                header — Huy yêu cầu 2026-11-28). */}
-            <Link
-              to="/shop"
-              className="kairn-in kairn-tile kairn-glass-circle"
-              style={{ animationDelay: '0.8s' }}
-              aria-label="Xem tất cả 8 danh mục"
-            >
-              <span className="kairn-ring" aria-hidden="true">
-                <span className="text-xl font-extrabold">↘</span>
-              </span>
-              <span className="mt-2 block text-sm font-extrabold tracking-wide">
-                01 / 08
-              </span>
-              <span className="text-xs font-semibold opacity-85">
-                8 danh mục đồ cắm trại
-              </span>
-            </Link>
-
-            {/* Thẻ sản phẩm bán chạy nhất */}
-            {TENT && (
-              <Link
-                to={`/product/${TENT.id}`}
-                className="kairn-in kairn-tile kairn-tile-cream"
-                style={{ animationDelay: '0.95s' }}
-              >
-                <img
-                  src={resolveImage(TENT.image)}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  className="h-20 w-full rounded-xl bg-white object-contain sm:h-24"
-                />
-                <span className="mt-2 block text-[11px] font-extrabold tracking-[0.14em] opacity-80">
-                  BÁN CHẠY NHẤT · ★ {TENT.rating.toFixed(1)}
-                </span>
-                <span className="mt-1 block font-[Be_Vietnam_Pro,Inter,sans-serif] text-base leading-snug font-extrabold">
-                  Lều trại 2 người
-                </span>
-                <span className="mt-1 block text-sm font-bold text-primary-text">
-                  {formatPrice(TENT.price)}
-                </span>
-                <span className="mt-1 inline-flex items-center gap-1 text-sm font-bold">
-                  Xem ngay <span aria-hidden="true">→</span>
-                </span>
-              </Link>
-            )}
+          {/* Phải: chuyển đổi gói mua #423 (Lucian Plan switch) — thay cụm
+              tile 2×2 (2 danh mục + vòng tròn 8 danh mục + thẻ bán chạy
+              nhất) theo yêu cầu của Huy 2026-11-28. */}
+          <div
+            className="kairn-in flex items-center justify-center"
+            style={{ animationDelay: '0.5s' }}
+          >
+            <PlanSwitch />
           </div>
         </div>
 
