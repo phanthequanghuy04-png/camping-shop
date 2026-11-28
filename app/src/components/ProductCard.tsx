@@ -25,10 +25,11 @@
    4. Khung demo .u441 (340×300, căn giữa) không port: thẻ là item fluid
       trong lưới sản phẩm (grid-cols-1 sm:2 lg:3 xl:4) nên .u441-c rộng
       100%; giữ nguyên bo 22px, padding 8px 8px 12px, bóng gốc.
-   5. Vùng ảnh giữ đúng height 150px + bo 16px + gradient nền radial gốc
-      (đổi sang token --ux-* để tự đổi theo dark mode); ảnh thật object-fit
-      cover lấp đầy vùng; bỏ display:grid/place-items:center (chỉ để căn
-      bình SVG gốc).
+   5. Vùng ảnh (sửa 2026-11-28, theo yêu cầu chủ shop): aspect-ratio 4/3
+      + bo 16px + nền trắng #ffffff ở cả 2 chế độ; ảnh thật object-fit
+      contain để TOÀN BỘ sản phẩm hiện đủ, không bị cắt (trước đây height
+      150px + cover cắt mất đầu/cuối ảnh studio vuông 1600×1600). Không
+      còn gradient radial nền như bản port đầu.
    6. Giữ nguyên tên/giá theo kích thước gốc: tên 15px/650, giá 16px/750.
       Tên giữ line-clamp 2 dòng như thẻ hiện tại (bản gốc không có clamp).
    7. Hàng dưới (.u441-row) giữ đúng cấu trúc gốc (flex, space-between,
