@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -16,8 +17,20 @@ import {
   syncCartApi,
 } from '../lib/api'
 
-/** Key lưu giỏ hàng trong localStorage (giỏ của khách vãng lai / đã đăng nhập đều dùng chung key này ở bản demo). */
+/**
+ * Key lưu giỏ hàng trong localStorage — MỖI TÀI KHOẢN MỘT GIỎ RIÊNG
+ * ('camping-cart-<userId>'); khách vãng lai dùng key chung 'camping-cart'
+ * (sau bản chặn khách thêm giỏ thì key này luôn trống). Đăng xuất thì
+ * clearSession() (data/users.ts) dọn key chung, nên giỏ sau đăng xuất
+ * luôn trống, không còn đồ của tài khoản cũ; đăng nhập lại thì giỏ riêng
+ * của tài khoản đó vẫn còn nguyên.
+ */
 export const CART_STORAGE_KEY = 'camping-cart'
+
+/** Key giỏ của tài khoản đang đăng nhập (null = khách vãng lai). */
+export function cartKeyFor(userId: number | null): string {
+  return userId ? `${CART_STORAGE_KEY}-${userId}` : CART_STORAGE_KEY
+}
 
 /** Định dạng tiền VND: 2.890.000 ₫ */
 export function formatVND(value: number): string {
@@ -64,9 +77,9 @@ export interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null)
 
-function loadCart(): CartItem[] {
+function loadCartFromKey(key: string): CartItem[] {
   try {
-    const raw = localStorage.getItem(CART_STORAGE_KEY)
+    const raw = localStorage.getItem(key)
     if (!raw) return []
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
@@ -85,13 +98,23 @@ function loadCart(): CartItem[] {
   }
 }
 
+/** Giỏ của tài khoản đang đăng nhập (khách vãng lai: key chung). */
+function loadCart(): CartItem[] {
+  return loadCartFromKey(cartKeyFor(getSessionUser()?.id ?? null))
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(loadCart)
+  // Key giỏ đang dùng (đổi khi đăng nhập/đăng xuất — xem effect cuối file).
+  const cartKeyRef = useRef<string>(cartKeyFor(getSessionUser()?.id ?? null))
   // API: đồng bộ giỏ lên server khi chạy được, localStorage vẫn là gốc
   // (fallback khi fetch lỗi — xem app/src/lib/api.ts).
   const [apiAvailable, setApiAvailable] = useState(false)
   // Cờ: chỉ đồng bộ lên server sau khi đã nạp giỏ server lần đầu.
   const [hydratedFromApi, setHydratedFromApi] = useState(false)
+  // Số hiệu lần kéo giỏ server gần nhất: tránh lần kéo cũ (đăng nhập
+  // rồi đăng xuất nhanh) ghi đè giỏ mới.
+  const hydrateGenRef = useRef(0)
 
   // Ngăn giỏ trượt (#240 Lucian): mở khi bấm nút giỏ ở header hoặc khi
   // vừa thêm món (kèm id món mới để nhấp nháy); đóng thì xóa flash.
@@ -106,58 +129,75 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setFlashProductId(null)
   }, [])
 
-  // Lưu giỏ xuống localStorage mỗi khi giỏ thay đổi.
+  // Lưu giỏ xuống localStorage mỗi khi giỏ thay đổi (vào key của tài
+  // khoản đang đăng nhập — xem cartKeyRef).
   useEffect(() => {
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+      localStorage.setItem(cartKeyRef.current, JSON.stringify(items))
     } catch {
       // localStorage đầy / bị chặn: giỏ vẫn dùng được trong phiên hiện tại.
     }
   }, [items])
 
-  // Lần đầu: kéo giỏ từ API (nếu chạy) rồi gộp với giỏ local (lấy max
-  // số lượng từng món, chặn theo tồn kho). Lỗi -> giữ nguyên giỏ local.
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        if (!(await isApiAvailable())) return
-        const userId = getSessionUser()?.id ?? null
-        const serverItems = await getCartApi(userId)
-        if (cancelled) return
-        setApiAvailable(true)
-        if (serverItems.length > 0) {
-          setItems((prev) => {
-            const merged = new Map<number, number>()
-            for (const item of prev) merged.set(item.productId, item.quantity)
-            for (const item of serverItems) {
-              merged.set(
-                item.product_id,
-                Math.max(merged.get(item.product_id) ?? 0, item.quantity),
-              )
+  // Kéo giỏ từ API rồi gộp với giỏ local (lấy max số lượng từng món,
+  // chặn theo tồn kho). Lỗi -> giữ nguyên giỏ local.
+  const hydrateFromApi = useCallback(async (userId: number | null) => {
+    const gen = ++hydrateGenRef.current
+    try {
+      if (!(await isApiAvailable())) return
+      const serverItems = await getCartApi(userId)
+      if (gen !== hydrateGenRef.current) return
+      setApiAvailable(true)
+      if (serverItems.length > 0) {
+        setItems((prev) => {
+          const merged = new Map<number, number>()
+          for (const item of prev) merged.set(item.productId, item.quantity)
+          for (const item of serverItems) {
+            merged.set(
+              item.product_id,
+              Math.max(merged.get(item.product_id) ?? 0, item.quantity),
+            )
+          }
+          return [...merged.entries()].map(([productId, quantity]) => {
+            const product = products.find((p) => p.id === productId)
+            return {
+              productId,
+              quantity:
+                product && product.quantity > 0
+                  ? Math.min(quantity, product.quantity)
+                  : quantity,
             }
-            return [...merged.entries()].map(([productId, quantity]) => {
-              const product = products.find((p) => p.id === productId)
-              return {
-                productId,
-                quantity:
-                  product && product.quantity > 0
-                    ? Math.min(quantity, product.quantity)
-                    : quantity,
-              }
-            })
           })
-        }
-      } catch {
-        // API lỗi: giữ giỏ local, không báo lỗi chặn người dùng.
-      } finally {
-        if (!cancelled) setHydratedFromApi(true)
+        })
       }
-    })()
-    return () => {
-      cancelled = true
+    } catch {
+      // API lỗi: giữ giỏ local, không báo lỗi chặn người dùng.
+    } finally {
+      if (gen === hydrateGenRef.current) setHydratedFromApi(true)
     }
   }, [])
+
+  // Lần đầu mở trang: kéo giỏ server của tài khoản hiện tại.
+  useEffect(() => {
+    void hydrateFromApi(getSessionUser()?.id ?? null)
+  }, [hydrateFromApi])
+
+  // Đổi tài khoản (đăng nhập / đăng xuất): đổi sang giỏ của tài khoản mới.
+  // Đăng xuất -> key khách đã được clearSession() dọn nên giỏ trống;
+  // đăng nhập -> giỏ riêng của tài khoản đó (local) + kéo giỏ server gộp.
+  useEffect(() => {
+    const onAuthChanged = () => {
+      const userId = getSessionUser()?.id ?? null
+      const nextKey = cartKeyFor(userId)
+      if (nextKey === cartKeyRef.current) return
+      cartKeyRef.current = nextKey
+      setItems(loadCartFromKey(nextKey))
+      if (userId) void hydrateFromApi(userId)
+    }
+    window.addEventListener('camping-auth-changed', onAuthChanged)
+    return () =>
+      window.removeEventListener('camping-auth-changed', onAuthChanged)
+  }, [hydrateFromApi])
 
   // Giỏ đổi -> đồng bộ lên server (debounce 800ms, best-effort).
   useEffect(() => {
@@ -247,7 +287,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
     const onStorage = (event: StorageEvent) => {
-      if (event.key === CART_STORAGE_KEY) setItems(loadCart())
+      if (event.key === cartKeyRef.current)
+        setItems(loadCartFromKey(cartKeyRef.current))
     }
     window.addEventListener('add-to-cart', onAddToCart)
     window.addEventListener('storage', onStorage)
