@@ -6,7 +6,8 @@
  * - DECIMAL trong DB -> number ở frontend.
  * - TIMESTAMP trong DB -> string (ISO) ở frontend.
  * - Cột NULL được -> `... | null`.
- * - products.status là TINYINT(1): 1 = đang bán, 0 = ẩn/ngừng bán.
+ * - products.status là TINYINT(1): 1 = đang bán, 0 = ẩn/ngừng bán,
+ *   2 = hết hàng (vẫn hiện trên cửa hàng nhưng khách không mua được).
  * - users.role chỉ nhận 'user' | 'admin' (CHECK trong DB).
  * - orders.status chỉ nhận 'pending' | 'paid' | 'shipped' | 'done' | 'cancelled'.
  *
