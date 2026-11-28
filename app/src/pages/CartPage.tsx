@@ -15,13 +15,13 @@ export default function CartPage() {
         <h1 className="mt-4 text-2xl font-bold text-emerald-900 sm:text-3xl">
           Giỏ hàng của bạn đang trống
         </h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-muted-foreground">
           Bạn chưa thêm sản phẩm nào vào giỏ. Hãy khám phá đồ cắm trại và
           chọn món đồ ưng ý nhé!
         </p>
         <Link
           to="/shop"
-          className="mt-8 inline-block rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
+          className="btn-white mt-8 inline-block rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
         >
           Tiếp tục mua sắm
         </Link>
