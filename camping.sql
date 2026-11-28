@@ -70,7 +70,26 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NULL,
+  -- total = số tiền khách phải trả = subtotal - discount_amount + shipping_fee.
   total DECIMAL(12,0) NOT NULL DEFAULT 0,
+  -- Tạm tính trước giảm giá (tổng giá sản phẩm × số lượng).
+  subtotal DECIMAL(12,0) NOT NULL DEFAULT 0,
+  -- Số tiền đã giảm theo mã (vd CAMP10: 10%, tối đa 200.000₫).
+  discount_amount DECIMAL(12,0) NOT NULL DEFAULT 0,
+  coupon_code VARCHAR(20) NULL,
+  -- Phí vận chuyển (0 = miễn phí khi tạm tính >= 500.000₫).
+  shipping_fee DECIMAL(12,0) NOT NULL DEFAULT 0,
+  shipping_method VARCHAR(20) NOT NULL DEFAULT 'standard',
+  -- Khu vực giao: 'hanoi' | 'hcm' (nội thành, phí 20.000₫) | 'other' (30.000₫).
+  shipping_region VARCHAR(20) NULL,
+  -- Cách thanh toán: 'cod' (khi nhận hàng) | 'bank_transfer' (chuyển khoản/VietQR).
+  payment_method VARCHAR(20) NOT NULL DEFAULT 'cod',
+  -- 'unpaid' (chưa thanh toán) | 'paid' (đã thanh toán/đã nhận tiền).
+  payment_status VARCHAR(20) NOT NULL DEFAULT 'unpaid',
+  -- Mã vận đơn do admin nhập khi giao hàng (GHN/GHTK/Viettel Post...).
+  tracking_code VARCHAR(100) NULL,
+  -- Ngày giao dự kiến (server tự tính theo khu vực lúc tạo đơn).
+  estimated_delivery DATE NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
   address VARCHAR(500) NULL,
   phone VARCHAR(15) NULL,
@@ -79,7 +98,9 @@ CREATE TABLE IF NOT EXISTS orders (
   CONSTRAINT fk_orders_user
     FOREIGN KEY (user_id) REFERENCES users (id)
     ON DELETE SET NULL,
-  CONSTRAINT chk_orders_status CHECK (status IN ('pending', 'paid', 'shipped', 'done', 'cancelled'))
+  CONSTRAINT chk_orders_status CHECK (status IN ('pending', 'paid', 'shipped', 'done', 'cancelled')),
+  CONSTRAINT chk_orders_payment_method CHECK (payment_method IN ('cod', 'bank_transfer')),
+  CONSTRAINT chk_orders_payment_status CHECK (payment_status IN ('unpaid', 'paid'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -176,6 +197,67 @@ INSERT INTO products (id, name, image, price, quantity, status, id_category, des
   (26, 'Thảm cách nhiệt Naturehike', 'tham-cach-nhiet.jpg', 390000, 38, 1, 8, 'Thảm cách nhiệt trải lều êm lưng, chống ẩm từ mặt đất, cuộn gọn nhẹ.', 4.5),
   (27, 'Dao đa năng Victorinox', 'dao-da-nang.jpg', 890000, 21, 1, 8, 'Dao đa năng 12 chức năng, thép không gỉ, nhỏ gọn cho mọi chuyến đi rừng.', 4.9),
   (28, 'Bộ dụng cụ sơ cứu dã ngoại', 'bo-so-cuu.jpg', 250000, 45, 1, 8, 'Bộ sơ cứu dã ngoại đầy đủ băng gạc và thuốc cơ bản, túi chống nước.', 4.3);
+
+-- 50 sản phẩm mới (id 29–78), ảnh studio AI từ ảnh tham chiếu thật (2026-11-28)
+INSERT INTO products (id, name, image, price, quantity, status, id_category, description, rating) VALUES
+  -- 1. Lều trại
+  (29, 'Lều trại 3 người Naturehike Mongar 3', 'leu-trai-3-nguoi-mongar.jpg', 3890000, 12, 1, 1, 'Lều 3 người 2 lớp siêu nhẹ, chống mưa tốt, dựng nhanh cho chuyến trekking dài ngày.', 4.7),
+  (30, 'Lều trại 2 người Decathlon Quechua MH100', 'leu-trai-2-nguoi-mh100.jpg', 1990000, 18, 1, 1, 'Lều 2 người giá tốt, dựng trong 5 phút, thoáng khí, phù hợp cắm trại cuối tuần.', 4.6),
+  (31, 'Lều trại 4 người Naturehike Village 5.0', 'leu-trai-4-nguoi-village.jpg', 5490000, 8, 1, 1, 'Lều cabin 4 người rộng rãi có mái hiên trước, chống nắng mưa tốt cho gia đình.', 4.7),
+  (32, 'Lều cắm trại mái vòm Coleman Pop-Up', 'leu-trai-mai-vom-coleman.jpg', 2490000, 15, 1, 1, 'Lều pop-up mở ra là dùng ngay, gấp gọn nhanh, tiện cho chuyến đi ngắn ngày.', 4.5),
+  (33, 'Lều trại 1 người Naturehike Cloud Up 1', 'leu-trai-1-nguoi-cloud-up.jpg', 2390000, 14, 1, 1, 'Lều 1 người siêu nhẹ chỉ hơn 1kg, chống mưa tốt, lý tưởng cho trekking một mình.', 4.8),
+  (34, 'Tăng che nắng Naturehike 3x3m', 'tang-che-nang-3x3.jpg', 1190000, 20, 1, 1, 'Tăng che nắng 3x3m chống UV và chống mưa nhẹ, dựng nhanh làm mái hiên trại.', 4.6),
+  (35, 'Lều trại 6 người Coleman Montana 6', 'leu-trai-6-nguoi-montana.jpg', 6490000, 7, 1, 1, 'Lều 6 người 2 phòng rộng rãi, cửa sổ lưới thoáng, phù hợp đại gia đình.', 4.6),
+  -- 2. Túi ngủ
+  (36, 'Túi ngủ Naturehike CW280', 'tui-ngu-cw280.jpg', 1490000, 16, 1, 2, 'Túi ngủ bông chịu lạnh tới -5 độ, ấm nhẹ, phù hợp cắm trại mùa đông vùng cao.', 4.7),
+  (37, 'Túi ngủ Decathlon Quechua MH500', 'tui-ngu-mh500.jpg', 990000, 22, 1, 2, 'Túi ngủ 2 trong 1 dùng được cả mùa hè lẫn mùa đông, ấm và thoáng.', 4.6),
+  (38, 'Túi ngủ mùa hè Naturehike LW280', 'tui-ngu-mua-he-lw280.jpg', 690000, 28, 1, 2, 'Túi ngủ mùa hè nhẹ và thoáng, gọn trong ba lô, dùng tốt cho đêm hè oi bức.', 4.5),
+  (39, 'Túi ngủ đôi Naturehike ULG800', 'tui-ngu-doi-ulg800.jpg', 2890000, 10, 1, 2, 'Túi ngủ đôi lông vũ ấm tới -8 độ, rộng rãi cho 2 người ôm nhau ngủ.', 4.7),
+  (40, 'Túi ngủ trẻ em Coleman', 'tui-ngu-tre-em.jpg', 590000, 25, 1, 2, 'Túi ngủ trẻ em êm ái, họa tiết vui nhộn, ấm vừa cho bé cắm trại cùng gia đình.', 4.5),
+  (41, 'Túi ngủ siêu nhẹ Sea to Summit Spark', 'tui-ngu-sea-to-summit-spark.jpg', 4900000, 8, 1, 2, 'Túi ngủ lông vũ siêu nhẹ chỉ 500g, nén nhỏ bằng chai nước, cho trekker chuyên nghiệp.', 4.9),
+  (42, 'Lót túi ngủ Naturehike', 'lot-tui-ngu.jpg', 350000, 35, 1, 2, 'Lót túi ngủ lụa mềm giữ ấm thêm, giặt dễ, tăng tuổi thọ cho túi ngủ chính.', 4.4),
+  -- 3. Bếp & dụng cụ nấu
+  (43, 'Bếp ga dã ngoại Soto WindMaster', 'bep-ga-soto-windmaster.jpg', 1890000, 12, 1, 3, 'Bếp ga chống gió cực tốt, lửa mạnh ổn định, nấu nhanh ngay cả khi gió lớn.', 4.8),
+  (44, 'Bếp ga MSR PocketRocket Deluxe', 'bo-noi-msr-pocketrocket.jpg', 1290000, 15, 1, 3, 'Bếp ga siêu nhẹ kèm nồi nhỏ, gấp gọn bằng lòng bàn tay, nấu nhanh ngoài trời.', 4.7),
+  (45, 'Cốc titan Naturehike 450ml', 'coc-titan-450ml.jpg', 290000, 40, 1, 3, 'Cốc titan 450ml siêu nhẹ, bền, không gỉ, dùng uống nước hay nấu mì đều tiện.', 4.6),
+  (46, 'Bình giữ nhiệt Stanley Classic 1.9L', 'binh-giu-nhiet-1-9l.jpg', 1490000, 18, 1, 3, 'Bình giữ nhiệt 1.9 lít giữ nóng 28 giờ, giữ lạnh 36 giờ, bền bỉ huyền thoại.', 4.8),
+  (47, 'Bộ chén đĩa dã ngoại Naturehike', 'bo-chen-dia-da-ngoai.jpg', 450000, 24, 1, 3, 'Bộ chén đĩa titan 3 món nhẹ, xếp gọn, đủ dùng cho bữa ăn ngoài trời.', 4.5),
+  (48, 'Bếp cồn dã ngoại Trangia', 'bep-con-trangia.jpg', 890000, 14, 1, 3, 'Bếp cồn đồng thau bền bỉ, đốt êm, không khói, dùng cồn khô dễ tìm.', 4.6),
+  (49, 'Ấm đun nước dã ngoại Fire-Maple', 'am-dun-nuoc-fire-maple.jpg', 390000, 26, 1, 3, 'Ấm nhôm nhẹ đun nước nhanh, quai gấp gọn, tiện pha trà cà phê ngoài trại.', 4.5),
+  -- 4. Đèn & pin
+  (50, 'Đèn lồng LED Goal Zero Lighthouse', 'den-long-goal-zero.jpg', 1290000, 14, 1, 4, 'Đèn lồng LED 600 lumen sạc USB, sáng ấm, pin dùng 200 giờ ở chế độ thấp.', 4.8),
+  (51, 'Đèn pin đội đầu Nitecore NU25', 'den-pin-doi-dau-nu25.jpg', 890000, 20, 1, 4, 'Đèn đội đầu 400 lumen siêu nhẹ 28g, sạc USB-C, có đèn đỏ bảo vệ mắt ban đêm.', 4.7),
+  (52, 'Đèn pin cầm tay Fenix PD36R', 'den-pin-fenix-pd36r.jpg', 1990000, 10, 1, 4, 'Đèn pin 1600 lumen sạc USB-C, chống nước, xa tới 283m, nhỏ gọn bỏ túi.', 4.8),
+  (53, 'Đèn dây LED trang trí Naturehike 5m', 'den-day-led-5m.jpg', 190000, 38, 1, 4, 'Dây đèn LED 5m trang trí lều ấm cúng, chống nước, pin sạc USB tiện lợi.', 4.4),
+  (54, 'Đèn pin đội đầu Black Diamond Spot', 'den-pin-doi-dau-black-diamond.jpg', 1490000, 12, 1, 4, 'Đèn đội đầu 400 lumen chống nước, nhớ chế độ sáng, rảnh tay đi rừng ban đêm.', 4.7),
+  (55, 'Đèn lồng sạc USB Coleman', 'den-long-sac-usb-coleman.jpg', 490000, 22, 1, 4, 'Đèn lồng sạc USB sáng dịu, pin dùng 20 giờ, có móc treo tiện lợi trong lều.', 4.5),
+  -- 5. Ba lô
+  (56, 'Ba lô Osprey Talon 22L', 'ba-lo-osprey-talon-22l.jpg', 3490000, 9, 1, 5, 'Ba lô 22 lít ôm lưng tốt, lưng lưới thoáng, đủ đồ cho chuyến đi trong ngày.', 4.8),
+  (57, 'Ba lô Deuter Speed Lite 24L', 'ba-lo-deuter-speed-lite.jpg', 2890000, 11, 1, 5, 'Ba lô 24 lít nhẹ, ôm sát lưng, leo núi và đạp xe đều thoải mái.', 4.7),
+  (58, 'Ba lô dã ngoại Decathlon Quechua MH500 40L', 'ba-lo-quechua-mh500-40l.jpg', 1290000, 18, 1, 5, 'Ba lô 40 lít chống mưa, nhiều ngăn, giá tốt cho chuyến đi 2-3 ngày.', 4.6),
+  (59, 'Túi đeo hông Naturehike', 'tui-deo-hong.jpg', 390000, 30, 1, 5, 'Túi đeo hông đựng bình nước và điện thoại, rảnh tay khi đi bộ đường dài.', 4.4),
+  (60, 'Ba lô leo núi Gregory Zulu 55L', 'ba-lo-gregory-zulu-55l.jpg', 5900000, 7, 1, 5, 'Ba lô 55 lít lưng lưới thoáng khí, đeo êm cho chuyến đi dài ngày nhiều đồ.', 4.8),
+  (61, 'Ba lô chống nước Naturehike 25L', 'ba-lo-chong-nuoc-25l.jpg', 890000, 16, 1, 5, 'Ba lô chống nước 25 lít dạng túi khô, bảo vệ đồ khô ráo khi đi mưa hay chèo thuyền.', 4.5),
+  -- 6. Bàn ghế cắm trại
+  (62, 'Ghế xếp Helinox Chair One', 'ghe-xep-helinox-chair-one.jpg', 2490000, 10, 1, 6, 'Ghế xếp Helinox nhẹ chỉ 900g, khung nhôm chắc, ngồi êm, gấp gọn bằng chai nước.', 4.9),
+  (63, 'Bàn gấp Naturehike nhôm', 'ban-gap-naturehike.jpg', 890000, 16, 1, 6, 'Bàn gấp nhôm nhẹ, mặt nan chắc chắn, xếp gọn mang theo dễ dàng.', 4.6),
+  (64, 'Ghế xếp có tựa đầu Coleman', 'ghe-xep-co-tua-dau-coleman.jpg', 990000, 14, 1, 6, 'Ghế xếp có tựa đầu và tay vịn êm, ngồi thư giãn cả buổi bên lửa trại.', 4.6),
+  (65, 'Võng dã ngoại Naturehike', 'vong-da-ngoai.jpg', 590000, 20, 1, 6, 'Võng vải dù bền, chịu tải 150kg, mắc nhanh giữa 2 cây, ngủ trưa cực đã.', 4.5),
+  (66, 'Bàn ghế xếp gọn 4 người Naturehike', 'ban-ghe-xep-4-nguoi.jpg', 1890000, 9, 1, 6, 'Bộ bàn gấp kèm 4 ghế đẩu, xếp gọn thành một kiện, đủ chỗ cho cả nhóm.', 4.6),
+  (67, 'Ghế đẩu gấp gọn', 'ghe-dau-gap-gon.jpg', 290000, 32, 1, 6, 'Ghế đẩu gấp gọn nhẹ, ngồi vững, tiện mang theo câu cá hay ngồi bếp.', 4.3),
+  -- 7. Quần áo & giày
+  (68, 'Áo mưa dã ngoại Decathlon Quechua', 'ao-mua-da-ngoai.jpg', 690000, 22, 1, 7, 'Áo mưa chống nước 5000mm, nhẹ, gấp gọn vào túi riêng, đi mưa rừng vẫn khô.', 4.5),
+  (69, 'Giày leo núi Merrell Moab 3', 'giay-leo-nui-merrell-moab.jpg', 3490000, 10, 1, 7, 'Giày leo núi đế Vibram bám tốt, chống nước, êm chân trên địa hình đá dốc.', 4.8),
+  (70, 'Áo khoác gió Naturehike', 'ao-khoac-gio.jpg', 890000, 18, 1, 7, 'Áo khoác gió nhẹ chống nước nhẹ, có mũ, mặc ngoài chống gió lạnh buổi sáng.', 4.6),
+  (71, 'Quần trekking chống nước Columbia', 'quan-trekking-columbia.jpg', 1290000, 14, 1, 7, 'Quần trekking chống nước, co giãn tốt, khô nhanh, leo núi thoải mái cả ngày.', 4.6),
+  (72, 'Mũ chống nắng dã ngoại', 'mu-chong-nang.jpg', 250000, 40, 1, 7, 'Mũ rộng vành chống nắng, có tấm che gáy và dây quai cằm, đội mát cả ngày.', 4.4),
+  (73, 'Găng tay leo núi The North Face', 'gang-tay-leo-nui.jpg', 590000, 20, 1, 7, 'Găng tay da bền, chống lạnh và chống trầy, bám tốt khi cầm gậy hay dây.', 4.6),
+  -- 8. Phụ kiện
+  (74, 'Thảm trải lều Therm-a-Rest', 'tham-trai-leu-therm-a-rest.jpg', 1890000, 12, 1, 8, 'Thảm tự phồng êm ái, cách nhiệt tốt, ngủ ngon như ở nhà ngay giữa rừng.', 4.8),
+  (75, 'Gậy trekking Naturehike (cặp)', 'gay-trekking.jpg', 690000, 22, 1, 8, 'Cặp gậy trekking nhôm nhẹ, khóa gài chắc, giảm tải cho đầu gối khi leo dốc.', 4.6),
+  (76, 'Bật lửa chống gió Zippo', 'bat-lua-chong-gio.jpg', 490000, 28, 1, 8, 'Bật lửa Zippo chống gió kinh điển, vỏ kim loại bền, dùng bền cả chục năm.', 4.7),
+  (77, 'Túi đựng nước dã ngoại 3L', 'tui-dung-nuoc-3l.jpg', 390000, 30, 1, 8, 'Túi đựng nước 3 lít có ống uống tiện lợi, gắn vừa ba lô, uống nước không cần dừng.', 4.5),
+  (78, 'La bàn dã ngoại', 'la-ban-da-ngoai.jpg', 290000, 35, 1, 8, 'La bàn kim dạ quang chính xác, vỏ chống sốc, xác định hướng nhanh khi đi rừng.', 4.4);
 
 -- 2 user mẫu
 -- password_hash bên dưới là hash bcrypt thật (cost 10) của mật khẩu
