@@ -310,6 +310,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
+  touch-action: manipulation;
   background: var(--ux-surface);
   box-shadow: 0 2px 8px -2px var(--ux-shadow);
   color: var(--ux-ink-2);
@@ -507,18 +508,25 @@
     0 22px 44px -24px var(--ux-shadow-strong);
 }
 /* AOS cũng đặt transform (translateZ(0)) trên thẻ khi hiện ra nên luật hover
-   cần đặc hiệu hơn AOS ([data-aos][data-aos].aos-animate) mới thắng được. */
-.u441-c:hover,
-.u441-c[data-aos].aos-animate:hover {
-  transform: translateY(-8px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 24px 48px -16px rgba(27, 67, 50, 0.32);
-}
-.dark .u441-c:hover {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 20px 40px -16px var(--ux-shadow-strong);
+   cần đặc hiệu hơn AOS ([data-aos][data-aos].aos-animate) mới thắng được.
+   CHỈ CHẠY KHI CÓ CHUỘT THẬT: trên điện thoại (cảm ứng, không có hover),
+   lần chạm đầu tiên kích hoạt :hover làm thẻ nhích lên -8px ngay giữa cú
+   chạm, khiến cú bấm vào nút Thêm bị lệch mục tiêu. Vì vậy hiệu ứng nâng
+   thẻ khi trỏ chuột chỉ chạy trên thiết bị có hover thật; trên điện thoại,
+   hiệu ứng nổi 3D vẫn có lúc cuộn tới (AOS) + lúc bấm nút (focus). */
+@media (hover: hover) and (pointer: fine) {
+  .u441-c:hover,
+  .u441-c[data-aos].aos-animate:hover {
+    transform: translateY(-8px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 24px 48px -16px rgba(27, 67, 50, 0.32);
+  }
+  .dark .u441-c:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 20px 40px -16px var(--ux-shadow-strong);
+  }
 }
 /* Trỏ chuột: thẻ nổi lên trên các thẻ xung quanh để ảnh bật ra khỏi thẻ
    không bị thẻ bên cạnh che (mỗi thẻ đã là stacking context riêng vì AOS
@@ -540,7 +548,19 @@
   overflow: hidden;
   background: transparent;
 }
+/* Link ảnh PHẢI absolute (inset 0) để ảnh ra khỏi luồng: trước đây link + ảnh
+   còn trong luồng nên khi thẻ :hover/:focus-within đổi .u441-img sang
+   overflow: visible, khung cao theo chiều cao thật của ảnh (ảnh cao như
+   bếp Fire-Maple 662×838 → khung phình 255px thành 430px) và đẩy nút Thêm
+   xuống ~175px NGAY GIỮA CÚ CHẠM — điểm chạm vốn ở nút lại rơi lên ảnh
+   (nhảy vào trang sản phẩm) hoặc lên thân thẻ (bấm lần 1 không ăn). Ảnh
+   rộng (tỉ lệ < 0,75) không phình nên chỉ "một vài sản phẩm" lỗi. Giờ link
+   absolute thì khung chỉ còn aspect-ratio quyết chiều cao, không bao giờ
+   đổi khi trỏ/chạm; hiệu ứng ảnh bật ra ngoài khung vẫn giữ nguyên vì
+   overflow: visible + transform không ảnh hưởng bố cục. */
 .u441-img > a {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -575,10 +595,19 @@
 .u441-c[data-aos].aos-animate .u441-img img {
   transform: translateY(0) scale(1);
 }
-.u441-c.aos-animate:hover .u441-img img,
 .u441-c.aos-animate:focus-within .u441-img img {
-  transform: translateY(-24px) scale(1.2);
+  transform: translateY(-32px) scale(1.2);
   filter: drop-shadow(0 26px 18px rgba(27, 67, 50, 0.38));
+}
+/* Ảnh bật ra khi TRỎ CHUỘT chỉ chạy trên thiết bị có hover thật (xem chú
+   thích ở luật nâng thẻ bên trên — tránh làm lệch cú chạm trên điện thoại).
+   Còn :focus-within ở trên giữ nguyên: bấm nút bằng bàn phím/chạm vẫn thấy
+   ảnh bật lên, nhưng nút Thêm không hề di chuyển nên cú bấm luôn trúng. */
+@media (hover: hover) and (pointer: fine) {
+  .u441-c.aos-animate:hover .u441-img img {
+    transform: translateY(-32px) scale(1.2);
+    filter: drop-shadow(0 26px 18px rgba(27, 67, 50, 0.38));
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .u441-c .u441-img img {
@@ -709,6 +738,9 @@
   font-size: 13.5px;
   font-weight: 650;
   cursor: pointer;
+  /* Chạm là bấm ngay, không chờ trình duyệt phân biệt chạm 1/chạm 2
+     (double-tap zoom) — tránh cảm giác bấm lần 1 không ăn. */
+  touch-action: manipulation;
 }
 .u441-add:hover {
   background: #1b4332;
