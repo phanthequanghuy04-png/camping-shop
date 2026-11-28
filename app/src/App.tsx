@@ -35,6 +35,7 @@ import {
   refreshAnimations,
   revealOnScroll,
   scrollToTop,
+  setScrollLocked,
 } from './lib/animations'
 
 const navLinks = [
@@ -81,7 +82,10 @@ function Header() {
         setHeaderSolid(solid)
       }
       let nextHidden = hidden
-      if (y < 60) nextHidden = false
+      // Menu mobile đang mở thì KHÔNG ẩn header: trước đây cuộn là
+      // cả menu trượt theo header ra khỏi màn hình (2026-11-28).
+      if (menuOpen) nextHidden = false
+      else if (y < 60) nextHidden = false
       else if (acc > 8) nextHidden = true
       else if (acc < -6) nextHidden = false
       if (nextHidden !== hidden) {
@@ -97,9 +101,19 @@ function Header() {
       }
     }
     onScroll()
+    // Mở menu trong lúc header đang ẩn (vd tab bằng bàn phím) thì
+    // bắt header hiện lại ngay — onScroll() ở trên không setState
+    // được vì biến `hidden` cục bộ của effect mới khởi tạo là false.
+    if (menuOpen) setHeaderHidden(false)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [menuOpen])
+  // Menu mobile mở thì khóa cuộn trang (Lenis stop + body overflow)
+  // để nền đứng yên sau menu; đóng menu thì mở cuộn lại.
+  useEffect(() => {
+    setScrollLocked(menuOpen)
+    return () => setScrollLocked(false)
+  }, [menuOpen])
   // useLocation để Header render lại mỗi lần đổi trang.
   useLocation()
   const navigate = useNavigate()
@@ -277,22 +291,25 @@ function Header() {
         {/* Menu desktop: ngang đầy đủ, nằm giữa header (logo trái,
             menu giữa, cụm tác vụ phải); mobile: hiện khi bấm burger */}
         <nav
-          className={`${menuOpen ? 'flex' : 'hidden'} w-full flex-col gap-1 lg:order-2 lg:flex lg:w-auto lg:flex-row lg:items-center lg:gap-6`}
+          className="u-nav w-full lg:order-2 lg:flex lg:w-auto lg:flex-row lg:items-center lg:gap-6"
           aria-label="Menu chính"
         >
-          {visibleNavLinks.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.to === '/'}
-              className={({ isActive }) =>
-                `nav-link${isActive ? ' nav-link--active' : ''}`
-              }
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </NavLink>
-          ))}
+          <div className="u-nav-inner flex flex-col gap-1 lg:contents">
+            {visibleNavLinks.map((link, idx) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.to === '/'}
+                className={({ isActive }) =>
+                  `nav-link${isActive ? ' nav-link--active' : ''}`
+                }
+                style={{ '--i': idx } as React.CSSProperties}
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </div>
         </nav>
 
         {/* Ô tìm kiếm trong pill (chỉ hiện từ xl): gợi ý sản phẩm thật
