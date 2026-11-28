@@ -181,28 +181,33 @@ export default function ProductDetailPage() {
         {/* Hai cột dùng data-aos="fade" (chỉ mờ dần): fade-right/fade-left trượt 100px ngang làm bấm nhầm nút Thêm/Mua ngay khi khối đang hiện ra — đã đo được 2026-11-28. */}
         <div className="mt-6 grid gap-8 md:grid-cols-2">
           <div data-aos="fade">
-            <button
-              type="button"
-              onClick={() => setLightboxOpen(true)}
-              aria-label={`Xem ảnh lớn: ${product.name}`}
-              className="relative block w-full cursor-zoom-in focus:outline-2 focus:outline-ring"
-            >
-              <img
-                ref={imgRef}
-                src={resolveImage(product.image)}
-                alt={product.name}
-                className="aspect-[4/3] w-full rounded-[24px] object-contain shadow-[0_8px_32px_rgba(27,67,50,0.12)]"
-              />
-              <span
-                aria-hidden="true"
-                className="absolute right-3 bottom-3 grid h-10 w-10 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm"
+            {/* Khung kính quanh ảnh lớn (Huy yêu cầu 2026-11-28: thẻ ảnh
+                thiếu tương phản với nền kem) — viền + bóng của khung,
+                ảnh giữ object-contain bên trong. */}
+            <div className="pdp-img">
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                aria-label={`Xem ảnh lớn: ${product.name}`}
+                className="relative block w-full cursor-zoom-in focus:outline-2 focus:outline-ring"
               >
+                <img
+                  ref={imgRef}
+                  src={resolveImage(product.image)}
+                  alt={product.name}
+                  className="aspect-[4/3] w-full rounded-[16px] object-contain"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute right-3 bottom-3 grid h-10 w-10 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm"
+                >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-5 w-5">
                   <circle cx="11" cy="11" r="7" />
                   <path d="M21 21l-4.3-4.3M11 8v6M8 11h6" />
                 </svg>
-              </span>
-            </button>
+                </span>
+              </button>
+            </div>
           </div>
 
           <div data-aos="fade" data-aos-delay="100">
