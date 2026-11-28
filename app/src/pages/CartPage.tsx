@@ -45,7 +45,7 @@ export default function CartPage() {
               <img
                 src={resolveImage(item.product.image)}
                 alt={item.product.name}
-                className="h-24 w-24 shrink-0 rounded-lg object-cover"
+                className="h-24 w-24 shrink-0 rounded-lg bg-white object-contain"
               />
             ) : (
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-3xl">
