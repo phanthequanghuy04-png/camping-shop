@@ -60,7 +60,7 @@ export default function HeroKairn() {
       {/* Lớp phủ xanh rừng giữ chữ trắng đọc rõ trên ảnh sáng */}
       <div className="kairn-shade absolute inset-0" aria-hidden="true" />
 
-      <div className="relative z-10 mx-auto flex min-h-[92svh] w-full max-w-[1200px] flex-col px-4 pt-14 pb-10 sm:px-6 md:pt-20 md:pb-12">
+      <div className="relative z-10 mx-auto flex min-h-[92svh] w-full max-w-[1200px] flex-col px-4 pt-28 pb-10 sm:px-6 md:pt-32 md:pb-12">
         <div className="grid flex-1 items-center gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-8">
           {/* Trái: tiêu đề + nút + thống kê */}
           <div>
