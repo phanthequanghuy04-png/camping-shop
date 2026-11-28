@@ -79,18 +79,21 @@ export default function HeroKairn() {
             >
               <Link
                 to="/shop"
-                className="kairn-cta inline-flex min-h-12 items-center rounded-full bg-[#1B4332] px-7 py-3 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#14332a] focus:outline-2 focus:outline-offset-2 focus:outline-white"
+                className="kairn-cta kairn-cta-primary inline-flex min-h-12 items-center rounded-full bg-[#1B4332] px-7 py-3 text-base font-bold text-white shadow-lg hover:bg-[#14332a] focus:outline-2 focus:outline-offset-2 focus:outline-white"
               >
                 Mua sắm ngay
+                <span className="kairn-arrow" aria-hidden="true">
+                  →
+                </span>
               </Link>
               {/* Nút "Xem combo" dẫn tới mục Combo cắm trại (#combos) —
                   thay cho nút "Xem bộ sưu tập" cũ (sang /shop) theo yêu
                   cầu của Huy 2026-11-28: đưa phần combo lên thay thế. */}
               <a
                 href="#combos"
-                className="kairn-cta inline-flex min-h-12 items-center rounded-full bg-white/15 px-7 py-3 text-base font-bold text-white shadow-[inset_0_0_0_2px_rgba(255,255,255,0.85)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/25 focus:outline-2 focus:outline-offset-2 focus:outline-white"
+                className="kairn-cta kairn-cta-ghost inline-flex min-h-12 items-center rounded-full border-2 border-white/85 bg-white/15 px-7 py-3 text-base font-bold text-white backdrop-blur-sm focus:outline-2 focus:outline-offset-2 focus:outline-white"
               >
-                Xem combo
+                <span>Xem combo</span>
               </a>
             </div>
           </div>
