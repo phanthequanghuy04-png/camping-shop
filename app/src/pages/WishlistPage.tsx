@@ -45,7 +45,7 @@ export default function WishlistPage() {
           </p>
           <Link
             to="/shop"
-            className="mt-6 inline-block rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
+            className="btn-white mt-6 inline-block rounded-lg bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800"
           >
             Xem sản phẩm
           </Link>
