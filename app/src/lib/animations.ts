@@ -334,6 +334,25 @@ export function refreshAnimations(): void {
  * "Sản phẩm liên quan". Dùng Lenis.scrollTo khi có Lenis (cuộn mượt
  * sẽ không giật), không thì window.scrollTo.
  */
+/**
+ * Khóa/mở cuộn trang — dùng khi menu mobile mở: trang đứng yên sau
+ * menu, Lenis dừng hẳn (stop) để bánh xe lăn không cuộn nền, và
+ * body overflow hidden để dự phòng khi Lenis chưa chạy (vd chế độ
+ * giảm chuyển động). Mở lại bằng setScrollLocked(false).
+ */
+export function setScrollLocked(locked: boolean): void {
+  if (typeof window === 'undefined') return
+  if (lenisInstance) {
+    try {
+      if (locked) lenisInstance.stop()
+      else lenisInstance.start()
+    } catch {
+      // Lenis lỗi thì vẫn khóa bằng overflow bên dưới.
+    }
+  }
+  document.body.style.overflow = locked ? 'hidden' : ''
+}
+
 export function scrollToTop(): void {
   if (typeof window === 'undefined') return;
   if (lenisInstance) {
