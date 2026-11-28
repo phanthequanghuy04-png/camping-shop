@@ -517,6 +517,13 @@
     0 1px 0 rgba(255, 255, 255, 0.08) inset,
     0 20px 40px -16px var(--ux-shadow-strong);
 }
+/* Trỏ chuột: thẻ nổi lên trên các thẻ xung quanh để ảnh bật ra khỏi thẻ
+   không bị thẻ bên cạnh che (mỗi thẻ đã là stacking context riêng vì AOS
+   đặt transform, nên z-index này có tác dụng). */
+.u441-c:hover,
+.u441-c:focus-within {
+  z-index: 3;
+}
 
 /* ---------- Vùng ảnh (.u441-img) — ảnh thật, hiện TRỌN sản phẩm ----------
    aspect-ratio 4/3 thay height 150px cố định; ảnh object-fit: contain
@@ -552,8 +559,13 @@
    rồi nảy lên (spring). Nếu AOS không chạy thì ảnh vẫn ở trạng thái
    thường, không bị kẹt.
    Trỏ chuột / focus: thẻ nổi lên -8px, ảnh nhô lên + phóng to + bóng đổ
-   ôm theo hình sản phẩm — như sản phẩm nổi khỏi thẻ (rõ nhất khi ảnh đã
-   tách nền trong suốt). */
+   ôm theo hình sản phẩm — và BẬT RA KHỎI THẺ (vùng ảnh overflow: visible
+   khi trỏ chuột, thẻ z-index 3 để không bị thẻ bên cạnh che) nên ảnh
+   không bị cắt ở mép khung nữa. Rõ nhất khi ảnh đã tách nền trong suốt. */
+.u441-c:hover .u441-img,
+.u441-c:focus-within .u441-img {
+  overflow: visible;
+}
 .u441-c[data-aos].aos-init .u441-img img {
   transform: translateY(14px) scale(0.94);
 }
@@ -562,8 +574,8 @@
 }
 .u441-c.aos-animate:hover .u441-img img,
 .u441-c.aos-animate:focus-within .u441-img img {
-  transform: translateY(-6px) scale(1.08);
-  filter: drop-shadow(0 18px 14px rgba(27, 67, 50, 0.3));
+  transform: translateY(-12px) scale(1.14);
+  filter: drop-shadow(0 22px 16px rgba(27, 67, 50, 0.35));
 }
 @media (prefers-reduced-motion: reduce) {
   .u441-c .u441-img img {
