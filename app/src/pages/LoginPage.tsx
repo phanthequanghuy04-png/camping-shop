@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   checkDemoLogin,
   checkRegisteredLogin,
@@ -9,12 +9,19 @@ import {
 } from '../data/users'
 import { loginApi } from '../lib/api'
 import { showToast } from '../lib/toast'
+import { safeReturnTo } from '../lib/requireLogin'
 import EmailSignInForm, { type SignInResult } from '../components/EmailSignInForm'
 import SocialSignInButtons from '../components/SocialSignInButtons'
 import type { User } from '../data/types'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  // Trang "quay lại sau khi đăng nhập" — khi bị chặn ở giỏ/yêu thích/
+  // thanh toán thì gate đã gửi kèm state.from; mở /login trực tiếp
+  // thì không có state, mặc định về trang chủ như trước.
+  const rawFrom = (location.state as { from?: unknown } | null)?.from
+  const from = safeReturnTo(rawFrom, '/')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   // Người dùng vừa đăng nhập xong (để onSuccess báo chào + chuyển trang).
@@ -24,9 +31,9 @@ export default function LoginPage() {
   // khoản và nút đăng xuất đã nằm trên header, không cần trang chào nữa.
   useEffect(() => {
     if (getSessionUser()) {
-      navigate('/', { replace: true })
+      navigate(from, { replace: true })
     }
-  }, [navigate])
+  }, [navigate, from])
 
   // Đăng nhập thật: thử API trước (loginApi tự lưu token + session);
   // API lỗi thì fallback tài khoản demo/local (users.ts) như trước.
@@ -58,12 +65,13 @@ export default function LoginPage() {
     return 'ok'
   }
 
-  // Đăng nhập xong (sau khi nút hiện tick): báo thành công rồi về trang chủ.
+  // Đăng nhập xong (sau khi nút hiện tick): báo thành công rồi quay
+  // lại trang trước đó (mặc định về trang chủ).
   const handleLoginSuccess = () => {
     const user = signedInUserRef.current
     if (!user) return
     showToast(`Đăng nhập thành công! Xin chào, ${user.name}.`)
-    navigate('/')
+    navigate(from)
   }
 
   return (
@@ -74,6 +82,7 @@ export default function LoginPage() {
           Chưa có tài khoản?{' '}
           <Link
             to="/register"
+            state={rawFrom ? { from } : undefined}
             className="font-medium text-primary-text hover:underline"
           >
             Đăng ký ngay
