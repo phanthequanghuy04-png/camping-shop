@@ -14,6 +14,9 @@ import CheckoutPage from './pages/CheckoutPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import OrdersPage from './pages/OrdersPage'
+import PolicyPrivacy from './pages/PolicyPrivacy'
+import PolicyReturn from './pages/PolicyReturn'
+import PolicyTerms from './pages/PolicyTerms'
 import ProductDetailPage from './pages/ProductDetailPage'
 import RegisterPage from './pages/RegisterPage'
 import ShopPage from './pages/ShopPage'
@@ -450,6 +453,9 @@ function AppContent() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/chinh-sach/doi-tra" element={<PolicyReturn />} />
+        <Route path="/chinh-sach/bao-mat" element={<PolicyPrivacy />} />
+        <Route path="/chinh-sach/dieu-khoan" element={<PolicyTerms />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin" element={<AdminPage />} />
@@ -479,7 +485,7 @@ function AppContent() {
       <BackToTop />
 
       <footer className="site-footer">
-        <div className="mx-auto grid max-w-[1200px] gap-8 px-4 py-10 text-sm md:grid-cols-3 md:px-6">
+        <div className="mx-auto grid max-w-[1200px] gap-8 px-4 py-10 text-sm md:grid-cols-4 md:px-6">
           <div>
             <p className="font-display text-lg font-bold">Camping Shop</p>
             <p className="mt-2 opacity-80">
@@ -495,6 +501,20 @@ function AppContent() {
                   <Link to={link.to}>{link.label}</Link>
                 </li>
               ))}
+            </ul>
+          </nav>
+          <nav aria-label="Chính sách">
+            <p className="font-display font-bold">Chính sách</p>
+            <ul className="mt-2 space-y-2">
+              <li>
+                <Link to="/chinh-sach/doi-tra">Đổi trả &amp; hoàn tiền</Link>
+              </li>
+              <li>
+                <Link to="/chinh-sach/bao-mat">Bảo mật</Link>
+              </li>
+              <li>
+                <Link to="/chinh-sach/dieu-khoan">Điều khoản sử dụng</Link>
+              </li>
             </ul>
           </nav>
           <div>
