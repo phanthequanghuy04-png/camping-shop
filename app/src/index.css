@@ -200,9 +200,9 @@
 
 /* ---------- Nền tảng ---------- */
 
-html {
-  scroll-behavior: smooth;
-}
+/* KHÔNG đặt scroll-behavior: smooth ở đây: Lenis cấm dùng chung với
+   CSS smooth — nó phá cú nhảy anchor (#combos) và cuộn bàn phím
+   (Lenis đã tự cuộn mượt bằng JS; bánh xe chuột không bị ảnh hưởng). */
 
 body {
   margin: 0;
