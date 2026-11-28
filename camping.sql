@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS products (
   image VARCHAR(250) NULL,
   price DECIMAL(12,0) NOT NULL,
   quantity INT NOT NULL DEFAULT 0,
-  status TINYINT(1) NOT NULL DEFAULT 1,
+  status TINYINT(1) NOT NULL DEFAULT 1, -- 0 = An, 1 = Dang ban, 2 = Het hang
   id_category INT NULL,
   description TEXT NULL,
   rating DECIMAL(2,1) NOT NULL DEFAULT 4.5,
