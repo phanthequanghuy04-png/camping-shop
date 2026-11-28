@@ -158,9 +158,9 @@ export function formatPrice(price: number): string {
   return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
 }
 
-/** Chỉ lấy sản phẩm đang bán (status = 1, như dự án cũ). */
+/** Chỉ lấy sản phẩm đang bán hoặc hết hàng (status = 1 hoặc 2, như API). */
 export function getActiveProducts(): Product[] {
-  return PRODUCTS.filter((p) => p.status === 1)
+  return PRODUCTS.filter((p) => p.status === 1 || p.status === 2)
 }
 
 export function getCategoryById(id: number): Category | undefined {
@@ -171,9 +171,12 @@ export function getProductById(id: number): Product | undefined {
   return PRODUCTS.find((p) => p.id === id)
 }
 
-/** Sản phẩm đang bán thuộc một danh mục. */
+/** Sản phẩm đang bán hoặc hết hàng thuộc một danh mục. */
 export function getProductsByCategory(categoryId: number): Product[] {
-  return PRODUCTS.filter((p) => p.id_category === categoryId && p.status === 1)
+  return PRODUCTS.filter(
+    (p) =>
+      p.id_category === categoryId && (p.status === 1 || p.status === 2),
+  )
 }
 
 /** Bỏ dấu tiếng Việt để tìm kiếm không phân biệt dấu, vd: "leu" khớp "Lều". */
@@ -187,13 +190,16 @@ function removeDiacritics(value: string): string {
 }
 
 /**
- * Tìm theo tên sản phẩm, chỉ lấy sản phẩm đang bán (status = 1, như dự án cũ).
+ * Tìm theo tên sản phẩm, chỉ lấy sản phẩm đang bán hoặc hết hàng
+ * (status = 1 hoặc 2, như API).
  * Trả về toàn bộ sản phẩm đang bán khi từ khóa rỗng.
  */
 export function searchProducts(q: string): Product[] {
   const keyword = removeDiacritics(q.trim())
   if (!keyword) return getActiveProducts()
   return PRODUCTS.filter(
-    (p) => p.status === 1 && removeDiacritics(p.name).includes(keyword),
+    (p) =>
+      (p.status === 1 || p.status === 2) &&
+      removeDiacritics(p.name).includes(keyword),
   )
 }
