@@ -196,6 +196,56 @@ export async function getProduct(id: number): Promise<Product> {
   return withLocalImage(await apiFetch<Product>(`/api/products/${id}`))
 }
 
+export interface CreateProductInput {
+  name: string
+  price: number
+  quantity: number
+  id_category: number
+  description?: string | null
+  /** Link ảnh có sẵn (https://… hoặc /images/…). */
+  image?: string | null
+  /** Ảnh tải lên từ thiết bị, dạng data URL (đã cắt lề + nén ở client). */
+  image_data?: string | null
+}
+
+/**
+ * Admin thêm sản phẩm mới vào database (hiện ngay trên cửa hàng).
+ * Trả về sản phẩm vừa tạo; cờ image_pending_deploy = true khi ảnh tải
+ * lên còn chờ Pages deploy (~1 phút) mới hiện.
+ */
+export async function createProductApi(
+  input: CreateProductInput,
+): Promise<Product & { image_pending_deploy?: boolean }> {
+  return apiFetch<Product & { image_pending_deploy?: boolean }>(
+    '/api/admin/products',
+    { method: 'POST', body: JSON.stringify(input) },
+  )
+}
+
+export interface UpdateProductInput {
+  price?: number
+  quantity?: number
+  status?: 0 | 1
+}
+
+/** Admin sửa giá / tồn kho / hiện-ẩn sản phẩm trong database. */
+export async function updateAdminProductApi(
+  id: number,
+  patch: UpdateProductInput,
+): Promise<Product> {
+  return apiFetch<Product>(`/api/admin/products/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
+/** Admin xóa sản phẩm: ẩn khỏi cửa hàng (status = 0), không xóa hẳn. */
+export async function deleteAdminProductApi(id: number): Promise<Product> {
+  return apiFetch<Product>(`/api/admin/products/${id}`, {
+    method: 'DELETE',
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Auth — thử API trước, fallback demo/local do page tự lo khi ném ApiError
 // ---------------------------------------------------------------------------
