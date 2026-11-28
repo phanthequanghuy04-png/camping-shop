@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import Pagination from '../components/Pagination'
 import ProductCard from '../components/ProductCard'
 import SearchAutocomplete from '../components/SearchAutocomplete'
 import {
@@ -9,8 +10,12 @@ import {
 } from '../data/products'
 import type { Category, Product } from '../data/types'
 import { getCategories, getProducts, normalizeSearch } from '../lib/api'
+import { scrollToElement } from '../lib/animations'
 
 type SortOrder = 'default' | 'price-asc' | 'price-desc'
+
+/** Số sản phẩm mỗi trang phân trang Lucian #449 (78 sản phẩm → 7 trang). */
+const PAGE_SIZE = 12
 
 /**
  * Trang cửa hàng.
@@ -77,6 +82,27 @@ export default function ShopPage() {
     }
     return list
   }, [qParam, categoryId, sort, allProducts])
+
+  // #449 Lucian — phân trang: 12 sản phẩm/trang, trang hiện tại là state
+  // local (cố tình KHÔNG đưa vào URL để không xáo trộn ?category= / ?q=).
+  // Đổi từ khóa/danh mục/cách sắp xếp thì về trang 1; tổng số trang thu
+  // hẹp lại thì kẹp trang hiện tại xuống cho vừa.
+  const [page, setPage] = useState(1)
+  const gridRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    setPage(1)
+  }, [qParam, categoryId, sort])
+  const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageItems = results.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  )
+  const changePage = (next: number) => {
+    setPage(next)
+    // Cuộn về đầu lưới (chừa 80px cho header thủy tinh).
+    scrollToElement(gridRef.current, -80)
+  }
 
   const updateParams = (next: { category?: string; q?: string }) => {
     const params = new URLSearchParams(searchParams)
@@ -251,7 +277,8 @@ export default function ShopPage() {
         <p className="mt-6 text-sm text-[#5A6B5A]" role="status">
           Tìm thấy <span className="font-semibold text-[#1C2B1F]">{results.length}</span> sản phẩm
           {category ? ` trong danh mục “${category.name}”` : ''}
-          {qParam ? ` khớp với “${qParam}”` : ''}.
+          {qParam ? ` khớp với “${qParam}”` : ''}
+          {totalPages > 1 ? ` · Trang ${safePage} / ${totalPages}` : ''}.
         </p>
 
         {results.length === 0 ? (
@@ -271,11 +298,25 @@ export default function ShopPage() {
             </Link>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {results.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
-          </div>
+          <>
+            <div
+              ref={gridRef}
+              className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            >
+              {pageItems.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="mt-10 flex justify-center">
+                <Pagination
+                  totalPages={totalPages}
+                  currentPage={safePage}
+                  onPageChange={changePage}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </main>
