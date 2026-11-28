@@ -27,8 +27,20 @@ const CREATED_AT = '2026-11-27T00:00:00+07:00'
  * phải thêm BASE_URL vào trước thì trình duyệt mới tải đúng file.
  * Dùng hàm này ở mọi chỗ render <img> của sản phẩm.
  */
+/**
+ * Ảnh giữ chỗ cho sản phẩm chưa có ảnh (vd thêm ở quản trị mà không tải
+ * ảnh lên): SVG vẽ sẵn — nền kem, khung nét đứt, lều xanh rừng + chữ
+ * "Chưa có ảnh". Đặt ở đây vì mọi chỗ render <img> của sản phẩm đều đi
+ * qua resolveImage, nên thẻ sản phẩm, trang chi tiết, giỏ, tìm kiếm,
+ * thanh mua dính đều tự có ảnh giữ chỗ mà không cần sửa từng chỗ.
+ * (Huy duyệt 2026-11-28 sau đợt test thêm sản phẩm 0/3 — món không ảnh
+ * trước đây hiện ô ảnh trống trên /shop.)
+ */
+const NO_IMAGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 1024 768"><rect width="1024" height="768" fill="#F7F2E6"/><rect x="24" y="24" width="976" height="720" rx="24" fill="none" stroke="#2D6A4F" stroke-opacity="0.25" stroke-width="3" stroke-dasharray="14 12"/><g fill="none" stroke="#2D6A4F" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M512 240 L716 560 L308 560 Z"/><path d="M512 420 L584 560 L440 560 Z"/></g><text x="512" y="652" font-family="sans-serif" font-size="46" fill="#2D6A4F" text-anchor="middle">Chưa có ảnh</text></svg>`
+const NO_IMAGE_PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(NO_IMAGE_SVG)}`
+
 export function resolveImage(path: string | null | undefined): string {
-  if (!path) return ''
+  if (!path) return NO_IMAGE_PLACEHOLDER
   if (/^(https?:|data:|blob:)/i.test(path)) return path
   const base = import.meta.env.BASE_URL.replace(/\/$/, '')
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
